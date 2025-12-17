@@ -1,0 +1,107 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  passwordHash       String
+  emailVerified      DateTime?
+  verificationToken  String?   @unique
+  verificationExpiry DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  submissions        Submission[]
+}
+
+model Tour {
+  id        String    @id @default(cuid())
+  name      String    // e.g., "Summer Tour 2024"
+  startDate DateTime
+  endDate   DateTime?
+  shows     Show[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Show {
+  id          String       @id @default(cuid())
+  showDate    DateTime     @unique
+  venue       String
+  city        String?
+  state       String?
+  country     String?
+  tourId      String?
+  tour        Tour?        @relation(fields: [tourId], references: [id])
+  setlistJson Json?        // Cached setlist from phish.net
+  isComplete  Boolean      @default(false)
+  fetchedAt   DateTime?
+  submissions Submission[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([showDate])
+  @@index([tourId])
+}
+
+model Submission {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  showId      String
+  show        Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
+  isScored    Boolean  @default(false)
+  totalPoints Int?
+  picks       Pick[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, showId]) // One submission per user per show
+  @@index([userId])
+  @@index([showId])
+}
+
+enum PickType {
+  OPENER
+  ENCORE
+  REGULAR
+}
+
+model Pick {
+  id           String     @id @default(cuid())
+  submissionId String
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  songId       String
+  song         Song       @relation(fields: [songId], references: [id])
+  pickType     PickType
+  wasPlayed    Boolean?
+  pointsEarned Int?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([submissionId])
+  @@index([songId])
+}
+
+model Song {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique // For matching with phish.net
+  artist      String   @default("Phish") // Some covers have different artists
+  timesPlayed Int      @default(0)
+  picks       Pick[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([name])
+  @@index([slug])
+}

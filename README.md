@@ -1,36 +1,126 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FantasyPhish
+
+A fantasy game for Phish fans. Pick 13 songs before each show, score points when they play your picks, and compete on the tour leaderboard.
+
+## Features
+
+- **Pick 13 Songs**: Select your opener (3 pts), encore (3 pts), and 11 regular songs (1 pt each)
+- **Lock Before Showtime**: Submissions lock automatically when the show starts
+- **Auto-Scoring**: Picks are scored automatically after each show using phish.net data
+- **Tour Leaderboards**: Compete with other fans on tour-based leaderboards
+- **Pick History**: View all your past submissions and scores
+
+## Tech Stack
+
+- **Next.js 14** with App Router
+- **TypeScript**
+- **Prisma** + PostgreSQL (Vercel Postgres)
+- **NextAuth.js** for authentication
+- **Tailwind CSS** for styling
+- **Resend** for email verification
+- **phish.net API** for setlist data
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- PostgreSQL database (or Vercel Postgres)
+- phish.net API key
+- Resend API key
+
+### Environment Variables
+
+Create a `.env` file based on `.env.example`:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Database (Vercel Postgres)
+DATABASE_URL="postgres://..."
+DIRECT_URL="postgres://..."
+
+# NextAuth
+AUTH_SECRET="generate-with: openssl rand -base64 32"
+NEXTAUTH_URL="http://localhost:3000"
+
+# phish.net API
+PHISHNET_API_KEY="your-phishnet-api-key"
+
+# Resend (Email)
+RESEND_API_KEY="re_..."
+
+# App URL (for email links)
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Install dependencies
+npm install
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Push database schema
+npm run db:push
 
-## Learn More
+# Seed songs from phish.net
+npm run db:seed
 
-To learn more about Next.js, take a look at the following resources:
+# Optionally sync tours for a specific year
+npm run db:sync-tours 2024
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Start development server
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment to Vercel
 
-## Deploy on Vercel
+1. Push code to GitHub
+2. Import project in Vercel
+3. Add Vercel Postgres database
+4. Set environment variables:
+   - `AUTH_SECRET` (generate with `openssl rand -base64 32`)
+   - `PHISHNET_API_KEY`
+   - `RESEND_API_KEY`
+   - `NEXT_PUBLIC_APP_URL` (your Vercel URL)
+5. Deploy
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+After deployment:
+1. Run `npm run db:seed` to seed the songs database
+2. The cron job (`/api/score`) runs at midnight UTC daily to score completed shows
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Scoring System
+
+| Pick Type | Points |
+|-----------|--------|
+| Opener (first song of Set 1) | 3 points |
+| Encore (any song in encore) | 3 points |
+| Regular (11 songs, played anywhere) | 1 point each |
+| **Maximum per show** | **17 points** |
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── (auth)/         # Login, register, verify pages
+│   ├── (main)/         # Dashboard, pick, history, leaderboard
+│   ├── api/            # API routes
+│   └── page.tsx        # Landing page
+├── components/         # React components
+├── lib/               # Utilities (auth, prisma, phishnet, scoring)
+└── types/             # TypeScript types
+```
+
+## API Routes
+
+- `POST /api/auth/register` - User registration
+- `GET /api/auth/verify` - Email verification
+- `GET/POST /api/picks` - Get/submit picks for a show
+- `GET /api/shows` - Get upcoming shows
+- `GET /api/songs` - Get all songs
+- `GET /api/history` - Get user's submission history
+- `GET /api/leaderboard` - Get tour leaderboard
+- `POST /api/score` - Score completed shows (cron job)
+
+## License
+
+MIT
