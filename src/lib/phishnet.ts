@@ -1,8 +1,8 @@
 const PHISHNET_API_BASE = "https://api.phish.net/v5";
 
 interface PhishNetResponse<T> {
-  error_code: number;
-  error_message: string | null;
+  error: boolean;
+  error_message: string;
   data: T;
 }
 
@@ -71,7 +71,7 @@ async function fetchPhishNet<T>(endpoint: string): Promise<T> {
 
   const json: PhishNetResponse<T> = await response.json();
 
-  if (json.error_code !== 0) {
+  if (json.error) {
     throw new Error(`phish.net API error: ${json.error_message}`);
   }
 

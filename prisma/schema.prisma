@@ -94,7 +94,7 @@ model Pick {
 
 model Song {
   id          String   @id @default(cuid())
-  name        String   @unique
+  name        String
   slug        String   @unique // For matching with phish.net
   artist      String   @default("Phish") // Some covers have different artists
   timesPlayed Int      @default(0)

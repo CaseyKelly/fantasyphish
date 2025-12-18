@@ -30,30 +30,32 @@ export async function sendVerificationEmail(
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
-        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%); padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #f97316; margin: 0; font-size: 28px;">FantasyPhish</h1>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+          <div style="background: #2d4654; padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #c23a3a; margin: 0; font-size: 28px;">FantasyPhish</h1>
             <p style="color: #94a3b8; margin: 10px 0 0 0;">Predict the setlist. Score the points.</p>
           </div>
           
-          <h2 style="color: #1e3a5f;">Verify your email address</h2>
-          
-          <p>Welcome to FantasyPhish! Click the button below to verify your email address and start making your picks.</p>
-          
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${verificationUrl}" style="background: #f97316; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">Verify Email</a>
+          <div style="background: white; padding: 30px; border-radius: 12px;">
+            <h2 style="color: #2d4654; margin-top: 0;">Verify your email address</h2>
+            
+            <p style="color: #333;">Welcome to FantasyPhish! Click the button below to verify your email address and start making your picks.</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${verificationUrl}" style="background: #c23a3a; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">Verify Email</a>
+            </div>
+            
+            <p style="color: #666; font-size: 14px;">Or copy and paste this link into your browser:</p>
+            <p style="color: #666; font-size: 14px; word-break: break-all;">${verificationUrl}</p>
+            
+            <p style="color: #666; font-size: 14px;">This link will expire in 24 hours.</p>
+            
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+            
+            <p style="color: #999; font-size: 12px; text-align: center;">
+              If you didn't create a FantasyPhish account, you can safely ignore this email.
+            </p>
           </div>
-          
-          <p style="color: #666; font-size: 14px;">Or copy and paste this link into your browser:</p>
-          <p style="color: #666; font-size: 14px; word-break: break-all;">${verificationUrl}</p>
-          
-          <p style="color: #666; font-size: 14px;">This link will expire in 24 hours.</p>
-          
-          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-          
-          <p style="color: #999; font-size: 12px; text-align: center;">
-            If you didn't create a FantasyPhish account, you can safely ignore this email.
-          </p>
         </body>
         </html>
       `,
@@ -91,27 +93,30 @@ export async function sendPasswordResetEmail(
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
-        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%); padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #f97316; margin: 0; font-size: 28px;">FantasyPhish</h1>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+          <div style="background: #2d4654; padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #c23a3a; margin: 0; font-size: 28px;">FantasyPhish</h1>
+            <p style="color: #94a3b8; margin: 10px 0 0 0;">Predict the setlist. Score the points.</p>
           </div>
           
-          <h2 style="color: #1e3a5f;">Reset your password</h2>
-          
-          <p>Click the button below to reset your password. This link will expire in 1 hour.</p>
-          
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${resetUrl}" style="background: #f97316; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">Reset Password</a>
+          <div style="background: white; padding: 30px; border-radius: 12px;">
+            <h2 style="color: #2d4654; margin-top: 0;">Reset your password</h2>
+            
+            <p style="color: #333;">Click the button below to reset your password. This link will expire in 1 hour.</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetUrl}" style="background: #c23a3a; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">Reset Password</a>
+            </div>
+            
+            <p style="color: #666; font-size: 14px;">Or copy and paste this link into your browser:</p>
+            <p style="color: #666; font-size: 14px; word-break: break-all;">${resetUrl}</p>
+            
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+            
+            <p style="color: #999; font-size: 12px; text-align: center;">
+              If you didn't request a password reset, you can safely ignore this email.
+            </p>
           </div>
-          
-          <p style="color: #666; font-size: 14px;">Or copy and paste this link into your browser:</p>
-          <p style="color: #666; font-size: 14px; word-break: break-all;">${resetUrl}</p>
-          
-          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-          
-          <p style="color: #999; font-size: 12px; text-align: center;">
-            If you didn't request a password reset, you can safely ignore this email.
-          </p>
         </body>
         </html>
       `,

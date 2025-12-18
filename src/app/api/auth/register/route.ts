@@ -61,6 +61,12 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Registration error:", error);
+    
+    // Log more details for debugging
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    }
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -70,7 +76,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: "An error occurred during registration" },
+      { 
+        error: "An error occurred during registration",
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     );
   }
