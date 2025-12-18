@@ -13,11 +13,13 @@ interface PhishNetShow {
   country: string;
   tour_name: string;
   tourid: number;
+  artistid: number;
+  artist_name: string;
 }
 
 interface PhishNetResponse<T> {
-  error_code: number;
-  error_message: string | null;
+  error: boolean;
+  error_message: string;
   data: T;
 }
 
@@ -29,7 +31,7 @@ async function fetchShowsByYear(year: number): Promise<PhishNetShow[]> {
 
   console.log(`Fetching shows for year ${year}...`);
   const response = await fetch(
-    `${PHISHNET_API_BASE}/shows/year/${year}?apikey=${apiKey}`
+    `${PHISHNET_API_BASE}/shows/showyear/${year}.json?apikey=${apiKey}`
   );
 
   if (!response.ok) {
@@ -38,7 +40,7 @@ async function fetchShowsByYear(year: number): Promise<PhishNetShow[]> {
 
   const json: PhishNetResponse<PhishNetShow[]> = await response.json();
 
-  if (json.error_code !== 0) {
+  if (json.error) {
     throw new Error(`API error: ${json.error_message}`);
   }
 
@@ -50,8 +52,12 @@ async function main() {
   console.log(`Syncing tours for year ${year}...`);
 
   try {
-    const shows = await fetchShowsByYear(year);
-    console.log(`Fetched ${shows.length} shows`);
+    const allShows = await fetchShowsByYear(year);
+    console.log(`Fetched ${allShows.length} shows`);
+
+    // Filter for Phish shows only (artistid: 1)
+    const shows = allShows.filter((show) => show.artistid === 1);
+    console.log(`Filtered to ${shows.length} Phish shows`);
 
     // Group shows by tour
     const tourMap = new Map<

@@ -16,8 +16,8 @@ interface PhishNetSong {
 }
 
 interface PhishNetResponse<T> {
-  error_code: number;
-  error_message: string | null;
+  error: boolean;
+  error_message: string;
   data: T;
 }
 
@@ -36,7 +36,7 @@ async function fetchSongs(): Promise<PhishNetSong[]> {
 
   const json: PhishNetResponse<PhishNetSong[]> = await response.json();
 
-  if (json.error_code !== 0) {
+  if (json.error) {
     throw new Error(`API error: ${json.error_message}`);
   }
 
