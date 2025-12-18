@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 
-const FROM_EMAIL = "FantasyPhish <noreply@resend.dev>"; // Use your own domain in production
+const FROM_EMAIL = process.env.FROM_EMAIL || "FantasyPhish <noreply@fantasyphish.com>";
 
 function getResendClient() {
   const apiKey = process.env.RESEND_API_KEY;
@@ -23,6 +23,15 @@ export async function sendVerificationEmail(
       from: FROM_EMAIL,
       to: email,
       subject: "Verify your FantasyPhish account",
+      tags: [
+        {
+          name: 'category',
+          value: 'verification'
+        }
+      ],
+      headers: {
+        'X-Entity-Ref-ID': token,
+      },
       html: `
         <!DOCTYPE html>
         <html>
@@ -86,6 +95,15 @@ export async function sendPasswordResetEmail(
       from: FROM_EMAIL,
       to: email,
       subject: "Reset your FantasyPhish password",
+      tags: [
+        {
+          name: 'category',
+          value: 'password-reset'
+        }
+      ],
+      headers: {
+        'X-Entity-Ref-ID': token,
+      },
       html: `
         <!DOCTYPE html>
         <html>
