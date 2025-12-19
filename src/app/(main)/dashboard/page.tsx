@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth"
-import { Music, Sparkles, Clock } from "lucide-react"
+import { Sparkles, Calendar, MapPin } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { DonutLogo } from "@/components/DonutLogo"
 
@@ -17,7 +17,7 @@ export default async function PicksPage() {
         </p>
       </div>
 
-      {/* Coming Soon Content */}
+      {/* Empty State - Picks Not Open Yet */}
       <div className="min-h-[60vh] flex items-center justify-center px-4">
         <Card className="max-w-2xl w-full bg-gradient-to-br from-[#1e3340] to-[#2d4654] border-[#3d5a6c]/50">
           <CardContent className="py-16 px-8 text-center">
@@ -31,26 +31,34 @@ export default async function PicksPage() {
               </div>
             </div>
 
-            {/* Coming Soon Message */}
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-              Coming Soon
+            {/* Main Message */}
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
+              Picks Opening Soon!
             </h2>
 
-            <div className="flex items-center justify-center space-x-2 text-lg text-gray-300 mb-8">
-              <Music className="h-5 w-5" />
-              <p>Pick selection is being built</p>
-            </div>
-
-            <p className="text-base text-gray-400 max-w-xl mx-auto mb-12 leading-relaxed">
-              We&apos;re building the pick selection interface. Soon you&apos;ll
-              be able to choose your opener, encore, and 11 regular songs for
-              upcoming shows.
+            <p className="text-base text-gray-400 max-w-xl mx-auto mb-8 leading-relaxed">
+              Check back before the first show to make your picks! Choose your
+              opener, encore, and 11 regular songs to compete for glory.
             </p>
+
+            {/* Event Details */}
+            <div className="space-y-3 mb-12">
+              <div className="flex items-center justify-center space-x-2 text-gray-300">
+                <MapPin className="h-5 w-5 text-[#c23a3a]" />
+                <span className="font-medium">Madison Square Garden</span>
+              </div>
+              <div className="flex items-center justify-center space-x-2 text-gray-300">
+                <Calendar className="h-5 w-5 text-[#c23a3a]" />
+                <span>New Year&apos;s Eve Run 2024-2025</span>
+              </div>
+            </div>
 
             {/* Status Box */}
             <div className="inline-flex items-center space-x-3 px-6 py-4 bg-[#3d5a6c]/30 rounded-xl border border-[#3d5a6c]/50">
-              <Clock className="h-5 w-5 text-[#c23a3a]" />
-              <span className="text-gray-300 font-medium">In development</span>
+              <Sparkles className="h-5 w-5 text-[#c23a3a] animate-pulse" />
+              <span className="text-gray-300 font-medium">
+                Picks open before first show
+              </span>
             </div>
           </CardContent>
         </Card>
