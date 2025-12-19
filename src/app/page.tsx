@@ -277,7 +277,15 @@ export default function LandingPage() {
                 </a>
               </p>
               <p className="text-sm text-gray-500 flex items-end gap-2">
-                <span className="pb-1">made by chalupa</span>
+                <span className="pb-1">
+                  made by{" "}
+                  <a
+                    href="mailto:chalupa@fantasyphish.com"
+                    className="hover:text-gray-400 transition-colors"
+                  >
+                    chalupa
+                  </a>
+                </span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
