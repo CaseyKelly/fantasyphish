@@ -6,6 +6,7 @@ declare module "next-auth" {
       id: string
       email: string
       username: string
+      isAdmin: boolean
     }
   }
 
@@ -13,6 +14,7 @@ declare module "next-auth" {
     id: string
     email: string
     username: string
+    isAdmin: boolean
   }
 }
 
@@ -20,5 +22,6 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string
     username: string
+    isAdmin: boolean
   }
 }

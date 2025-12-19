@@ -18,6 +18,7 @@ model User {
   emailVerified      DateTime?
   verificationToken  String?   @unique
   verificationExpiry DateTime?
+  isAdmin            Boolean   @default(false)
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
   submissions        Submission[]
@@ -34,36 +35,40 @@ model Tour {
 }
 
 model Show {
-  id          String       @id @default(cuid())
-  showDate    DateTime     @unique
-  venue       String
-  city        String?
-  state       String?
-  country     String?
-  tourId      String?
-  tour        Tour?        @relation(fields: [tourId], references: [id])
-  setlistJson Json?        // Cached setlist from phish.net
-  isComplete  Boolean      @default(false)
-  fetchedAt   DateTime?
-  submissions Submission[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id            String       @id @default(cuid())
+  showDate      DateTime     @unique
+  venue         String
+  city          String?
+  state         String?
+  country       String?
+  tourId        String?
+  tour          Tour?        @relation(fields: [tourId], references: [id])
+  setlistJson   Json?        // Cached setlist from phish.net
+  isComplete    Boolean      @default(false)
+  fetchedAt     DateTime?
+  timezone      String?      // Venue timezone (e.g., "America/New_York")
+  lockTime      DateTime?    // Time when picks locked (7 PM in venue timezone)
+  lastScoredAt  DateTime?    // Last progressive scoring run
+  submissions   Submission[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   @@index([showDate])
   @@index([tourId])
 }
 
 model Submission {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  showId      String
-  show        Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
-  isScored    Boolean  @default(false)
-  totalPoints Int?
-  picks       Pick[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  showId        String
+  show          Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
+  isScored      Boolean  @default(false)
+  totalPoints   Int?
+  lastSongCount Int?     // Track song count for progressive scoring
+  picks         Pick[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@unique([userId, showId]) // One submission per user per show
   @@index([userId])

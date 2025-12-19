@@ -97,3 +97,37 @@ export function getPickTypePoints(pickType: PickType): number {
       return 0
   }
 }
+
+/**
+ * Score submission progressively (handles incomplete setlists)
+ * Returns score and whether the show is complete
+ */
+export function scoreSubmissionProgressive(
+  picks: PickToScore[],
+  setlist: PhishNetSetlist,
+  previousSongCount: number = 0
+): {
+  scoredPicks: ScoredPick[]
+  totalPoints: number
+  isComplete: boolean
+  currentSongCount: number
+  hasNewSongs: boolean
+} {
+  const parsed = parseSetlist(setlist)
+  const currentSongCount = parsed.allSongs.length
+  const hasNewSongs = currentSongCount > previousSongCount
+  const isComplete = setlist.songs.some(
+    (song) => song.set.toLowerCase() === "e"
+  )
+
+  // Use existing scoring logic
+  const { scoredPicks, totalPoints } = scoreSubmission(picks, setlist)
+
+  return {
+    scoredPicks,
+    totalPoints,
+    isComplete,
+    currentSongCount,
+    hasNewSongs,
+  }
+}

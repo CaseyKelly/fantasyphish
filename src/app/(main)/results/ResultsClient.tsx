@@ -1,6 +1,7 @@
-import { auth } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
-import { redirect } from "next/navigation"
+"use client"
+
+import { useState } from "react"
+import Link from "next/link"
 import { format } from "date-fns"
 import {
   Trophy,
@@ -11,72 +12,191 @@ import {
   Check,
   X,
   Clock,
+  Eye,
+  Plus,
+  RefreshCw,
+  AlertCircle,
+  Trash2,
 } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
-async function getHistory(userId: string) {
-  const submissions = await prisma.submission.findMany({
-    where: { userId },
-    include: {
-      show: {
-        include: { tour: true },
-      },
-      picks: {
-        include: { song: true },
-        orderBy: { pickType: "asc" },
-      },
-    },
-    orderBy: {
-      show: { showDate: "desc" },
-    },
-  })
-
-  const scoredSubmissions = submissions.filter((s) => s.isScored)
-  const totalPoints = scoredSubmissions.reduce(
-    (sum, s) => sum + (s.totalPoints || 0),
-    0
-  )
-  const totalPicks = scoredSubmissions.length * 13
-  const correctPicks = scoredSubmissions.reduce(
-    (sum, s) => sum + s.picks.filter((p) => p.wasPlayed).length,
-    0
-  )
-
-  return {
-    submissions,
-    stats: {
-      totalSubmissions: submissions.length,
-      scoredSubmissions: scoredSubmissions.length,
-      totalPoints,
-      avgPoints:
-        scoredSubmissions.length > 0
-          ? Math.round((totalPoints / scoredSubmissions.length) * 10) / 10
-          : 0,
-      correctPicks,
-      totalPicks,
-      accuracy:
-        totalPicks > 0 ? Math.round((correctPicks / totalPicks) * 100) : 0,
-    },
+interface Pick {
+  id: string
+  pickType: string
+  song: {
+    id: string
+    name: string
+    slug: string
+    artist: string
+    timesPlayed: number
+    createdAt: Date
+    updatedAt: Date
   }
+  wasPlayed: boolean | null
+  pointsEarned: number | null
 }
 
-export default async function HistoryPage() {
-  const session = await auth()
-  if (!session?.user?.id) {
-    redirect("/login")
+interface Show {
+  id: string
+  venue: string
+  city: string | null
+  state: string | null
+  country: string | null
+  showDate: Date
+  isComplete: boolean
+  tour: {
+    name: string
+  } | null
+}
+
+interface Submission {
+  id: string
+  totalPoints: number | null
+  isScored: boolean
+  show: Show
+  picks: Pick[]
+}
+
+interface Stats {
+  totalSubmissions: number
+  scoredSubmissions: number
+  totalPoints: number
+  avgPoints: number
+  correctPicks: number
+  totalPicks: number
+  accuracy: number
+}
+
+interface ResultsClientProps {
+  submissions: Submission[]
+  stats: Stats
+  isAdmin: boolean
+}
+
+export default function ResultsClient({
+  submissions,
+  stats,
+  isAdmin,
+}: ResultsClientProps) {
+  const [adminLoading, setAdminLoading] = useState<string | null>(null)
+  const [deletingSubmission, setDeletingSubmission] = useState<string | null>(
+    null
+  )
+
+  const handleDeleteSubmission = async (
+    submissionId: string,
+    showVenue: string
+  ) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete this submission for ${showVenue}?`
+      )
+    ) {
+      return
+    }
+
+    setDeletingSubmission(submissionId)
+
+    try {
+      const response = await fetch(
+        `/api/admin/delete-submission/${submissionId}`,
+        {
+          method: "DELETE",
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to delete submission")
+      }
+
+      // Refresh the page to update the list
+      window.location.reload()
+    } catch (err) {
+      console.error("Delete error:", err)
+      // Just refresh anyway - the user will see if the deletion worked
+      window.location.reload()
+    } finally {
+      setDeletingSubmission(null)
+    }
   }
 
-  const { submissions, stats } = await getHistory(session.user.id)
+  const handleCreateTestSubmission = async () => {
+    setAdminLoading("creating")
+
+    try {
+      const response = await fetch("/api/admin/test-submission", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create test submission")
+      }
+
+      // Redirect to the new test show
+      window.location.href = `/results_detail/${data.testShow.id}`
+    } catch (err) {
+      console.error("Test submission error:", err)
+      alert(
+        err instanceof Error ? err.message : "Failed to create test submission"
+      )
+    } finally {
+      setAdminLoading(null)
+    }
+  }
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">My Picks History</h1>
+        <h1 className="text-3xl font-bold text-white">Results</h1>
         <p className="text-slate-400 mt-1">
           View your past submissions and scores
         </p>
       </div>
+
+      {/* Admin Testing Controls */}
+      {isAdmin && (
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-orange-500" />
+                  Admin Testing Controls
+                </h3>
+                <p className="text-sm text-slate-400 mt-1">
+                  Create a test submission from a historical show to test the
+                  scoring system
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleCreateTestSubmission}
+                  disabled={!!adminLoading}
+                  className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {adminLoading === "creating" ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4" />
+                      Create Test Submission
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -165,6 +285,11 @@ export default async function HistoryPage() {
                   <div>
                     <h3 className="font-semibold text-white text-lg">
                       {submission.show.venue}
+                      {submission.show.venue.includes("Test Venue") && (
+                        <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                          Test
+                        </span>
+                      )}
                     </h3>
                     <div className="flex items-center space-x-4 text-sm text-slate-400 mt-1">
                       <span className="flex items-center">
@@ -192,6 +317,35 @@ export default async function HistoryPage() {
                         Awaiting results
                       </span>
                     )}
+                    <div className="flex items-center gap-2 mt-2">
+                      <Link
+                        href={`/results_detail/${submission.show.id}`}
+                        className="inline-flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                      >
+                        <Eye className="h-4 w-4" />
+                        View Details
+                      </Link>
+                      {isAdmin && (
+                        <button
+                          onClick={() =>
+                            handleDeleteSubmission(
+                              submission.id,
+                              submission.show.venue
+                            )
+                          }
+                          disabled={deletingSubmission === submission.id}
+                          className="inline-flex items-center gap-1 text-sm text-red-400 hover:text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Delete submission"
+                        >
+                          {deletingSubmission === submission.id ? (
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                          Delete
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </CardHeader>
@@ -200,8 +354,8 @@ export default async function HistoryPage() {
                   {/* Special Picks */}
                   <div className="grid sm:grid-cols-2 gap-4">
                     {submission.picks
-                      .filter((p) => p.pickType !== "REGULAR")
-                      .map((pick) => (
+                      .filter((p: Pick) => p.pickType !== "REGULAR")
+                      .map((pick: Pick) => (
                         <div
                           key={pick.id}
                           className={`flex items-center justify-between p-3 rounded-lg ${
@@ -247,8 +401,8 @@ export default async function HistoryPage() {
                     <p className="text-sm text-slate-400 mb-2">Regular Picks</p>
                     <div className="flex flex-wrap gap-2">
                       {submission.picks
-                        .filter((p) => p.pickType === "REGULAR")
-                        .map((pick) => (
+                        .filter((p: Pick) => p.pickType === "REGULAR")
+                        .map((pick: Pick) => (
                           <span
                             key={pick.id}
                             className={`px-3 py-1.5 rounded-full text-sm flex items-center space-x-1 ${
