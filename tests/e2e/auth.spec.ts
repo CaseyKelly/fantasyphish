@@ -7,6 +7,11 @@ import {
 
 test.describe.configure({ mode: "serial" }) // Run tests sequentially to avoid rate limiting
 
+/**
+ * Email sending strategy:
+ * - Test 1 (full registration flow): Sends real email via Resend to test end-to-end flow
+ * - All other tests: Use direct database creation to avoid hitting email quota
+ */
 test.describe("User Authentication", () => {
   test("should complete full registration flow with email verification", async ({
     page,
@@ -70,42 +75,26 @@ test.describe("User Authentication", () => {
 
   test("should login with verified credentials", async ({
     page,
-    cleanupEmail,
+    createUser,
   }) => {
-    const testEmail = generateTestEmail("login-flow")
+    const testEmail = `test-login-${Date.now()}@example.com`
     const testUsername = `loginuser${Date.now()}`
     const testPassword = "TestPassword123!"
 
-    await cleanupEmail(testEmail)
-
-    // Register the user
-    await page.goto("/register")
-    await page.getByPlaceholder("Username").fill(testUsername)
-    await page.getByPlaceholder("Email address").fill(testEmail)
-    await page
-      .getByPlaceholder("Password (min 8 characters)")
-      .fill(testPassword)
-    await page.getByPlaceholder("Confirm password").fill(testPassword)
-    await page.click('button[type="submit"]')
-
-    // Get verification email and token
-    const email = await waitForEmail(testEmail, {
-      subject: "Verify your FantasyPhish account",
+    // Create user directly in database (no email sent)
+    await createUser({
+      email: testEmail,
+      username: testUsername,
+      password: testPassword,
+      verified: true,
     })
-    const verificationToken = extractVerificationToken(email.html)
 
-    // Verify email (will redirect to login page)
-    await page.goto(`/verify?token=${verificationToken}`)
-    await expect(page.getByText(/email verified/i)).toBeVisible({
-      timeout: 10000,
-    })
-    await expect(page).toHaveURL(/\/login/, { timeout: 10000 })
-
-    // Login after verification
+    // Login with credentials
+    await page.goto("/login")
     await page.getByPlaceholder("Email address").fill(testEmail)
     await page.getByPlaceholder("Password").fill(testPassword)
     await page.click('button[type="submit"]')
-    await expect(page).toHaveURL(/\/dashboard/)
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 })
 
     // Logout
     const logoutButton = page.getByRole("button", { name: /logout|sign out/i })
@@ -115,7 +104,7 @@ test.describe("User Authentication", () => {
       await page.goto("/login")
     }
 
-    // Login with credentials
+    // Login again with same credentials
     await page.goto("/login")
     await page.getByPlaceholder("Email address").fill(testEmail)
     await page.getByPlaceholder("Password").fill(testPassword)
@@ -127,25 +116,19 @@ test.describe("User Authentication", () => {
 
   test("should not allow login with unverified email", async ({
     page,
-    cleanupEmail,
+    createUser,
   }) => {
-    const testEmail = generateTestEmail("unverified")
+    const testEmail = `test-unverified-${Date.now()}@example.com`
     const testUsername = `unverified${Date.now()}`
     const testPassword = "TestPassword123!"
 
-    await cleanupEmail(testEmail)
-
-    // Register user but don't verify
-    await page.goto("/register")
-    await page.getByPlaceholder("Username").fill(testUsername)
-    await page.getByPlaceholder("Email address").fill(testEmail)
-    await page
-      .getByPlaceholder("Password (min 8 characters)")
-      .fill(testPassword)
-    await page.getByPlaceholder("Confirm password").fill(testPassword)
-    await page.click('button[type="submit"]')
-
-    await expect(page.getByText(/check your email/i)).toBeVisible()
+    // Create user directly in database as unverified (no email sent)
+    await createUser({
+      email: testEmail,
+      username: testUsername,
+      password: testPassword,
+      verified: false,
+    })
 
     // Try to login without verifying email
     await page.goto("/login")
@@ -171,33 +154,21 @@ test.describe("User Authentication", () => {
     })
   })
 
-  test("should successfully logout user", async ({ page, cleanupEmail }) => {
-    const testEmail = generateTestEmail("logout-test")
+  test("should successfully logout user", async ({ page, createUser }) => {
+    const testEmail = `test-logout-${Date.now()}@example.com`
     const testUsername = `logoutuser${Date.now()}`
     const testPassword = "TestPassword123!"
 
-    await cleanupEmail(testEmail)
-
-    // Register and verify user
-    await page.goto("/register")
-    await page.getByPlaceholder("Username").fill(testUsername)
-    await page.getByPlaceholder("Email address").fill(testEmail)
-    await page
-      .getByPlaceholder("Password (min 8 characters)")
-      .fill(testPassword)
-    await page.getByPlaceholder("Confirm password").fill(testPassword)
-    await page.click('button[type="submit"]')
-
-    // Get verification email and verify
-    const email = await waitForEmail(testEmail, {
-      subject: "Verify your FantasyPhish account",
+    // Create user directly in database (no email sent)
+    await createUser({
+      email: testEmail,
+      username: testUsername,
+      password: testPassword,
+      verified: true,
     })
-    const verificationToken = extractVerificationToken(email.html)
-
-    await page.goto(`/verify?token=${verificationToken}`)
-    await expect(page).toHaveURL(/\/login/, { timeout: 10000 })
 
     // Login
+    await page.goto("/login")
     await page.getByPlaceholder("Email address").fill(testEmail)
     await page.getByPlaceholder("Password").fill(testPassword)
     await page.click('button[type="submit"]')
