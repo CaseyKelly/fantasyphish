@@ -49,6 +49,6 @@ html {
 
 /* Body background */
 body {
-  background: var(--color-phish-blue-dark);
+  background: var(--color-phish-blue-darker);
   min-height: 100vh;
 }
