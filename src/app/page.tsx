@@ -5,24 +5,26 @@ import { DonutLogo } from "@/components/DonutLogo";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#2d4654]">
+    <div className="min-h-screen bg-[#2d4654] relative">
+      {/* Repeating donut pattern background */}
+      <div className="fixed inset-0 opacity-10 pointer-events-none">
+        <svg width="100%" height="100%">
+          <defs>
+            <pattern id="donut-pattern" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
+              {/* First row */}
+              <circle cx="30" cy="30" r="22" stroke="#c23a3a" strokeWidth="12" fill="none" />
+              <circle cx="150" cy="30" r="22" stroke="#c23a3a" strokeWidth="12" fill="none" />
+              {/* Second row - offset */}
+              <circle cx="90" cy="90" r="22" stroke="#c23a3a" strokeWidth="12" fill="none" />
+              <circle cx="-30" cy="90" r="22" stroke="#c23a3a" strokeWidth="12" fill="none" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#donut-pattern)" />
+        </svg>
+      </div>
+
       {/* Hero Section */}
       <header className="relative overflow-hidden">
-        {/* Decorative donuts background */}
-        <div className="absolute inset-0 overflow-hidden opacity-20">
-          <svg className="absolute -top-20 -left-20 w-64 h-64" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="40" stroke="#c23a3a" strokeWidth="14" fill="none" />
-          </svg>
-          <svg className="absolute top-40 -right-10 w-48 h-48" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="40" stroke="#c23a3a" strokeWidth="14" fill="none" />
-          </svg>
-          <svg className="absolute bottom-20 left-1/4 w-32 h-32" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="40" stroke="#c23a3a" strokeWidth="14" fill="none" />
-          </svg>
-          <svg className="absolute -bottom-10 right-1/3 w-56 h-56" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="40" stroke="#c23a3a" strokeWidth="14" fill="none" />
-          </svg>
-        </div>
 
         <nav className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
@@ -64,7 +66,7 @@ export default function LandingPage() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link href="/leaderboard">
+              <Link href="/register">
                 <Button
                   variant="outline"
                   size="lg"
@@ -79,7 +81,7 @@ export default function LandingPage() {
       </header>
 
       {/* How It Works */}
-      <section className="py-20 bg-[#1e3340]/50">
+      <section className="py-20 bg-[#1e3340] relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl sm:text-4xl font-bold text-center text-white mb-12">
             How It Works
@@ -139,7 +141,7 @@ export default function LandingPage() {
               Scoring
             </h2>
 
-            <div className="bg-[#1e3340]/80 backdrop-blur-sm border border-[#3d5a6c]/50 rounded-2xl overflow-hidden">
+            <div className="bg-[#1e3340] border border-[#3d5a6c]/50 rounded-2xl overflow-hidden relative z-10">
               <div className="divide-y divide-[#3d5a6c]/50">
                 <div className="flex items-center justify-between p-6">
                   <div className="flex items-center space-x-4">
@@ -218,7 +220,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-[#3d5a6c]/50 py-8">
+      <footer className="border-t border-[#3d5a6c]/50 py-8 bg-[#1e3340] relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center space-x-2">
