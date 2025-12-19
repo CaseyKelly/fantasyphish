@@ -113,15 +113,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Show not found" }, { status: 404 })
     }
 
-    // Check if show has started
+    // Check if show has started (now timezone-aware)
     const showDateStr = format(show.showDate, "yyyy-MM-dd")
-    const showStarted = await hasShowStarted(showDateStr)
+    const showStarted = await hasShowStarted(
+      showDateStr,
+      show.timezone,
+      show.state
+    )
 
     if (showStarted) {
       return NextResponse.json(
         { error: "This show has already started. Submissions are locked." },
         { status: 400 }
       )
+    }
+
+    // Calculate and store lock time if not set
+    if (!show.lockTime && (show.timezone || show.state)) {
+      const { getTimezoneForLocation, getShowLockTime } =
+        await import("@/lib/timezone")
+      const tz = show.timezone || getTimezoneForLocation(show.state)
+      const lockTime = getShowLockTime(show.showDate, tz)
+
+      await prisma.show.update({
+        where: { id: show.id },
+        data: { lockTime, timezone: tz },
+      })
     }
 
     // Check if user already has a submission for this show

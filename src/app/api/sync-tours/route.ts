@@ -1,5 +1,6 @@
+import { NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
-import { getTimezoneForLocation, getShowLockTime } from "../src/lib/timezone"
+import { getTimezoneForLocation, getShowLockTime } from "@/lib/timezone"
 
 const prisma = new PrismaClient()
 
@@ -30,9 +31,10 @@ async function fetchShowsByYear(year: number): Promise<PhishNetShow[]> {
     throw new Error("PHISHNET_API_KEY is not set")
   }
 
-  console.log(`Fetching shows for year ${year}...`)
+  console.log(`[Sync Tours] Fetching shows for year ${year}...`)
   const response = await fetch(
-    `${PHISHNET_API_BASE}/shows/showyear/${year}.json?apikey=${apiKey}`
+    `${PHISHNET_API_BASE}/shows/showyear/${year}.json?apikey=${apiKey}`,
+    { cache: "no-store" }
   )
 
   if (!response.ok) {
@@ -48,15 +50,18 @@ async function fetchShowsByYear(year: number): Promise<PhishNetShow[]> {
   return json.data || []
 }
 
-async function syncYear(year: number): Promise<void> {
-  console.log(`\nSyncing tours for year ${year}...`)
+async function syncYear(year: number): Promise<{
+  tours: number
+  shows: number
+}> {
+  console.log(`[Sync Tours] Starting sync for year ${year}`)
 
   const allShows = await fetchShowsByYear(year)
-  console.log(`Fetched ${allShows.length} shows`)
+  console.log(`[Sync Tours] Fetched ${allShows.length} total shows`)
 
   // Filter for Phish shows only (artistid: 1)
   const shows = allShows.filter((show) => show.artistid === 1)
-  console.log(`Filtered to ${shows.length} Phish shows`)
+  console.log(`[Sync Tours] Filtered to ${shows.length} Phish shows`)
 
   // Group shows by tour
   const tourMap = new Map<number, { name: string; shows: PhishNetShow[] }>()
@@ -71,7 +76,7 @@ async function syncYear(year: number): Promise<void> {
     tourMap.get(show.tourid)!.shows.push(show)
   }
 
-  console.log(`Found ${tourMap.size} tours`)
+  console.log(`[Sync Tours] Found ${tourMap.size} tours`)
 
   // Create/update tours and shows
   for (const [tourId, tourData] of tourMap) {
@@ -99,17 +104,15 @@ async function syncYear(year: number): Promise<void> {
       },
     })
 
-    console.log(`Tour: ${tour.name}`)
+    console.log(
+      `[Sync Tours] Tour: ${tour.name} (${tourData.shows.length} shows)`
+    )
 
     // Create/update shows
     for (const show of tourData.shows) {
       const showDate = new Date(show.showdate)
       const timezone = getTimezoneForLocation(show.state)
       const lockTime = getShowLockTime(showDate, timezone)
-
-      // Determine if show is complete (in the past)
-      const now = new Date()
-      const isComplete = showDate < now
 
       await prisma.show.upsert({
         where: { showDate: showDate },
@@ -122,7 +125,6 @@ async function syncYear(year: number): Promise<void> {
           tourId: tour.id,
           timezone: timezone,
           lockTime: lockTime,
-          isComplete: isComplete,
         },
         update: {
           venue: show.venue,
@@ -132,38 +134,82 @@ async function syncYear(year: number): Promise<void> {
           tourId: tour.id,
           timezone: timezone,
           lockTime: lockTime,
-          isComplete: isComplete,
         },
       })
     }
+  }
 
-    console.log(`  - ${tourData.shows.length} shows synced`)
+  return {
+    tours: tourMap.size,
+    shows: shows.length,
   }
 }
 
-async function main() {
+export async function POST(request: Request) {
+  const startTime = Date.now()
+  console.log(`[Sync Tours] Cron job started at ${new Date().toISOString()}`)
+
   try {
-    // If a year is specified, sync only that year
-    // Otherwise, sync current year and next year
-    if (process.argv[2]) {
-      const year = parseInt(process.argv[2])
-      console.log(`Syncing single year: ${year}`)
-      await syncYear(year)
-    } else {
-      const currentYear = new Date().getFullYear()
-      const nextYear = currentYear + 1
-      console.log(`Syncing years: ${currentYear} and ${nextYear}`)
-      await syncYear(currentYear)
-      await syncYear(nextYear)
+    // Verify cron secret
+    const authHeader = request.headers.get("authorization")
+    const token = authHeader?.replace("Bearer ", "")
+
+    if (token !== process.env.CRON_SECRET) {
+      console.error("[Sync Tours] Unauthorized: Invalid or missing CRON_SECRET")
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    console.log("\n✓ Sync complete!")
+    console.log("[Sync Tours] Authorization successful")
+
+    const currentYear = new Date().getFullYear()
+    const nextYear = currentYear + 1
+
+    console.log(`[Sync Tours] Syncing years: ${currentYear}, ${nextYear}`)
+
+    // Sync both years
+    const currentYearResult = await syncYear(currentYear)
+    const nextYearResult = await syncYear(nextYear)
+
+    const duration = Date.now() - startTime
+
+    const summary = {
+      success: true,
+      duration: `${duration}ms`,
+      years: [
+        {
+          year: currentYear,
+          tours: currentYearResult.tours,
+          shows: currentYearResult.shows,
+        },
+        {
+          year: nextYear,
+          tours: nextYearResult.tours,
+          shows: nextYearResult.shows,
+        },
+      ],
+      totalTours: currentYearResult.tours + nextYearResult.tours,
+      totalShows: currentYearResult.shows + nextYearResult.shows,
+    }
+
+    console.log(`[Sync Tours] ✓ Sync complete in ${duration}ms`)
+    console.log(
+      `[Sync Tours] Summary: ${summary.totalShows} shows across ${summary.totalTours} tours`
+    )
+
+    return NextResponse.json(summary)
   } catch (error) {
-    console.error("\n✗ Sync failed:", error)
-    process.exit(1)
+    const duration = Date.now() - startTime
+    console.error(`[Sync Tours] ✗ Error after ${duration}ms:`, error)
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+        duration: `${duration}ms`,
+      },
+      { status: 500 }
+    )
   } finally {
     await prisma.$disconnect()
   }
 }
-
-main()
