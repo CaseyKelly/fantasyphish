@@ -227,17 +227,39 @@ export default function LandingPage() {
               <DonutLogo size="sm" />
               <span className="font-semibold text-white">FantasyPhish</span>
             </div>
-            <p className="text-sm text-gray-400">
-              Setlist data provided by{" "}
-              <a
-                href="https://phish.net"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#c23a3a] hover:text-[#d64545]"
-              >
-                phish.net
-              </a>
-            </p>
+            <div className="flex flex-col items-center sm:items-end gap-1">
+              <p className="text-sm text-gray-400">
+                Setlist data provided by{" "}
+                <a
+                  href="https://phish.net"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#c23a3a] hover:text-[#d64545]"
+                >
+                  phish.net
+                </a>
+              </p>
+              <p className="text-sm text-gray-500 flex items-end gap-2">
+                <span className="pb-1">made by chalupa</span>
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="1.5" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                  className="w-10 h-10"
+                >
+                  <path d="M4 20C4 20 4 12 12 12C20 12 20 20 20 20H4Z" fill="currentColor" opacity="0.2" />
+                  <path d="M4 20C4 20 4 12 12 12C20 12 20 20 20 20" />
+                  <circle cx="8" cy="16" r="0.8" fill="currentColor" />
+                  <circle cx="12" cy="15" r="0.8" fill="currentColor" />
+                  <circle cx="16" cy="16" r="0.8" fill="currentColor" />
+                  <path d="M6 18L18 18" strokeWidth="1" />
+                </svg>
+              </p>
+            </div>
           </div>
         </div>
       </footer>
