@@ -184,7 +184,7 @@ export default function LandingPage() {
                     <div className="min-w-0">
                       <p className="font-semibold text-white">Opener Pick</p>
                       <p className="text-sm text-gray-400">
-                        Call the first song (Runaway Jim incoming?)
+                        Call the first song of Set 1
                       </p>
                     </div>
                   </div>
@@ -199,7 +199,7 @@ export default function LandingPage() {
                     <div className="min-w-0">
                       <p className="font-semibold text-white">Encore Pick</p>
                       <p className="text-sm text-gray-400">
-                        Pick any encore song (First Tube, obviously)
+                        Pick any song from the encore
                       </p>
                     </div>
                   </div>
@@ -277,7 +277,15 @@ export default function LandingPage() {
                 </a>
               </p>
               <p className="text-sm text-gray-500 flex items-end gap-2">
-                <span className="pb-1">made by chalupa</span>
+                <span className="pb-1">
+                  made by{" "}
+                  <a
+                    href="mailto:chalupa@fantasyphish.com"
+                    className="hover:text-gray-400 transition-colors"
+                  >
+                    chalupa
+                  </a>
+                </span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
