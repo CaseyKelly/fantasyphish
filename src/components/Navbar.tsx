@@ -7,9 +7,9 @@ import { useState } from "react";
 import {
   Menu,
   X,
-  Home,
+  Music,
   Trophy,
-  History,
+  ClipboardList,
   LogOut,
   User,
 } from "lucide-react";
@@ -21,8 +21,8 @@ export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navItems = [
-    { href: "/dashboard", label: "Dashboard", icon: Home },
-    { href: "/history", label: "My Picks", icon: History },
+    { href: "/dashboard", label: "My Picks", icon: Music },
+    { href: "/history", label: "Results", icon: ClipboardList },
     { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   ];
 
@@ -64,10 +64,13 @@ export function Navbar() {
           {/* User Menu (Desktop) */}
           {session && (
             <div className="hidden md:flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-sm text-gray-400 whitespace-nowrap">
+              <Link
+                href="/profile"
+                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50 transition-colors whitespace-nowrap"
+              >
                 <User className="h-4 w-4 flex-shrink-0" />
-                <span className="truncate max-w-[200px]">{session.user.username}</span>
-              </div>
+                <span className="truncate max-w-[150px]">{session.user.username}</span>
+              </Link>
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
                 className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50 transition-colors whitespace-nowrap"
@@ -135,9 +138,14 @@ export function Navbar() {
               );
             })}
             <div className="pt-3 mt-3 border-t border-[#3d5a6c]/50">
-              <div className="px-4 py-2 text-sm text-gray-400">
-                {session.user.username}
-              </div>
+              <Link
+                href="/profile"
+                onClick={() => setIsMenuOpen(false)}
+                className="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50 transition-colors"
+              >
+                <User className="h-5 w-5" />
+                <span>{session.user.username}</span>
+              </Link>
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
                 className="flex items-center space-x-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50 transition-colors"
