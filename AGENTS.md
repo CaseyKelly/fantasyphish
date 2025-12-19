@@ -12,7 +12,7 @@
 ## Code Style
 - **TypeScript:** Strict mode enabled. Use explicit types for function params and returns.
 - **Imports:** Use `@/*` path alias for src/ imports (e.g., `import { auth } from "@/lib/auth"`).
-- **Formatting:** 2-space indent. Double quotes for strings. No semicolons in some files, be consistent with existing.
+- **Formatting:** 2-space indent. Double quotes for strings. Omit semicolons in TypeScript and JavaScript files.
 - **Components:** React functional components with "use client" directive for client components.
 - **Naming:** camelCase for functions/variables, PascalCase for components/types, SCREAMING_SNAKE for enums.
 - **Error handling:** API routes return `NextResponse.json({ error: "message" }, { status: code })`. Use try/catch with console.error for logging.
