@@ -1,12 +1,12 @@
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { notFound, redirect } from "next/navigation";
-import { format } from "date-fns";
-import { hasShowStarted } from "@/lib/phishnet";
-import { SongPicker } from "@/components/SongPicker";
+import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
+import { notFound, redirect } from "next/navigation"
+import { format } from "date-fns"
+import { hasShowStarted } from "@/lib/phishnet"
+import { SongPicker } from "@/components/SongPicker"
 
 interface PickPageProps {
-  params: Promise<{ showId: string }>;
+  params: Promise<{ showId: string }>
 }
 
 async function getShowData(showId: string, userId: string) {
@@ -22,15 +22,15 @@ async function getShowData(showId: string, userId: string) {
         },
       },
     },
-  });
+  })
 
-  if (!show) return null;
+  if (!show) return null
 
   // Check if show has started
-  const showDateStr = format(show.showDate, "yyyy-MM-dd");
-  const isLocked = await hasShowStarted(showDateStr);
+  const showDateStr = format(show.showDate, "yyyy-MM-dd")
+  const isLocked = await hasShowStarted(showDateStr)
 
-  return { show, isLocked };
+  return { show, isLocked }
 }
 
 async function getAllSongs() {
@@ -43,34 +43,34 @@ async function getAllSongs() {
       artist: true,
       timesPlayed: true,
     },
-  });
+  })
 }
 
 export default async function PickPage({ params }: PickPageProps) {
-  const session = await auth();
+  const session = await auth()
   if (!session?.user?.id) {
-    redirect("/login");
+    redirect("/login")
   }
 
-  const { showId } = await params;
+  const { showId } = await params
   const [showData, songs] = await Promise.all([
     getShowData(showId, session.user.id),
     getAllSongs(),
-  ]);
+  ])
 
   if (!showData) {
-    notFound();
+    notFound()
   }
 
-  const { show, isLocked } = showData;
-  const existingSubmission = show.submissions[0];
+  const { show, isLocked } = showData
+  const existingSubmission = show.submissions[0]
 
   // Transform existing picks for the picker
   const existingPicks = existingSubmission?.picks.map((pick) => ({
     songId: pick.songId,
     songName: pick.song.name,
     pickType: pick.pickType,
-  }));
+  }))
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -87,5 +87,5 @@ export default async function PickPage({ params }: PickPageProps) {
         isLocked={isLocked}
       />
     </div>
-  );
+  )
 }

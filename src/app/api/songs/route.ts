@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
 
 export async function GET() {
   try {
@@ -12,14 +12,14 @@ export async function GET() {
         artist: true,
         timesPlayed: true,
       },
-    });
+    })
 
-    return NextResponse.json({ songs });
+    return NextResponse.json({ songs })
   } catch (error) {
-    console.error("Error fetching songs:", error);
+    console.error("Error fetching songs:", error)
     return NextResponse.json(
       { error: "Failed to fetch songs" },
       { status: 500 }
-    );
+    )
   }
 }

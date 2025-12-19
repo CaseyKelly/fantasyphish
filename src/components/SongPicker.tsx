@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { format } from "date-fns";
-import { toast } from "sonner";
+import { useState, useMemo } from "react"
+import { useRouter } from "next/navigation"
+import { format } from "date-fns"
+import { toast } from "sonner"
 import {
   Search,
   X,
@@ -15,38 +15,38 @@ import {
   Check,
   MapPin,
   Calendar,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+} from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
 interface Song {
-  id: string;
-  name: string;
-  slug: string;
-  artist: string;
-  timesPlayed: number;
+  id: string
+  name: string
+  slug: string
+  artist: string
+  timesPlayed: number
 }
 
 interface Pick {
-  songId: string;
-  songName: string;
-  pickType: "OPENER" | "ENCORE" | "REGULAR";
+  songId: string
+  songName: string
+  pickType: "OPENER" | "ENCORE" | "REGULAR"
 }
 
 interface Show {
-  id: string;
-  venue: string;
-  city: string;
-  state: string;
-  showDate: string;
+  id: string
+  venue: string
+  city: string
+  state: string
+  showDate: string
 }
 
 interface SongPickerProps {
-  show: Show;
-  songs: Song[];
-  existingPicks?: Pick[];
-  isLocked: boolean;
+  show: Show
+  songs: Song[]
+  existingPicks?: Pick[]
+  isLocked: boolean
 }
 
 export function SongPicker({
@@ -55,117 +55,125 @@ export function SongPicker({
   existingPicks,
   isLocked,
 }: SongPickerProps) {
-  const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<string | null>("opener");
+  const router = useRouter()
+  const [searchQuery, setSearchQuery] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [expandedSection, setExpandedSection] = useState<string | null>(
+    "opener"
+  )
 
   // Initialize picks from existing submission
   const [openerPick, setOpenerPick] = useState<Pick | null>(
     existingPicks?.find((p) => p.pickType === "OPENER") || null
-  );
+  )
   const [encorePick, setEncorePick] = useState<Pick | null>(
     existingPicks?.find((p) => p.pickType === "ENCORE") || null
-  );
+  )
   const [regularPicks, setRegularPicks] = useState<Pick[]>(
     existingPicks?.filter((p) => p.pickType === "REGULAR") || []
-  );
+  )
 
   // Filter songs based on search
   const filteredSongs = useMemo(() => {
-    if (!searchQuery) return songs;
-    const query = searchQuery.toLowerCase();
+    if (!searchQuery) return songs
+    const query = searchQuery.toLowerCase()
     return songs.filter(
       (song) =>
         song.name.toLowerCase().includes(query) ||
         song.artist.toLowerCase().includes(query)
-    );
-  }, [songs, searchQuery]);
+    )
+  }, [songs, searchQuery])
 
   // Get all selected song IDs
   const selectedSongIds = useMemo(() => {
-    const ids = new Set<string>();
-    if (openerPick) ids.add(openerPick.songId);
-    if (encorePick) ids.add(encorePick.songId);
-    regularPicks.forEach((p) => ids.add(p.songId));
-    return ids;
-  }, [openerPick, encorePick, regularPicks]);
+    const ids = new Set<string>()
+    if (openerPick) ids.add(openerPick.songId)
+    if (encorePick) ids.add(encorePick.songId)
+    regularPicks.forEach((p) => ids.add(p.songId))
+    return ids
+  }, [openerPick, encorePick, regularPicks])
 
-  const handleSelectSong = (song: Song, pickType: "OPENER" | "ENCORE" | "REGULAR") => {
-    if (isLocked) return;
+  const handleSelectSong = (
+    song: Song,
+    pickType: "OPENER" | "ENCORE" | "REGULAR"
+  ) => {
+    if (isLocked) return
 
     const pick: Pick = {
       songId: song.id,
       songName: song.name,
       pickType,
-    };
+    }
 
     if (pickType === "OPENER") {
-      setOpenerPick(pick);
-      setExpandedSection("encore");
+      setOpenerPick(pick)
+      setExpandedSection("encore")
     } else if (pickType === "ENCORE") {
-      setEncorePick(pick);
-      setExpandedSection("regular");
+      setEncorePick(pick)
+      setExpandedSection("regular")
     } else {
       if (regularPicks.length < 11) {
-        setRegularPicks([...regularPicks, pick]);
+        setRegularPicks([...regularPicks, pick])
         if (regularPicks.length === 10) {
-          setExpandedSection(null);
+          setExpandedSection(null)
         }
       }
     }
-  };
+  }
 
-  const handleRemovePick = (pickType: "OPENER" | "ENCORE" | "REGULAR", songId?: string) => {
-    if (isLocked) return;
+  const handleRemovePick = (
+    pickType: "OPENER" | "ENCORE" | "REGULAR",
+    songId?: string
+  ) => {
+    if (isLocked) return
 
     if (pickType === "OPENER") {
-      setOpenerPick(null);
+      setOpenerPick(null)
     } else if (pickType === "ENCORE") {
-      setEncorePick(null);
+      setEncorePick(null)
     } else if (songId) {
-      setRegularPicks(regularPicks.filter((p) => p.songId !== songId));
+      setRegularPicks(regularPicks.filter((p) => p.songId !== songId))
     }
-  };
+  }
 
   const handleSubmit = async () => {
     if (!openerPick || !encorePick || regularPicks.length !== 11) {
-      toast.error("Please complete all picks before submitting");
-      return;
+      toast.error("Please complete all picks before submitting")
+      return
     }
 
-    setIsSubmitting(true);
+    setIsSubmitting(true)
 
     try {
       const picks = [
         { songId: openerPick.songId, pickType: "OPENER" },
         { songId: encorePick.songId, pickType: "ENCORE" },
         ...regularPicks.map((p) => ({ songId: p.songId, pickType: "REGULAR" })),
-      ];
+      ]
 
       const response = await fetch("/api/picks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ showId: show.id, picks }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (!response.ok) {
-        toast.error(data.error || "Failed to submit picks");
+        toast.error(data.error || "Failed to submit picks")
       } else {
-        toast.success(data.message || "Picks submitted successfully!");
-        router.push("/dashboard");
-        router.refresh();
+        toast.success(data.message || "Picks submitted successfully!")
+        router.push("/dashboard")
+        router.refresh()
       }
     } catch {
-      toast.error("An unexpected error occurred");
+      toast.error("An unexpected error occurred")
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
-  const isComplete = openerPick && encorePick && regularPicks.length === 11;
+  const isComplete = openerPick && encorePick && regularPicks.length === 11
 
   const renderSongList = (pickType: "OPENER" | "ENCORE" | "REGULAR") => (
     <div className="max-h-64 overflow-y-auto space-y-1">
@@ -173,8 +181,8 @@ export function SongPicker({
         <p className="text-center text-gray-400 py-4">No songs found</p>
       ) : (
         filteredSongs.map((song) => {
-          const isSelected = selectedSongIds.has(song.id);
-          const isDisabled = isSelected || isLocked;
+          const isSelected = selectedSongIds.has(song.id)
+          const isDisabled = isSelected || isLocked
 
           return (
             <button
@@ -197,11 +205,11 @@ export function SongPicker({
                 {isSelected && <Check className="h-4 w-4 text-green-500" />}
               </div>
             </button>
-          );
+          )
         })
       )}
     </div>
-  );
+  )
 
   return (
     <div className="space-y-6">
@@ -363,7 +371,9 @@ export function SongPicker({
           <CardHeader
             className="cursor-pointer"
             onClick={() =>
-              setExpandedSection(expandedSection === "regular" ? null : "regular")
+              setExpandedSection(
+                expandedSection === "regular" ? null : "regular"
+              )
             }
           >
             <div className="flex items-center justify-between">
@@ -448,5 +458,5 @@ export function SongPicker({
         </div>
       )}
     </div>
-  );
+  )
 }

@@ -84,17 +84,18 @@ npm run dev
 5. Deploy
 
 After deployment:
+
 1. Run `npm run db:seed` to seed the songs database
 2. The cron job (`/api/score`) runs at midnight UTC daily to score completed shows
 
 ## Scoring System
 
-| Pick Type | Points |
-|-----------|--------|
-| Opener (first song of Set 1) | 3 points |
-| Encore (any song in encore) | 3 points |
-| Regular (11 songs, played anywhere) | 1 point each |
-| **Maximum per show** | **17 points** |
+| Pick Type                           | Points        |
+| ----------------------------------- | ------------- |
+| Opener (first song of Set 1)        | 3 points      |
+| Encore (any song in encore)         | 3 points      |
+| Regular (11 songs, played anywhere) | 1 point each  |
+| **Maximum per show**                | **17 points** |
 
 ## Project Structure
 

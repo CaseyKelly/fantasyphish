@@ -1,11 +1,11 @@
-import { auth } from "@/lib/auth";
-import { Music, Sparkles, Clock } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { DonutLogo } from "@/components/DonutLogo";
+import { auth } from "@/lib/auth"
+import { Music, Sparkles, Clock } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { DonutLogo } from "@/components/DonutLogo"
 
 export default async function PicksPage() {
-  const session = await auth();
-  if (!session?.user?.id) return null;
+  const session = await auth()
+  if (!session?.user?.id) return null
 
   return (
     <div className="space-y-8">
@@ -35,27 +35,26 @@ export default async function PicksPage() {
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
               Coming Soon
             </h2>
-            
+
             <div className="flex items-center justify-center space-x-2 text-lg text-gray-300 mb-8">
               <Music className="h-5 w-5" />
               <p>Pick selection is being built</p>
             </div>
 
             <p className="text-base text-gray-400 max-w-xl mx-auto mb-12 leading-relaxed">
-              We&apos;re building the pick selection interface. Soon you&apos;ll be able to choose 
-              your opener, encore, and 11 regular songs for upcoming shows.
+              We&apos;re building the pick selection interface. Soon you&apos;ll
+              be able to choose your opener, encore, and 11 regular songs for
+              upcoming shows.
             </p>
 
             {/* Status Box */}
             <div className="inline-flex items-center space-x-3 px-6 py-4 bg-[#3d5a6c]/30 rounded-xl border border-[#3d5a6c]/50">
               <Clock className="h-5 w-5 text-[#c23a3a]" />
-              <span className="text-gray-300 font-medium">
-                In development
-              </span>
+              <span className="text-gray-300 font-medium">In development</span>
             </div>
           </CardContent>
         </Card>
       </div>
     </div>
-  );
+  )
 }

@@ -1,6 +1,6 @@
 interface DonutLogoProps {
-  size?: "sm" | "md" | "lg" | "xl";
-  className?: string;
+  size?: "sm" | "md" | "lg" | "xl"
+  className?: string
 }
 
 const sizes = {
@@ -8,7 +8,7 @@ const sizes = {
   md: "w-8 h-8",
   lg: "w-10 h-10",
   xl: "w-16 h-16",
-};
+}
 
 export function DonutLogo({ size = "md", className = "" }: DonutLogoProps) {
   return (
@@ -28,7 +28,7 @@ export function DonutLogo({ size = "md", className = "" }: DonutLogoProps) {
         fill="none"
       />
     </svg>
-  );
+  )
 }
 
 export function DonutLogoWithText({
@@ -40,5 +40,5 @@ export function DonutLogoWithText({
       <DonutLogo size={size} />
       <span className="font-bold text-white">FantasyPhish</span>
     </div>
-  );
+  )
 }

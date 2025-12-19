@@ -1,95 +1,99 @@
-import { PickType } from "@prisma/client";
-import { parseSetlist, normalizeSongName, type PhishNetSetlist } from "./phishnet";
+import { PickType } from "@prisma/client"
+import {
+  parseSetlist,
+  normalizeSongName,
+  type PhishNetSetlist,
+} from "./phishnet"
 
 interface PickToScore {
-  id: string;
-  pickType: PickType;
+  id: string
+  pickType: PickType
   song: {
-    name: string;
-    slug: string;
-  };
+    name: string
+    slug: string
+  }
 }
 
 interface ScoredPick {
-  id: string;
-  wasPlayed: boolean;
-  pointsEarned: number;
+  id: string
+  wasPlayed: boolean
+  pointsEarned: number
 }
 
 export const POINTS = {
   OPENER: 3,
   ENCORE: 3,
   REGULAR: 1,
-} as const;
+} as const
 
-export const MAX_POINTS = POINTS.OPENER + POINTS.ENCORE + 11 * POINTS.REGULAR; // 17 total
+export const MAX_POINTS = POINTS.OPENER + POINTS.ENCORE + 11 * POINTS.REGULAR // 17 total
 
 export function scoreSubmission(
   picks: PickToScore[],
   setlist: PhishNetSetlist
 ): { scoredPicks: ScoredPick[]; totalPoints: number } {
-  const parsed = parseSetlist(setlist);
-  const scoredPicks: ScoredPick[] = [];
-  let totalPoints = 0;
+  const parsed = parseSetlist(setlist)
+  const scoredPicks: ScoredPick[] = []
+  let totalPoints = 0
 
   for (const pick of picks) {
-    const normalizedPickName = normalizeSongName(pick.song.name);
-    let wasPlayed = false;
-    let pointsEarned = 0;
+    const normalizedPickName = normalizeSongName(pick.song.name)
+    let wasPlayed = false
+    let pointsEarned = 0
 
     if (pick.pickType === "OPENER") {
       // Opener must match first song of set 1
       if (parsed.opener) {
-        wasPlayed = normalizeSongName(parsed.opener) === normalizedPickName;
+        wasPlayed = normalizeSongName(parsed.opener) === normalizedPickName
       }
-      pointsEarned = wasPlayed ? POINTS.OPENER : 0;
+      pointsEarned = wasPlayed ? POINTS.OPENER : 0
     } else if (pick.pickType === "ENCORE") {
       // Encore must be in the encore set
       wasPlayed = parsed.encoreSongs.some(
         (song) => normalizeSongName(song) === normalizedPickName
-      );
-      pointsEarned = wasPlayed ? POINTS.ENCORE : 0;
+      )
+      pointsEarned = wasPlayed ? POINTS.ENCORE : 0
     } else {
       // Regular pick - just needs to be played anywhere
       wasPlayed = parsed.allSongs.some(
         (song) => normalizeSongName(song) === normalizedPickName
-      );
-      pointsEarned = wasPlayed ? POINTS.REGULAR : 0;
+      )
+      pointsEarned = wasPlayed ? POINTS.REGULAR : 0
     }
 
-    totalPoints += pointsEarned;
+    totalPoints += pointsEarned
     scoredPicks.push({
       id: pick.id,
       wasPlayed,
       pointsEarned,
-    });
+    })
   }
 
-  return { scoredPicks, totalPoints };
+  return { scoredPicks, totalPoints }
 }
 
 export function getPickTypeLabel(pickType: PickType): string {
   switch (pickType) {
     case "OPENER":
-      return "Opener";
+      return "Opener"
     case "ENCORE":
-      return "Encore";
+      return "Encore"
     case "REGULAR":
-      return "Regular";
+      return "Regular"
     default:
-      return "Unknown";
+      return "Unknown"
   }
 }
 
 export function getPickTypePoints(pickType: PickType): number {
   switch (pickType) {
     case "OPENER":
-      return POINTS.OPENER;
+      return POINTS.OPENER
     case "ENCORE":
-      return POINTS.ENCORE;
+      return POINTS.ENCORE
     case "REGULAR":
-      return POINTS.REGULAR;
+      return POINTS.REGULAR
     default:
-      return 0;
+      return 0
   }
 }
