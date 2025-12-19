@@ -143,40 +143,40 @@ export default function LandingPage() {
 
             <div className="bg-[#1e3340] border border-[#3d5a6c]/50 rounded-2xl overflow-hidden relative z-10">
               <div className="divide-y divide-[#3d5a6c]/50">
-                <div className="flex items-center justify-between p-6">
-                  <div className="flex items-center space-x-4">
-                    <Target className="h-6 w-6 text-[#c23a3a]" />
-                    <div>
+                <div className="flex items-center justify-between gap-4 p-6">
+                  <div className="flex items-center space-x-4 min-w-0">
+                    <Target className="h-6 w-6 text-[#c23a3a] flex-shrink-0" />
+                    <div className="min-w-0">
                       <p className="font-semibold text-white">Opener Pick</p>
                       <p className="text-sm text-gray-400">
                         Call the first song (Runaway Jim incoming?)
                       </p>
                     </div>
                   </div>
-                  <span className="text-2xl font-bold text-[#c23a3a]">
+                  <span className="text-2xl font-bold text-[#c23a3a] whitespace-nowrap flex-shrink-0">
                     3 pts
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between p-6">
-                  <div className="flex items-center space-x-4">
-                    <Target className="h-6 w-6 text-[#c23a3a]" />
-                    <div>
+                <div className="flex items-center justify-between gap-4 p-6">
+                  <div className="flex items-center space-x-4 min-w-0">
+                    <Target className="h-6 w-6 text-[#c23a3a] flex-shrink-0" />
+                    <div className="min-w-0">
                       <p className="font-semibold text-white">Encore Pick</p>
                       <p className="text-sm text-gray-400">
                         Pick any encore song (First Tube, obviously)
                       </p>
                     </div>
                   </div>
-                  <span className="text-2xl font-bold text-[#c23a3a]">
+                  <span className="text-2xl font-bold text-[#c23a3a] whitespace-nowrap flex-shrink-0">
                     3 pts
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between p-6">
-                  <div className="flex items-center space-x-4">
-                    <Target className="h-6 w-6 text-gray-400" />
-                    <div>
+                <div className="flex items-center justify-between gap-4 p-6">
+                  <div className="flex items-center space-x-4 min-w-0">
+                    <Target className="h-6 w-6 text-gray-400 flex-shrink-0" />
+                    <div className="min-w-0">
                       <p className="font-semibold text-white">
                         Regular Picks (11)
                       </p>
@@ -185,14 +185,14 @@ export default function LandingPage() {
                       </p>
                     </div>
                   </div>
-                  <span className="text-2xl font-bold text-gray-300">
+                  <span className="text-2xl font-bold text-gray-300 whitespace-nowrap flex-shrink-0">
                     1 pt each
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between p-6 bg-[#3d5a6c]/30">
+                <div className="flex items-center justify-between gap-4 p-6 bg-[#3d5a6c]/30">
                   <p className="font-semibold text-white">Maximum Points</p>
-                  <span className="text-2xl font-bold text-white">17 pts</span>
+                  <span className="text-2xl font-bold text-white whitespace-nowrap flex-shrink-0">17 pts</span>
                 </div>
               </div>
             </div>
@@ -220,7 +220,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-[#3d5a6c]/50 py-8 bg-[#1e3340] relative z-10">
+      <footer className="border-t border-[#3d5a6c]/50 py-8 bg-[#1e3340] relative z-10 shadow-[0_100vh_0_100vh_#1e3340]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center space-x-2">
