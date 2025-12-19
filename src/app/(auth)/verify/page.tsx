@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+
 import Link from "next/link";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,13 +17,12 @@ function VerifyContent() {
   const token = searchParams.get("token");
 
   useEffect(() => {
-    if (!token) {
-      setStatus("error");
-      setMessage("No verification token provided");
-      return;
-    }
-
     const verifyEmail = async () => {
+      if (!token) {
+        setStatus("error");
+        setMessage("No verification token provided");
+        return;
+      }
       try {
         const response = await fetch(`/api/auth/verify?token=${token}`);
         const data = await response.json();

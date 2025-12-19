@@ -90,7 +90,7 @@ export default async function LeaderboardPage({
   const params = await searchParams;
   const tourId = params.tourId;
 
-  const [leaderboard, tours] = await Promise.all([
+  const [leaderboard] = await Promise.all([
     getLeaderboard(tourId),
     getTours(),
   ]);
