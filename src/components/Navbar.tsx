@@ -47,13 +47,13 @@ export function Navbar() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                       isActive(item.href)
                         ? "bg-[#c23a3a]/20 text-[#d64545]"
                         : "text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50"
                     }`}
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className="h-4 w-4 flex-shrink-0" />
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -64,15 +64,15 @@ export function Navbar() {
           {/* User Menu (Desktop) */}
           {session && (
             <div className="hidden md:flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-sm text-gray-400">
-                <User className="h-4 w-4" />
-                <span>{session.user.email}</span>
+              <div className="flex items-center space-x-2 text-sm text-gray-400 whitespace-nowrap">
+                <User className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate max-w-[200px]">{session.user.username}</span>
               </div>
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
-                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50 transition-colors"
+                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50 transition-colors whitespace-nowrap"
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-4 w-4 flex-shrink-0" />
                 <span>Sign Out</span>
               </button>
             </div>
@@ -136,7 +136,7 @@ export function Navbar() {
             })}
             <div className="pt-3 mt-3 border-t border-[#3d5a6c]/50">
               <div className="px-4 py-2 text-sm text-gray-400">
-                {session.user.email}
+                {session.user.username}
               </div>
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
