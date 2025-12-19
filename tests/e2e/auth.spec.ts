@@ -104,7 +104,7 @@ test.describe("User Authentication", () => {
       await page.goto("/login")
     }
 
-    // Login again with same credentials
+    // Verify login works again after logout using the same credentials
     await page.goto("/login")
     await page.getByPlaceholder("Email address").fill(testEmail)
     await page.getByPlaceholder("Password").fill(testPassword)
