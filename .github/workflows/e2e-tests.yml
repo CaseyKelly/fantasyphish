@@ -29,6 +29,17 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      - name: Debug DATABASE_URL
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "ERROR: DATABASE_URL is empty or not set"
+            exit 1
+          else
+            echo "DATABASE_URL is set (length: ${#DATABASE_URL} characters)"
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
       - name: Setup database
         run: npm run db:push
         env:
