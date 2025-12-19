@@ -48,7 +48,7 @@ export async function waitForEmail(
       }
 
       // Find matching email
-      const matchingEmail = emails.data.find((email: any) => {
+      const matchingEmail = emails.data.find((email: { to?: string[]; subject?: string }) => {
         const matchesRecipient = email.to?.includes(toEmail);
         const matchesSubject = !subject || email.subject === subject;
         return matchesRecipient && matchesSubject;

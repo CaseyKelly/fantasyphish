@@ -83,10 +83,10 @@ export async function POST(request: NextRequest) {
             <p style="margin: 0 0 8px 0; font-weight: 600; color: #374151;">Attachments:</p>
             ${attachmentsList.data.data
               .map(
-                (att: any) => `
+                (att) => `
               <div style="margin: 4px 0;">
                 <a href="${att.download_url}" style="color: #2563eb; text-decoration: none;">
-                  📎 ${att.filename} (${Math.round(att.size / 1024)}KB)
+                  📎 ${att.filename ?? "attachment"} (${Math.round((att.size ?? 0) / 1024)}KB)
                 </a>
               </div>
             `
