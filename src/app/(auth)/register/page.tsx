@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Mail, Lock, AlertCircle, CheckCircle } from "lucide-react";
+import { Mail, Lock, AlertCircle, CheckCircle, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { DonutLogo } from "@/components/DonutLogo";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -33,11 +34,23 @@ export default function RegisterPage() {
       return;
     }
 
+    if (username.length < 3 || username.length > 20) {
+      setError("Username must be between 3 and 20 characters");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      setError("Username can only contain letters, numbers, and underscores");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, username, password }),
       });
 
       const data = await response.json();
@@ -125,6 +138,20 @@ export default function RegisterPage() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="pl-10"
+                  required
+                  minLength={3}
+                  maxLength={20}
+                />
+              </div>
+
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
