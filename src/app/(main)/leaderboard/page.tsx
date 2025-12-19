@@ -2,7 +2,6 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { Trophy, Medal, User, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { TourSelector } from "@/components/TourSelector";
 
 interface LeaderboardPageProps {
   searchParams: Promise<{ tourId?: string }>;
@@ -24,7 +23,7 @@ async function getLeaderboard(tourId?: string) {
     },
     select: {
       id: true,
-      email: true,
+      username: true,
       submissions: {
         where: whereClause,
         select: {
@@ -53,8 +52,7 @@ async function getLeaderboard(tourId?: string) {
 
       return {
         userId: user.id,
-        email: user.email,
-        displayName: user.email.split("@")[0].slice(0, 3) + "***",
+        username: user.username,
         totalPoints,
         showsPlayed: user.submissions.length,
         avgPoints:
@@ -121,14 +119,8 @@ export default async function LeaderboardPage({
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Leaderboard</h1>
-          <p className="text-slate-400 mt-1">
-            See how you stack up against other fans
-          </p>
-        </div>
-        <TourSelector tours={tours} currentTourId={tourId} />
+      <div>
+        <h1 className="text-3xl font-bold text-white">Leaderboard</h1>
       </div>
 
       {/* Current User Rank */}
@@ -166,7 +158,7 @@ export default async function LeaderboardPage({
           <CardContent className="py-12 text-center">
             <Trophy className="h-12 w-12 text-slate-500 mx-auto mb-4" />
             <p className="text-slate-400">
-              No scores yet for this tour. Be the first to make picks!
+              No scores yet for this tour.
             </p>
           </CardContent>
         </Card>
@@ -201,7 +193,7 @@ export default async function LeaderboardPage({
                           isCurrentUser ? "text-orange-400" : "text-white"
                         }`}
                       >
-                        {user.displayName}
+                        {user.username}
                         {isCurrentUser && (
                           <span className="ml-2 text-xs text-orange-400">
                             (You)
@@ -233,10 +225,6 @@ export default async function LeaderboardPage({
 
       {/* Stats Legend */}
       <div className="flex items-center justify-center space-x-6 text-sm text-slate-500">
-        <span className="flex items-center">
-          <Trophy className="h-4 w-4 mr-1 text-yellow-500" />
-          1st Place
-        </span>
         <span className="flex items-center">
           <TrendingUp className="h-4 w-4 mr-1" />
           Points are cumulative per tour
