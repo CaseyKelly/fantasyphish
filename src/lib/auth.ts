@@ -3,8 +3,14 @@ import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { prisma } from "./prisma";
 
+const authSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+
+if (!authSecret) {
+  console.error("AUTH_SECRET is not set in environment variables");
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  secret: process.env.AUTH_SECRET,
+  secret: authSecret,
   providers: [
     Credentials({
       name: "credentials",
@@ -14,7 +20,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Email and password are required");
+          return null;
         }
 
         const email = credentials.email as string;
@@ -25,17 +31,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         });
 
         if (!user) {
-          throw new Error("Invalid email or password");
+          return null;
         }
 
         if (!user.emailVerified) {
-          throw new Error("Please verify your email before logging in");
+          return null;
         }
 
         const isPasswordValid = await compare(password, user.passwordHash);
 
         if (!isPasswordValid) {
-          throw new Error("Invalid email or password");
+          return null;
         }
 
         return {
@@ -61,9 +67,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   pages: {
     signIn: "/login",
-    error: "/login",
   },
   session: {
     strategy: "jwt",
   },
+  debug: process.env.NODE_ENV === "development",
 });
