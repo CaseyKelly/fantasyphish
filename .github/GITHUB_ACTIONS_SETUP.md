@@ -55,24 +55,49 @@ API key for Phish.net to fetch setlist data.
 
 - Get it from: https://api.phish.net/keys
 
-## Workflow Details
+#### `NEON_API_KEY`
 
-The workflow runs on:
+API key for Neon database to automatically clean up preview branches.
+
+- Get it from: https://console.neon.tech/app/settings/api-keys
+- **Important:** This is used by the database cleanup workflow
+
+#### `NEON_PROJECT_ID`
+
+Your Neon project ID.
+
+- Find it in: https://console.neon.tech/app/projects
+- Format: `proj-xxxxx-xxxxxx-xxxxx`
+
+## Workflows
+
+### E2E Tests (`e2e-tests.yml`)
+
+Runs on:
 
 - Every pull request to `main`
 - Every push to `main`
 
-### What the Workflow Does
+What it does:
 
 1. **Checkout code**
 2. **Install dependencies**
 3. **Install Playwright browsers**
 4. **Setup database** (runs Prisma migrations)
 5. **Run E2E tests**
-6. **Upload artifacts** (if tests fail):
-   - HTML test report
-   - Screenshots of failures
-   - Test traces
+6. **Upload artifacts** (if tests fail)
+
+### Database Cleanup (`cleanup-db-branches.yml`)
+
+Runs on:
+
+- When a pull request is closed (merged or closed without merging)
+
+What it does:
+
+1. Automatically deletes the Neon database branch created for the PR preview
+2. Helps you stay within Neon's free tier branch limits
+3. Prevents "Branch limit reached" errors on Vercel deployments
 
 ### Viewing Test Results
 
@@ -169,5 +194,11 @@ CI=true npm test
 **Resend:**
 
 - Free tier: 100 emails/day, 3,000/month
-- Each test run sends ~4-8 test emails
+- Each test run sends only 1 email (thanks to database test helpers!)
 - Monitor your usage at: https://resend.com/dashboard
+
+**Neon:**
+
+- Free tier: 10 database branches
+- Database cleanup workflow automatically removes old branches
+- Monitor your branches at: https://console.neon.tech
