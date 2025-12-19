@@ -22,6 +22,21 @@ function LoginForm() {
   const verified = searchParams.get("verified");
   const authError = searchParams.get("error");
 
+  // Auto-fill email from sessionStorage if user just verified
+  useEffect(() => {
+    if (verified) {
+      const verifiedEmail = sessionStorage.getItem("verified-email");
+      if (verifiedEmail) {
+        setEmail(verifiedEmail);
+        sessionStorage.removeItem("verified-email");
+        // Focus password field after a brief delay
+        setTimeout(() => {
+          document.getElementById("password-input")?.focus();
+        }, 100);
+      }
+    }
+  }, [verified]);
+
   // Map NextAuth error codes to friendly messages
   const getErrorMessage = (errorCode: string | null) => {
     if (!errorCode) return "";
@@ -139,6 +154,7 @@ function LoginForm() {
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <Input
+              id="password-input"
               type="password"
               placeholder="Password"
               value={password}
