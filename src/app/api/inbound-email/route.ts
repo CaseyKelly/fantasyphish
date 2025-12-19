@@ -1,28 +1,29 @@
-import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
+import { NextRequest, NextResponse } from "next/server"
+import { Resend } from "resend"
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 // Add your personal email here - set this in your .env file
-const FORWARD_TO_EMAIL = process.env.FORWARD_TO_EMAIL || "your-email@example.com";
+const FORWARD_TO_EMAIL =
+  process.env.FORWARD_TO_EMAIL || "your-email@example.com"
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.text();
-    const event = JSON.parse(body);
+    const body = await request.text()
+    const event = JSON.parse(body)
 
     // Verify webhook signature (optional but recommended for production)
     if (process.env.RESEND_WEBHOOK_SECRET) {
-      const svixId = request.headers.get("svix-id");
-      const svixTimestamp = request.headers.get("svix-timestamp");
-      const svixSignature = request.headers.get("svix-signature");
+      const svixId = request.headers.get("svix-id")
+      const svixTimestamp = request.headers.get("svix-timestamp")
+      const svixSignature = request.headers.get("svix-signature")
 
       if (!svixId || !svixTimestamp || !svixSignature) {
-        console.error("Missing svix headers");
+        console.error("Missing svix headers")
         return NextResponse.json(
           { error: "Missing webhook signature" },
           { status: 401 }
-        );
+        )
       }
 
       try {
@@ -34,13 +35,13 @@ export async function POST(request: NextRequest) {
             signature: svixSignature,
           },
           webhookSecret: process.env.RESEND_WEBHOOK_SECRET,
-        });
+        })
       } catch (error) {
-        console.error("Webhook verification failed:", error);
+        console.error("Webhook verification failed:", error)
         return NextResponse.json(
           { error: "Invalid webhook signature" },
           { status: 401 }
-        );
+        )
       }
     }
 
@@ -50,32 +51,32 @@ export async function POST(request: NextRequest) {
       from: event.data?.from,
       to: event.data?.to,
       subject: event.data?.subject,
-    });
+    })
 
     // Only process email.received events
     if (event.type !== "email.received") {
-      return NextResponse.json({ received: true });
+      return NextResponse.json({ received: true })
     }
 
-    const emailData = event.data;
+    const emailData = event.data
 
     // Fetch the full email content (includes html, text, headers)
-    const emailContent = await resend.emails.receiving.get(emailData.email_id);
+    const emailContent = await resend.emails.receiving.get(emailData.email_id)
 
     if (emailContent.error) {
-      console.error("Error fetching email content:", emailContent.error);
+      console.error("Error fetching email content:", emailContent.error)
       return NextResponse.json(
         { error: "Failed to fetch email content" },
         { status: 500 }
-      );
+      )
     }
 
     // Build attachments section if any exist
-    let attachmentsHtml = "";
+    let attachmentsHtml = ""
     if (emailData.attachments && emailData.attachments.length > 0) {
       const attachmentsList = await resend.emails.receiving.attachments.list({
         emailId: emailData.email_id,
-      });
+      })
 
       if (attachmentsList.data?.data) {
         attachmentsHtml = `
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
               )
               .join("")}
           </div>
-        `;
+        `
       }
     }
 
@@ -116,27 +117,27 @@ export async function POST(request: NextRequest) {
           ${attachmentsHtml}
         </div>
       `,
-    });
+    })
 
     if (forwardResult.error) {
-      console.error("Error forwarding email:", forwardResult.error);
+      console.error("Error forwarding email:", forwardResult.error)
       return NextResponse.json(
         { error: "Failed to forward email" },
         { status: 500 }
-      );
+      )
     }
 
-    console.log("Forwarded email:", forwardResult.data?.id);
+    console.log("Forwarded email:", forwardResult.data?.id)
 
     return NextResponse.json({
       received: true,
       forwarded: forwardResult.data?.id,
-    });
+    })
   } catch (error) {
-    console.error("Error processing inbound email:", error);
+    console.error("Error processing inbound email:", error)
     return NextResponse.json(
       { error: "Failed to process email" },
       { status: 500 }
-    );
+    )
   }
 }

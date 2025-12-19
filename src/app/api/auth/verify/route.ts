@@ -1,28 +1,28 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const token = searchParams.get("token");
+    const { searchParams } = new URL(request.url)
+    const token = searchParams.get("token")
 
     if (!token) {
       return NextResponse.json(
         { error: "Verification token is required" },
         { status: 400 }
-      );
+      )
     }
 
     // Find user with this token
     const user = await prisma.user.findUnique({
       where: { verificationToken: token },
-    });
+    })
 
     if (!user) {
       return NextResponse.json(
         { error: "Invalid verification token" },
         { status: 400 }
-      );
+      )
     }
 
     // Check if token has expired
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: "Verification token has expired. Please register again." },
         { status: 400 }
-      );
+      )
     }
 
     // Verify the user
@@ -41,28 +41,28 @@ export async function GET(request: NextRequest) {
         verificationToken: null,
         verificationExpiry: null,
       },
-    });
+    })
 
     return NextResponse.json({
       success: true,
       message: "Email verified successfully! Logging you in...",
       email: user.email,
-    });
+    })
   } catch (error) {
-    console.error("Verification error:", error);
-    
+    console.error("Verification error:", error)
+
     // Log more details
     if (error instanceof Error) {
-      console.error("Error message:", error.message);
-      console.error("Error stack:", error.stack);
+      console.error("Error message:", error.message)
+      console.error("Error stack:", error.stack)
     }
-    
+
     return NextResponse.json(
-      { 
+      {
         error: "An error occurred during verification",
-        details: error instanceof Error ? error.message : String(error)
+        details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
-    );
+    )
   }
 }

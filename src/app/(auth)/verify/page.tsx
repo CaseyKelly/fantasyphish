@@ -1,63 +1,65 @@
-"use client";
+"use client"
 
-import { useEffect, useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect, useState, Suspense } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 
-import Link from "next/link";
-import { CheckCircle, XCircle, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { DonutLogo } from "@/components/DonutLogo";
+import Link from "next/link"
+import { CheckCircle, XCircle, Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { DonutLogo } from "@/components/DonutLogo"
 
 function VerifyContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
-  const [message, setMessage] = useState("");
-  const token = searchParams.get("token");
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const [status, setStatus] = useState<"loading" | "success" | "error">(
+    "loading"
+  )
+  const [message, setMessage] = useState("")
+  const token = searchParams.get("token")
 
   useEffect(() => {
     const verifyEmail = async () => {
       if (!token) {
-        setStatus("error");
-        setMessage("No verification token provided");
-        return;
+        setStatus("error")
+        setMessage("No verification token provided")
+        return
       }
       try {
-        const response = await fetch(`/api/auth/verify?token=${token}`);
-        const data = await response.json();
+        const response = await fetch(`/api/auth/verify?token=${token}`)
+        const data = await response.json()
 
         if (response.ok) {
-          setStatus("success");
-          setMessage(data.message);
-          
+          setStatus("success")
+          setMessage(data.message)
+
           // Auto-login the user after verification
           // The user's email is now verified, but we need them to enter their password
           // OR we can redirect them to login with a special flag
-          // Since we don't have their password stored in plaintext, 
+          // Since we don't have their password stored in plaintext,
           // we'll redirect to a pre-filled login
-          const email = data.email;
+          const email = data.email
           if (email) {
             // Store email in sessionStorage for the login page to use
-            sessionStorage.setItem("verified-email", email);
+            sessionStorage.setItem("verified-email", email)
           }
-          
+
           // Redirect to login after 2 seconds
           setTimeout(() => {
-            router.push("/login?verified=true");
-          }, 2000);
+            router.push("/login?verified=true")
+          }, 2000)
         } else {
-          setStatus("error");
-          setMessage(data.error);
+          setStatus("error")
+          setMessage(data.error)
         }
       } catch {
-        setStatus("error");
-        setMessage("An error occurred during verification");
+        setStatus("error")
+        setMessage("An error occurred during verification")
       }
-    };
+    }
 
-    verifyEmail();
-  }, [token, router]);
+    verifyEmail()
+  }, [token, router])
 
   return (
     <Card>
@@ -109,7 +111,7 @@ function VerifyContent() {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }
 
 export default function VerifyPage() {
@@ -122,23 +124,25 @@ export default function VerifyPage() {
             <span className="text-2xl font-bold text-white">FantasyPhish</span>
           </Link>
         </div>
-        <Suspense fallback={
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#3d5a6c] mb-6">
-                  <Loader2 className="h-8 w-8 text-[#c23a3a] animate-spin" />
+        <Suspense
+          fallback={
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#3d5a6c] mb-6">
+                    <Loader2 className="h-8 w-8 text-[#c23a3a] animate-spin" />
+                  </div>
+                  <h1 className="text-2xl font-bold text-white mb-4">
+                    Loading...
+                  </h1>
                 </div>
-                <h1 className="text-2xl font-bold text-white mb-4">
-                  Loading...
-                </h1>
-              </div>
-            </CardContent>
-          </Card>
-        }>
+              </CardContent>
+            </Card>
+          }
+        >
           <VerifyContent />
         </Suspense>
       </div>
     </div>
-  );
+  )
 }

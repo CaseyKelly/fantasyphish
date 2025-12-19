@@ -1,19 +1,21 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { Providers } from "@/components/Providers";
+import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import "./globals.css"
+import { Providers } from "@/components/Providers"
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
-});
+})
 
 export const metadata: Metadata = {
   title: "FantasyPhish - Predict the Setlist",
   description:
     "Pick 13 songs, score points when they're played. The fantasy game for Phish fans.",
   keywords: ["Phish", "fantasy", "setlist", "music", "game"],
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+  ),
   openGraph: {
     title: "FantasyPhish - Predict the Setlist",
     description:
@@ -27,12 +29,12 @@ export const metadata: Metadata = {
     description:
       "Pick 13 songs, score points when they're played. The fantasy game for Phish fans.",
   },
-};
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -43,5 +45,5 @@ export default function RootLayout({
         <Providers>{children}</Providers>
       </body>
     </html>
-  );
+  )
 }
