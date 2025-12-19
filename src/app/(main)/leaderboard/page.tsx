@@ -71,18 +71,6 @@ async function getLeaderboard(tourId?: string) {
   return rankedUsers;
 }
 
-async function getTours() {
-  return prisma.tour.findMany({
-    orderBy: { startDate: "desc" },
-    select: {
-      id: true,
-      name: true,
-      startDate: true,
-      endDate: true,
-    },
-  });
-}
-
 export default async function LeaderboardPage({
   searchParams,
 }: LeaderboardPageProps) {
@@ -90,10 +78,7 @@ export default async function LeaderboardPage({
   const params = await searchParams;
   const tourId = params.tourId;
 
-  const [leaderboard] = await Promise.all([
-    getLeaderboard(tourId),
-    getTours(),
-  ]);
+  const leaderboard = await getLeaderboard(tourId);
 
   const currentUserRank = session?.user?.id
     ? leaderboard.find((u) => u.userId === session.user.id)
