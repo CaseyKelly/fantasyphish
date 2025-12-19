@@ -13,18 +13,18 @@ const sizes = {
 export function DonutLogo({ size = "md", className = "" }: DonutLogoProps) {
   return (
     <svg
-      viewBox="0 0 100 100"
+      viewBox="0 0 120 120"
       className={`${sizes[size]} ${className}`}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Outer circle (donut) */}
+      {/* Outer circle (donut) - thicker stroke */}
       <circle
-        cx="50"
-        cy="50"
-        r="45"
+        cx="60"
+        cy="60"
+        r="40"
         stroke="#c23a3a"
-        strokeWidth="16"
+        strokeWidth="24"
         fill="none"
       />
     </svg>
