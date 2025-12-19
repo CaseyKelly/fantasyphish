@@ -49,15 +49,14 @@ export default function LandingPage() {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-32">
           <div className="text-center">
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-white mb-6">
-              Predict the{" "}
+              You Knew{" "}
               <span className="text-[#c23a3a]">
-                Setlist
+                They&apos;d Bust Out Fluffhead
               </span>
             </h1>
             <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto mb-10">
-              Pick 13 songs before each Phish show. Score points when they play
-              your picks. Climb the leaderboard and prove you know the band
-              better than anyone.
+              Now prove it. Pick 13 songs before showtime, rack up points when 
+              Trey plays your calls, and show the lot who really knows what&apos;s coming.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/register">
@@ -84,7 +83,7 @@ export default function LandingPage() {
       <section className="py-20 bg-[#1e3340] relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl sm:text-4xl font-bold text-center text-white mb-12">
-            How It Works
+            It&apos;s Easy (Unlike Getting Tickets)
           </h2>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -93,12 +92,13 @@ export default function LandingPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#c23a3a]/20 mb-6">
                 <Music className="h-8 w-8 text-[#c23a3a]" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-3">
-                Pick 13 Songs
+               <h3 className="text-xl font-semibold text-white mb-3">
+                Make Your Calls
               </h3>
               <p className="text-gray-400">
-                Select your opener (3 pts), encore (3 pts), and 11 regular songs
-                (1 pt each) from Phish&apos;s catalog of over 800 songs.
+                Pick your opener (3 pts), encore (3 pts), and 11 deep cuts
+                (1 pt each) from over 800 songs. Will they open with Ghost again? 
+                Is tonight the night for Harpua? You tell us.
               </p>
             </div>
 
@@ -107,12 +107,12 @@ export default function LandingPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#c23a3a]/20 mb-6">
                 <Calendar className="h-8 w-8 text-[#c23a3a]" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-3">
-                Lock Before Showtime
+               <h3 className="text-xl font-semibold text-white mb-3">
+                Lock It In
               </h3>
               <p className="text-gray-400">
-                Submit your picks before the first note drops. Once the show
-                starts, your picks are locked in.
+                Get your picks in before Page hits that first chord. Once the 
+                lights go down, no take-backsies. This isn&apos;t soundcheck.
               </p>
             </div>
 
@@ -121,12 +121,12 @@ export default function LandingPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#c23a3a]/20 mb-6">
                 <Trophy className="h-8 w-8 text-[#c23a3a]" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-3">
-                Score Points
+               <h3 className="text-xl font-semibold text-white mb-3">
+                Earn Bragging Rights
               </h3>
               <p className="text-gray-400">
-                After the show, we score your picks automatically. Climb the
-                tour leaderboard and compete with other fans.
+                We auto-score after the last encore. Climb the tour leaderboard, 
+                flex on your crew, and accept your title as the biggest wook.
               </p>
             </div>
           </div>
@@ -149,7 +149,7 @@ export default function LandingPage() {
                     <div>
                       <p className="font-semibold text-white">Opener Pick</p>
                       <p className="text-sm text-gray-400">
-                        Predict the first song of Set 1
+                        Call the first song (Runaway Jim incoming?)
                       </p>
                     </div>
                   </div>
@@ -164,7 +164,7 @@ export default function LandingPage() {
                     <div>
                       <p className="font-semibold text-white">Encore Pick</p>
                       <p className="text-sm text-gray-400">
-                        Predict any song played in the encore
+                        Pick any encore song (First Tube, obviously)
                       </p>
                     </div>
                   </div>
@@ -204,11 +204,11 @@ export default function LandingPage() {
       <section className="py-20 bg-gradient-to-b from-transparent to-[#c23a3a]/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
-            Ready to test your Phish knowledge?
+            Your Couch Tour Just Got Competitive
           </h2>
           <p className="text-lg text-gray-300 mb-8 max-w-xl mx-auto">
-            Join thousands of fans competing to predict each show&apos;s
-            setlist. Sign up free and start playing today.
+            Stop arguing in the group chat about who called it. Join the game, 
+            make your picks, and let the scoreboard do the talking.
           </p>
           <Link href="/register">
             <Button size="lg">
