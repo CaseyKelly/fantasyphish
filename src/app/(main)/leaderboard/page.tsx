@@ -1,10 +1,10 @@
-import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
-import { Trophy, Medal, User, TrendingUp } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { prisma } from "@/lib/prisma"
+import { auth } from "@/lib/auth"
+import { Trophy, Medal, User, TrendingUp } from "lucide-react"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
 interface LeaderboardPageProps {
-  searchParams: Promise<{ tourId?: string }>;
+  searchParams: Promise<{ tourId?: string }>
 }
 
 async function getLeaderboard(tourId?: string) {
@@ -13,7 +13,7 @@ async function getLeaderboard(tourId?: string) {
         isScored: true,
         show: { tourId },
       }
-    : { isScored: true };
+    : { isScored: true }
 
   const users = await prisma.user.findMany({
     where: {
@@ -36,19 +36,19 @@ async function getLeaderboard(tourId?: string) {
         },
       },
     },
-  });
+  })
 
   const rankedUsers = users
     .map((user) => {
       const totalPoints = user.submissions.reduce(
         (sum, sub) => sum + (sub.totalPoints || 0),
         0
-      );
-      const totalPicks = user.submissions.length * 13;
+      )
+      const totalPicks = user.submissions.length * 13
       const correctPicks = user.submissions.reduce(
         (sum, sub) => sum + sub.picks.filter((p) => p.wasPlayed).length,
         0
-      );
+      )
 
       return {
         userId: user.id,
@@ -59,47 +59,48 @@ async function getLeaderboard(tourId?: string) {
           user.submissions.length > 0
             ? Math.round((totalPoints / user.submissions.length) * 10) / 10
             : 0,
-        accuracy: totalPicks > 0 ? Math.round((correctPicks / totalPicks) * 100) : 0,
-      };
+        accuracy:
+          totalPicks > 0 ? Math.round((correctPicks / totalPicks) * 100) : 0,
+      }
     })
     .sort((a, b) => b.totalPoints - a.totalPoints)
     .map((user, index) => ({
       ...user,
       rank: index + 1,
-    }));
+    }))
 
-  return rankedUsers;
+  return rankedUsers
 }
 
 export default async function LeaderboardPage({
   searchParams,
 }: LeaderboardPageProps) {
-  const session = await auth();
-  const params = await searchParams;
-  const tourId = params.tourId;
+  const session = await auth()
+  const params = await searchParams
+  const tourId = params.tourId
 
-  const leaderboard = await getLeaderboard(tourId);
+  const leaderboard = await getLeaderboard(tourId)
 
   const currentUserRank = session?.user?.id
     ? leaderboard.find((u) => u.userId === session.user.id)
-    : null;
+    : null
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
-        return <Trophy className="h-6 w-6 text-yellow-500" />;
+        return <Trophy className="h-6 w-6 text-yellow-500" />
       case 2:
-        return <Medal className="h-6 w-6 text-gray-400" />;
+        return <Medal className="h-6 w-6 text-gray-400" />
       case 3:
-        return <Medal className="h-6 w-6 text-amber-600" />;
+        return <Medal className="h-6 w-6 text-amber-600" />
       default:
         return (
           <span className="w-6 h-6 flex items-center justify-center text-slate-400 font-medium">
             {rank}
           </span>
-        );
+        )
     }
-  };
+  }
 
   return (
     <div className="space-y-8">
@@ -142,9 +143,7 @@ export default async function LeaderboardPage({
         <Card>
           <CardContent className="py-12 text-center">
             <Trophy className="h-12 w-12 text-slate-500 mx-auto mb-4" />
-            <p className="text-slate-400">
-              No scores yet for this tour.
-            </p>
+            <p className="text-slate-400">No scores yet for this tour.</p>
           </CardContent>
         </Card>
       ) : (
@@ -163,7 +162,7 @@ export default async function LeaderboardPage({
           <CardContent className="p-0">
             <div className="divide-y divide-slate-700/50">
               {leaderboard.map((user) => {
-                const isCurrentUser = session?.user?.id === user.userId;
+                const isCurrentUser = session?.user?.id === user.userId
                 return (
                   <div
                     key={user.userId}
@@ -201,7 +200,7 @@ export default async function LeaderboardPage({
                       </span>
                     </div>
                   </div>
-                );
+                )
               })}
             </div>
           </CardContent>
@@ -216,5 +215,5 @@ export default async function LeaderboardPage({
         </span>
       </div>
     </div>
-  );
+  )
 }

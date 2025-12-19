@@ -2,7 +2,7 @@
 
 @theme inline {
   --font-sans: var(--font-inter);
-  
+
   /* Phish Donut Color Palette */
   --color-phish-blue: #3d5a6c;
   --color-phish-blue-dark: #2d4654;

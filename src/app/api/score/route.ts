@@ -1,18 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { getSetlist, isShowComplete, parseSetlist } from "@/lib/phishnet";
-import { scoreSubmission } from "@/lib/scoring";
-import { format } from "date-fns";
+import { NextRequest, NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
+import { getSetlist, isShowComplete, parseSetlist } from "@/lib/phishnet"
+import { scoreSubmission } from "@/lib/scoring"
+import { format } from "date-fns"
 
 // This endpoint is called by the cron job to score completed shows
 export async function POST(request: NextRequest) {
   try {
     // Verify cron secret (optional, for security)
-    const authHeader = request.headers.get("authorization");
-    const cronSecret = process.env.CRON_SECRET;
-    
+    const authHeader = request.headers.get("authorization")
+    const cronSecret = process.env.CRON_SECRET
+
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     // Find shows that need scoring (have submissions but aren't scored yet)
@@ -35,13 +35,13 @@ export async function POST(request: NextRequest) {
           },
         },
       },
-    });
+    })
 
-    const results = [];
+    const results = []
 
     for (const show of showsToScore) {
-      const showDateStr = format(show.showDate, "yyyy-MM-dd");
-      const setlist = await getSetlist(showDateStr);
+      const showDateStr = format(show.showDate, "yyyy-MM-dd")
+      const setlist = await getSetlist(showDateStr)
 
       if (!setlist || !isShowComplete(setlist)) {
         results.push({
@@ -49,8 +49,8 @@ export async function POST(request: NextRequest) {
           showDate: showDateStr,
           status: "not_complete",
           message: "Show setlist not complete yet",
-        });
-        continue;
+        })
+        continue
       }
 
       // Update show with setlist data
@@ -61,14 +61,14 @@ export async function POST(request: NextRequest) {
           isComplete: true,
           fetchedAt: new Date(),
         },
-      });
+      })
 
       // Score each submission
       for (const submission of show.submissions) {
         const { scoredPicks, totalPoints } = scoreSubmission(
           submission.picks,
           setlist
-        );
+        )
 
         // Update picks with scores
         for (const scoredPick of scoredPicks) {
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
               wasPlayed: scoredPick.wasPlayed,
               pointsEarned: scoredPick.pointsEarned,
             },
-          });
+          })
         }
 
         // Update submission
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
             isScored: true,
             totalPoints,
           },
-        });
+        })
       }
 
       results.push({
@@ -97,20 +97,20 @@ export async function POST(request: NextRequest) {
         status: "scored",
         submissionsScored: show.submissions.length,
         setlist: parseSetlist(setlist),
-      });
+      })
     }
 
     return NextResponse.json({
       success: true,
       showsProcessed: showsToScore.length,
       results,
-    });
+    })
   } catch (error) {
-    console.error("Error scoring shows:", error);
+    console.error("Error scoring shows:", error)
     return NextResponse.json(
       { error: "Failed to score shows" },
       { status: 500 }
-    );
+    )
   }
 }
 
@@ -131,7 +131,7 @@ export async function GET() {
         },
       },
       orderBy: { showDate: "asc" },
-    });
+    })
 
     return NextResponse.json({
       pendingShows: pendingShows.map((show) => ({
@@ -141,12 +141,12 @@ export async function GET() {
         isComplete: show.isComplete,
         submissionCount: show._count.submissions,
       })),
-    });
+    })
   } catch (error) {
-    console.error("Error checking score status:", error);
+    console.error("Error checking score status:", error)
     return NextResponse.json(
       { error: "Failed to check score status" },
       { status: 500 }
-    );
+    )
   }
 }

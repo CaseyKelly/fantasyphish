@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const tourId = searchParams.get("tourId");
+    const { searchParams } = new URL(request.url)
+    const tourId = searchParams.get("tourId")
 
     // Build the where clause for filtering by tour
     const whereClause = tourId
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
         }
       : {
           isScored: true,
-        };
+        }
 
     // Get all scored submissions grouped by user
     const leaderboard = await prisma.user.findMany({
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-    });
+    })
 
     // Calculate totals and format for leaderboard
     const rankedUsers = leaderboard
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
       .map((user, index) => ({
         ...user,
         rank: index + 1,
-      }));
+      }))
 
     // Get available tours for filtering
     const tours = await prisma.tour.findMany({
@@ -82,17 +82,17 @@ export async function GET(request: NextRequest) {
         startDate: true,
         endDate: true,
       },
-    });
+    })
 
     return NextResponse.json({
       leaderboard: rankedUsers,
       tours,
-    });
+    })
   } catch (error) {
-    console.error("Error fetching leaderboard:", error);
+    console.error("Error fetching leaderboard:", error)
     return NextResponse.json(
       { error: "Failed to fetch leaderboard" },
       { status: 500 }
-    );
+    )
   }
 }

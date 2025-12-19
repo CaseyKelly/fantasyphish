@@ -1,6 +1,7 @@
 # Agent Guidelines
 
 ## Build & Test Commands
+
 - **Build:** `npm run build` (includes prisma generate)
 - **Lint:** `npm run lint`
 - **Typecheck:** `npm run typecheck`
@@ -10,6 +11,7 @@
 - **Database:** `npm run db:push` (sync schema), `npm run db:migrate` (migrations)
 
 ## Code Style
+
 - **TypeScript:** Strict mode enabled. Use explicit types for function params and returns.
 - **Imports:** Use `@/*` path alias for src/ imports (e.g., `import { auth } from "@/lib/auth"`).
 - **Formatting:** 2-space indent. Double quotes for strings. Omit semicolons in TypeScript and JavaScript files.

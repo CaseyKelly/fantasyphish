@@ -1,49 +1,49 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import Link from "next/link";
-import { Mail, Lock, AlertCircle, CheckCircle, User } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { DonutLogo } from "@/components/DonutLogo";
+import { useState } from "react"
+import Link from "next/link"
+import { Mail, Lock, AlertCircle, CheckCircle, User } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { DonutLogo } from "@/components/DonutLogo"
 
 export default function RegisterPage() {
-  const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("")
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setIsLoading(true);
+    e.preventDefault()
+    setError("")
+    setIsLoading(true)
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      setIsLoading(false);
-      return;
+      setError("Passwords do not match")
+      setIsLoading(false)
+      return
     }
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters");
-      setIsLoading(false);
-      return;
+      setError("Password must be at least 8 characters")
+      setIsLoading(false)
+      return
     }
 
     if (username.length < 3 || username.length > 20) {
-      setError("Username must be between 3 and 20 characters");
-      setIsLoading(false);
-      return;
+      setError("Username must be between 3 and 20 characters")
+      setIsLoading(false)
+      return
     }
 
     if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      setError("Username can only contain letters, numbers, and underscores");
-      setIsLoading(false);
-      return;
+      setError("Username can only contain letters, numbers, and underscores")
+      setIsLoading(false)
+      return
     }
 
     try {
@@ -51,21 +51,21 @@ export default function RegisterPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, username, password }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || "Registration failed");
+        setError(data.error || "Registration failed")
       } else {
-        setSuccess(true);
+        setSuccess(true)
       }
     } catch {
-      setError("An unexpected error occurred");
+      setError("An unexpected error occurred")
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   if (success) {
     return (
@@ -74,7 +74,9 @@ export default function RegisterPage() {
           <div className="text-center mb-8">
             <Link href="/" className="inline-flex items-center space-x-2">
               <DonutLogo size="lg" />
-              <span className="text-2xl font-bold text-white">FantasyPhish</span>
+              <span className="text-2xl font-bold text-white">
+                FantasyPhish
+              </span>
             </Link>
           </div>
 
@@ -106,7 +108,7 @@ export default function RegisterPage() {
           </Card>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -212,5 +214,5 @@ export default function RegisterPage() {
         </Card>
       </div>
     </div>
-  );
+  )
 }
