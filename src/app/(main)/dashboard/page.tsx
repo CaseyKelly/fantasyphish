@@ -49,7 +49,7 @@ export default async function PicksPage() {
               </div>
               <div className="flex items-center justify-center space-x-2 text-gray-300">
                 <Calendar className="h-5 w-5 text-[#c23a3a]" />
-                <span>New Year&apos;s Eve Run 2024-2025</span>
+                <span>New Year&apos;s Eve Run 2025-2026</span>
               </div>
             </div>
 
