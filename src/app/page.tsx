@@ -184,7 +184,7 @@ export default function LandingPage() {
                     <div className="min-w-0">
                       <p className="font-semibold text-white">Opener Pick</p>
                       <p className="text-sm text-gray-400">
-                        Call the first song (Runaway Jim incoming?)
+                        Call the first song of Set 1
                       </p>
                     </div>
                   </div>
@@ -199,7 +199,7 @@ export default function LandingPage() {
                     <div className="min-w-0">
                       <p className="font-semibold text-white">Encore Pick</p>
                       <p className="text-sm text-gray-400">
-                        Pick any encore song (First Tube, obviously)
+                        Pick any song from the encore
                       </p>
                     </div>
                   </div>
