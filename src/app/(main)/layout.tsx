@@ -1,16 +1,16 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { Navbar } from "@/components/Navbar";
+import { redirect } from "next/navigation"
+import { auth } from "@/lib/auth"
+import { Navbar } from "@/components/Navbar"
 
 export default async function MainLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  const session = await auth();
+  const session = await auth()
 
   if (!session) {
-    redirect("/login");
+    redirect("/login")
   }
 
   return (
@@ -20,5 +20,5 @@ export default async function MainLayout({
         {children}
       </main>
     </div>
-  );
+  )
 }

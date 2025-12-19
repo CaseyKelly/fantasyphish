@@ -1,8 +1,8 @@
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { format } from "date-fns";
-import { User, Mail, Calendar, Trophy, Target, TrendingUp } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
+import { format } from "date-fns"
+import { User, Mail, Calendar, Trophy, Target, TrendingUp } from "lucide-react"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
 async function getUserProfile(userId: string) {
   const user = await prisma.user.findUnique({
@@ -14,20 +14,20 @@ async function getUserProfile(userId: string) {
         },
       },
     },
-  });
+  })
 
-  if (!user) return null;
+  if (!user) return null
 
-  const scoredSubmissions = user.submissions.filter((s) => s.isScored);
+  const scoredSubmissions = user.submissions.filter((s) => s.isScored)
   const totalPoints = scoredSubmissions.reduce(
     (sum, s) => sum + (s.totalPoints || 0),
     0
-  );
-  const totalPicks = user.submissions.length * 13;
+  )
+  const totalPicks = user.submissions.length * 13
   const correctPicks = user.submissions.reduce(
     (sum, sub) => sum + sub.picks.filter((p) => p.wasPlayed).length,
     0
-  );
+  )
 
   return {
     username: user.username,
@@ -38,22 +38,24 @@ async function getUserProfile(userId: string) {
       totalShows: user.submissions.length,
       scoredShows: scoredSubmissions.length,
       totalPoints,
-      avgPoints: scoredSubmissions.length > 0 
-        ? Math.round((totalPoints / scoredSubmissions.length) * 10) / 10 
-        : 0,
-      accuracy: totalPicks > 0 ? Math.round((correctPicks / totalPicks) * 100) : 0,
+      avgPoints:
+        scoredSubmissions.length > 0
+          ? Math.round((totalPoints / scoredSubmissions.length) * 10) / 10
+          : 0,
+      accuracy:
+        totalPicks > 0 ? Math.round((correctPicks / totalPicks) * 100) : 0,
       correctPicks,
       totalPicks,
     },
-  };
+  }
 }
 
 export default async function ProfilePage() {
-  const session = await auth();
-  if (!session?.user?.id) return null;
+  const session = await auth()
+  if (!session?.user?.id) return null
 
-  const profile = await getUserProfile(session.user.id);
-  if (!profile) return null;
+  const profile = await getUserProfile(session.user.id)
+  if (!profile) return null
 
   return (
     <div className="space-y-8">
@@ -69,7 +71,9 @@ export default async function ProfilePage() {
         {/* Account Info */}
         <Card>
           <CardHeader>
-            <h2 className="text-xl font-semibold text-white">Account Details</h2>
+            <h2 className="text-xl font-semibold text-white">
+              Account Details
+            </h2>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-3">
@@ -178,5 +182,5 @@ export default async function ProfilePage() {
         </Card>
       </div>
     </div>
-  );
+  )
 }

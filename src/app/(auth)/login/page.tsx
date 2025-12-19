@@ -1,74 +1,78 @@
-"use client";
+"use client"
 
-import { useState, useEffect, Suspense } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { Mail, Lock, AlertCircle, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { DonutLogo } from "@/components/DonutLogo";
+import { useState, useEffect, Suspense } from "react"
+import { signIn } from "next-auth/react"
+import { useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
+import { Mail, Lock, AlertCircle, Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { DonutLogo } from "@/components/DonutLogo"
 
 function LoginForm() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
-  const verified = searchParams.get("verified");
-  const authError = searchParams.get("error");
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
+  const verified = searchParams.get("verified")
+  const authError = searchParams.get("error")
 
   // Auto-fill email from sessionStorage if user just verified
   useEffect(() => {
     if (verified) {
-      const verifiedEmail = sessionStorage.getItem("verified-email");
+      const verifiedEmail = sessionStorage.getItem("verified-email")
       if (verifiedEmail) {
-        setEmail(verifiedEmail);
-        sessionStorage.removeItem("verified-email");
+        setEmail(verifiedEmail)
+        sessionStorage.removeItem("verified-email")
         // Focus password field after a brief delay
         setTimeout(() => {
-          document.getElementById("password-input")?.focus();
-        }, 100);
+          document.getElementById("password-input")?.focus()
+        }, 100)
       }
     }
-  }, [verified]);
+  }, [verified])
 
   // Map NextAuth error codes to friendly messages
   const getErrorMessage = (errorCode: string | null) => {
-    if (!errorCode) return "";
-    
+    if (!errorCode) return ""
+
     // If it's already a detailed message, use it
-    if (errorCode.length > 20 || errorCode.includes("email") || errorCode.includes("account")) {
-      return errorCode;
+    if (
+      errorCode.length > 20 ||
+      errorCode.includes("email") ||
+      errorCode.includes("account")
+    ) {
+      return errorCode
     }
-    
+
     switch (errorCode) {
       case "Configuration":
-        return "No account found with this email. Please sign up first.";
+        return "No account found with this email. Please sign up first."
       case "CredentialsSignin":
-        return "Invalid credentials. Please check your email and password.";
+        return "Invalid credentials. Please check your email and password."
       case "AccessDenied":
-        return "Access denied. Please verify your email or contact support.";
+        return "Access denied. Please verify your email or contact support."
       default:
-        return errorCode;
+        return errorCode
     }
-  };
+  }
 
   // Set error from URL parameter on mount
   useEffect(() => {
     if (authError) {
-      setError(getErrorMessage(authError));
+      setError(getErrorMessage(authError))
     }
-  }, [authError]);
+  }, [authError])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setIsLoading(true);
+    e.preventDefault()
+    setError("")
+    setIsLoading(true)
 
     try {
       // First, check if the user exists
@@ -76,20 +80,22 @@ function LoginForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
-      });
+      })
 
-      const checkData = await checkResponse.json();
+      const checkData = await checkResponse.json()
 
       if (!checkData.exists) {
-        setError("No account found with this email. Please sign up first.");
-        setIsLoading(false);
-        return;
+        setError("No account found with this email. Please sign up first.")
+        setIsLoading(false)
+        return
       }
 
       if (!checkData.verified) {
-        setError("Please verify your email before logging in. Check your inbox for the verification link.");
-        setIsLoading(false);
-        return;
+        setError(
+          "Please verify your email before logging in. Check your inbox for the verification link."
+        )
+        setIsLoading(false)
+        return
       }
 
       // Now attempt to sign in
@@ -97,20 +103,20 @@ function LoginForm() {
         email,
         password,
         redirect: false,
-      });
+      })
 
       if (result?.error) {
-        setError("Incorrect password. Please try again.");
+        setError("Incorrect password. Please try again.")
       } else {
-        router.push(callbackUrl);
-        router.refresh();
+        router.push(callbackUrl)
+        router.refresh()
       }
     } catch {
-      setError("An unexpected error occurred");
+      setError("An unexpected error occurred")
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <Card>
@@ -118,9 +124,7 @@ function LoginForm() {
         <h1 className="text-2xl font-bold text-white text-center">
           Welcome back
         </h1>
-        <p className="text-gray-400 text-center">
-          Sign in to your account
-        </p>
+        <p className="text-gray-400 text-center">Sign in to your account</p>
       </CardHeader>
       <CardContent>
         {verified && (
@@ -185,7 +189,7 @@ function LoginForm() {
         </p>
       </CardContent>
     </Card>
-  );
+  )
 }
 
 function LoadingCard() {
@@ -197,7 +201,7 @@ function LoadingCard() {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }
 
 export default function LoginPage() {
@@ -217,5 +221,5 @@ export default function LoginPage() {
         </Suspense>
       </div>
     </div>
-  );
+  )
 }

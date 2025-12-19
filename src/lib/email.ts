@@ -1,36 +1,37 @@
-import { Resend } from "resend";
+import { Resend } from "resend"
 
-const FROM_EMAIL = process.env.FROM_EMAIL || "FantasyPhish <noreply@fantasyphish.com>";
+const FROM_EMAIL =
+  process.env.FROM_EMAIL || "FantasyPhish <noreply@fantasyphish.com>"
 
 function getResendClient() {
-  const apiKey = process.env.RESEND_API_KEY;
+  const apiKey = process.env.RESEND_API_KEY
   if (!apiKey) {
-    throw new Error("RESEND_API_KEY is not configured");
+    throw new Error("RESEND_API_KEY is not configured")
   }
-  return new Resend(apiKey);
+  return new Resend(apiKey)
 }
 
 export async function sendVerificationEmail(
   email: string,
   token: string
 ): Promise<{ success: boolean; error?: string }> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const verificationUrl = `${appUrl}/verify?token=${token}`;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+  const verificationUrl = `${appUrl}/verify?token=${token}`
 
   try {
-    const resend = getResendClient();
+    const resend = getResendClient()
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: email,
       subject: "Verify your FantasyPhish account",
       tags: [
         {
-          name: 'category',
-          value: 'verification'
-        }
+          name: "category",
+          value: "verification",
+        },
       ],
       headers: {
-        'X-Entity-Ref-ID': token,
+        "X-Entity-Ref-ID": token,
       },
       html: `
         <!DOCTYPE html>
@@ -68,17 +69,17 @@ export async function sendVerificationEmail(
         </body>
         </html>
       `,
-    });
+    })
 
     if (error) {
-      console.error("Error sending verification email:", error);
-      return { success: false, error: error.message };
+      console.error("Error sending verification email:", error)
+      return { success: false, error: error.message }
     }
 
-    return { success: true };
+    return { success: true }
   } catch (error) {
-    console.error("Error sending verification email:", error);
-    return { success: false, error: "Failed to send verification email" };
+    console.error("Error sending verification email:", error)
+    return { success: false, error: "Failed to send verification email" }
   }
 }
 
@@ -86,23 +87,23 @@ export async function sendPasswordResetEmail(
   email: string,
   token: string
 ): Promise<{ success: boolean; error?: string }> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const resetUrl = `${appUrl}/reset-password?token=${token}`;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+  const resetUrl = `${appUrl}/reset-password?token=${token}`
 
   try {
-    const resend = getResendClient();
+    const resend = getResendClient()
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: email,
       subject: "Reset your FantasyPhish password",
       tags: [
         {
-          name: 'category',
-          value: 'password-reset'
-        }
+          name: "category",
+          value: "password-reset",
+        },
       ],
       headers: {
-        'X-Entity-Ref-ID': token,
+        "X-Entity-Ref-ID": token,
       },
       html: `
         <!DOCTYPE html>
@@ -138,16 +139,16 @@ export async function sendPasswordResetEmail(
         </body>
         </html>
       `,
-    });
+    })
 
     if (error) {
-      console.error("Error sending password reset email:", error);
-      return { success: false, error: error.message };
+      console.error("Error sending password reset email:", error)
+      return { success: false, error: error.message }
     }
 
-    return { success: true };
+    return { success: true }
   } catch (error) {
-    console.error("Error sending password reset email:", error);
-    return { success: false, error: "Failed to send password reset email" };
+    console.error("Error sending password reset email:", error)
+    return { success: false, error: "Failed to send password reset email" }
   }
 }

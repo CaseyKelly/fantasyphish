@@ -1,12 +1,12 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
 
 export async function GET() {
   try {
-    const session = await auth();
+    const session = await auth()
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const submissions = await prisma.submission.findMany({
@@ -33,19 +33,19 @@ export async function GET() {
           showDate: "desc",
         },
       },
-    });
+    })
 
     // Calculate user's total stats
-    const scoredSubmissions = submissions.filter((s) => s.isScored);
+    const scoredSubmissions = submissions.filter((s) => s.isScored)
     const totalPoints = scoredSubmissions.reduce(
       (sum, s) => sum + (s.totalPoints || 0),
       0
-    );
-    const totalPicks = scoredSubmissions.length * 13; // 13 picks per submission
+    )
+    const totalPicks = scoredSubmissions.length * 13 // 13 picks per submission
     const correctPicks = scoredSubmissions.reduce(
       (sum, s) => sum + s.picks.filter((p) => p.wasPlayed).length,
       0
-    );
+    )
 
     return NextResponse.json({
       submissions,
@@ -62,12 +62,12 @@ export async function GET() {
         accuracy:
           totalPicks > 0 ? Math.round((correctPicks / totalPicks) * 100) : 0,
       },
-    });
+    })
   } catch (error) {
-    console.error("Error fetching history:", error);
+    console.error("Error fetching history:", error)
     return NextResponse.json(
       { error: "Failed to fetch history" },
       { status: 500 }
-    );
+    )
   }
 }

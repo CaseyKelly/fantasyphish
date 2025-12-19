@@ -1,9 +1,9 @@
-import { forwardRef, ButtonHTMLAttributes } from "react";
+import { forwardRef, ButtonHTMLAttributes } from "react"
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
-  size?: "sm" | "md" | "lg";
-  isLoading?: boolean;
+  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger"
+  size?: "sm" | "md" | "lg"
+  isLoading?: boolean
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -20,7 +20,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#2d4654] disabled:opacity-50 disabled:cursor-not-allowed";
+      "inline-flex items-center justify-center font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#2d4654] disabled:opacity-50 disabled:cursor-not-allowed"
 
     const variants = {
       primary:
@@ -32,13 +32,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       ghost:
         "text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50 focus:ring-[#3d5a6c]",
       danger: "bg-[#a32e2e] hover:bg-[#c23a3a] text-white focus:ring-[#a32e2e]",
-    };
+    }
 
     const sizes = {
       sm: "px-3 py-1.5 text-sm",
       md: "px-4 py-2 text-base",
       lg: "px-6 py-3 text-lg",
-    };
+    }
 
     return (
       <button
@@ -74,8 +74,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           children
         )}
       </button>
-    );
+    )
   }
-);
+)
 
-Button.displayName = "Button";
+Button.displayName = "Button"

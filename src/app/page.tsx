@@ -1,7 +1,7 @@
-import Link from "next/link";
-import { Target, Trophy, Calendar, ArrowRight, Music } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { DonutLogo } from "@/components/DonutLogo";
+import Link from "next/link"
+import { Target, Trophy, Calendar, ArrowRight, Music } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { DonutLogo } from "@/components/DonutLogo"
 
 export default function LandingPage() {
   return (
@@ -10,13 +10,48 @@ export default function LandingPage() {
       <div className="fixed inset-0 opacity-10 pointer-events-none">
         <svg width="100%" height="100%">
           <defs>
-            <pattern id="donut-pattern" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
+            <pattern
+              id="donut-pattern"
+              x="0"
+              y="0"
+              width="120"
+              height="120"
+              patternUnits="userSpaceOnUse"
+            >
               {/* First row */}
-              <circle cx="30" cy="30" r="22" stroke="#c23a3a" strokeWidth="12" fill="none" />
-              <circle cx="150" cy="30" r="22" stroke="#c23a3a" strokeWidth="12" fill="none" />
+              <circle
+                cx="30"
+                cy="30"
+                r="22"
+                stroke="#c23a3a"
+                strokeWidth="12"
+                fill="none"
+              />
+              <circle
+                cx="150"
+                cy="30"
+                r="22"
+                stroke="#c23a3a"
+                strokeWidth="12"
+                fill="none"
+              />
               {/* Second row - offset */}
-              <circle cx="90" cy="90" r="22" stroke="#c23a3a" strokeWidth="12" fill="none" />
-              <circle cx="-30" cy="90" r="22" stroke="#c23a3a" strokeWidth="12" fill="none" />
+              <circle
+                cx="90"
+                cy="90"
+                r="22"
+                stroke="#c23a3a"
+                strokeWidth="12"
+                fill="none"
+              />
+              <circle
+                cx="-30"
+                cy="90"
+                r="22"
+                stroke="#c23a3a"
+                strokeWidth="12"
+                fill="none"
+              />
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#donut-pattern)" />
@@ -25,7 +60,6 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <header className="relative overflow-hidden">
-
         <nav className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -55,8 +89,9 @@ export default function LandingPage() {
               </span>
             </h1>
             <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto mb-10">
-              Now prove it. Pick 13 songs before showtime, rack up points when 
-              Trey plays your calls, and show the lot who really knows what&apos;s coming.
+              Now prove it. Pick 13 songs before showtime, rack up points when
+              Trey plays your calls, and show the lot who really knows
+              what&apos;s coming.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/register">
@@ -92,13 +127,13 @@ export default function LandingPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#c23a3a]/20 mb-6">
                 <Music className="h-8 w-8 text-[#c23a3a]" />
               </div>
-               <h3 className="text-xl font-semibold text-white mb-3">
+              <h3 className="text-xl font-semibold text-white mb-3">
                 Make Your Calls
               </h3>
               <p className="text-gray-400">
-                Pick your opener (3 pts), encore (3 pts), and 11 deep cuts
-                (1 pt each) from over 800 songs. Will they open with Ghost again? 
-                Is tonight the night for Harpua? You tell us.
+                Pick your opener (3 pts), encore (3 pts), and 11 deep cuts (1 pt
+                each) from over 800 songs. Will they open with Ghost again? Is
+                tonight the night for Harpua? You tell us.
               </p>
             </div>
 
@@ -107,11 +142,11 @@ export default function LandingPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#c23a3a]/20 mb-6">
                 <Calendar className="h-8 w-8 text-[#c23a3a]" />
               </div>
-               <h3 className="text-xl font-semibold text-white mb-3">
+              <h3 className="text-xl font-semibold text-white mb-3">
                 Lock It In
               </h3>
               <p className="text-gray-400">
-                Get your picks in before Page hits that first chord. Once the 
+                Get your picks in before Page hits that first chord. Once the
                 lights go down, no take-backsies. This isn&apos;t soundcheck.
               </p>
             </div>
@@ -121,11 +156,11 @@ export default function LandingPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#c23a3a]/20 mb-6">
                 <Trophy className="h-8 w-8 text-[#c23a3a]" />
               </div>
-               <h3 className="text-xl font-semibold text-white mb-3">
+              <h3 className="text-xl font-semibold text-white mb-3">
                 Earn Bragging Rights
               </h3>
               <p className="text-gray-400">
-                We auto-score after the last encore. Climb the tour leaderboard, 
+                We auto-score after the last encore. Climb the tour leaderboard,
                 flex on your crew, and accept your title as the biggest wook.
               </p>
             </div>
@@ -192,7 +227,9 @@ export default function LandingPage() {
 
                 <div className="flex items-center justify-between gap-4 p-6 bg-[#3d5a6c]/30">
                   <p className="font-semibold text-white">Maximum Points</p>
-                  <span className="text-2xl font-bold text-white whitespace-nowrap flex-shrink-0">17 pts</span>
+                  <span className="text-2xl font-bold text-white whitespace-nowrap flex-shrink-0">
+                    17 pts
+                  </span>
                 </div>
               </div>
             </div>
@@ -207,7 +244,7 @@ export default function LandingPage() {
             Your Couch Tour Just Got Competitive
           </h2>
           <p className="text-lg text-gray-300 mb-8 max-w-xl mx-auto">
-            Stop arguing in the group chat about who called it. Join the game, 
+            Stop arguing in the group chat about who called it. Join the game,
             make your picks, and let the scoreboard do the talking.
           </p>
           <Link href="/register">
@@ -241,17 +278,21 @@ export default function LandingPage() {
               </p>
               <p className="text-sm text-gray-500 flex items-end gap-2">
                 <span className="pb-1">made by chalupa</span>
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="1.5" 
-                  strokeLinecap="round" 
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                   className="w-10 h-10"
                 >
-                  <path d="M4 20C4 20 4 12 12 12C20 12 20 20 20 20H4Z" fill="currentColor" opacity="0.2" />
+                  <path
+                    d="M4 20C4 20 4 12 12 12C20 12 20 20 20 20H4Z"
+                    fill="currentColor"
+                    opacity="0.2"
+                  />
                   <path d="M4 20C4 20 4 12 12 12C20 12 20 20 20 20" />
                   <circle cx="8" cy="16" r="0.8" fill="currentColor" />
                   <circle cx="12" cy="15" r="0.8" fill="currentColor" />
@@ -264,5 +305,5 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
-  );
+  )
 }

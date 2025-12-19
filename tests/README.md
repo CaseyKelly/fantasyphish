@@ -5,6 +5,7 @@ This directory contains end-to-end tests for FantasyPhish using Playwright and R
 ## Overview
 
 The test suite validates the complete authentication flow including:
+
 - User registration with email verification
 - Email delivery and content validation
 - Login with verified credentials
@@ -47,31 +48,37 @@ npm run db:push
 ## Running Tests
 
 ### Run all tests (headless)
+
 ```bash
 npm test
 ```
 
 ### Run tests with UI mode (recommended for development)
+
 ```bash
 npm run test:ui
 ```
 
 ### Run tests in headed mode (see the browser)
+
 ```bash
 npm run test:headed
 ```
 
 ### Run tests in debug mode
+
 ```bash
 npm run test:debug
 ```
 
 ### Run specific test file
+
 ```bash
 npx playwright test tests/e2e/auth.spec.ts
 ```
 
 ### Run specific test by name
+
 ```bash
 npx playwright test -g "should complete full registration flow"
 ```
@@ -81,11 +88,13 @@ npx playwright test -g "should complete full registration flow"
 ### Resend Test Email Addresses
 
 The tests use Resend's special test email addresses that:
+
 - Don't require a real inbox
 - Can be retrieved via Resend's API
 - Support different delivery scenarios
 
 Test email formats:
+
 - `delivered+label-timestamp@resend.dev` - Successfully delivered
 - `bounce+label-timestamp@resend.dev` - Simulates bounce
 - `complaint+label-timestamp@resend.dev` - Simulates spam complaint
@@ -118,15 +127,16 @@ Custom test fixtures that extend Playwright's base test:
 - `cleanupEmail(email)` - Automatically removes test users after each test
 
 Usage:
+
 ```typescript
-test('my test', async ({ page, cleanupEmail, prisma }) => {
-  const email = generateTestEmail('my-test');
-  await cleanupEmail(email); // Register for cleanup
-  
+test("my test", async ({ page, cleanupEmail, prisma }) => {
+  const email = generateTestEmail("my-test")
+  await cleanupEmail(email) // Register for cleanup
+
   // Test code...
-  
+
   // User is automatically deleted after test
-});
+})
 ```
 
 ### Test Organization
@@ -145,17 +155,17 @@ test('my test', async ({ page, cleanupEmail, prisma }) => {
 ### Example: Testing a new feature
 
 ```typescript
-import { test, expect } from './helpers/fixtures';
-import { generateTestEmail, waitForEmail } from './helpers/email';
+import { test, expect } from "./helpers/fixtures"
+import { generateTestEmail, waitForEmail } from "./helpers/email"
 
-test('should do something', async ({ page, cleanupEmail }) => {
-  const email = generateTestEmail('feature-test');
-  await cleanupEmail(email);
-  
+test("should do something", async ({ page, cleanupEmail }) => {
+  const email = generateTestEmail("feature-test")
+  await cleanupEmail(email)
+
   // Your test code here
-  await page.goto('/my-page');
+  await page.goto("/my-page")
   // ...
-});
+})
 ```
 
 ### Best Practices
@@ -170,30 +180,38 @@ test('should do something', async ({ page, cleanupEmail }) => {
 ## Debugging
 
 ### View test results
+
 ```bash
 npx playwright show-report
 ```
 
 ### Debug specific test
+
 ```bash
 npx playwright test --debug -g "test name"
 ```
 
 ### Inspect email content
+
 The `waitForEmail()` function returns the full email object including HTML:
+
 ```typescript
-const email = await waitForEmail(testEmail);
-console.log('Email HTML:', email.html);
-console.log('Email subject:', email.subject);
+const email = await waitForEmail(testEmail)
+console.log("Email HTML:", email.html)
+console.log("Email subject:", email.subject)
 ```
 
 ### Check database state
+
 Use the `prisma` fixture to inspect database:
+
 ```typescript
-test('my test', async ({ prisma }) => {
-  const user = await prisma.user.findUnique({ where: { email: 'test@resend.dev' }});
-  console.log('User:', user);
-});
+test("my test", async ({ prisma }) => {
+  const user = await prisma.user.findUnique({
+    where: { email: "test@resend.dev" },
+  })
+  console.log("User:", user)
+})
 ```
 
 ## CI/CD Integration
@@ -205,6 +223,7 @@ The tests are configured to work in CI environments:
 - HTML report is generated automatically
 
 ### GitHub Actions Example
+
 ```yaml
 - name: Install dependencies
   run: npm ci
@@ -224,21 +243,25 @@ The tests are configured to work in CI environments:
 ## Troubleshooting
 
 ### Email not received
+
 - Check RESEND_API_KEY is set correctly
 - Verify you're using `@resend.dev` test emails
 - Increase timeout in `waitForEmail({ timeout: 60000 })`
 - Check Resend dashboard for delivery status
 
 ### Database connection errors
+
 - Ensure DATABASE_URL is set
 - Run `npm run db:push` to update schema
 - Check database is accessible from test environment
 
 ### Tests timing out
+
 - The dev server needs to be running (configured in playwright.config.ts)
 - Increase timeout if needed for slow environments
 - Check network connectivity
 
 ### Browser not launching
+
 - Run `npx playwright install` to install browsers
 - Check system dependencies with `npx playwright install --with-deps`

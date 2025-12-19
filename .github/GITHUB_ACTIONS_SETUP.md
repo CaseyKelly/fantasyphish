@@ -7,6 +7,7 @@ This document explains how to configure GitHub Actions to run E2E tests on pull 
 You need to add the following secrets to your GitHub repository:
 
 ### How to Add Secrets
+
 1. Go to your GitHub repository
 2. Click **Settings** → **Secrets and variables** → **Actions**
 3. Click **New repository secret**
@@ -15,15 +16,20 @@ You need to add the following secrets to your GitHub repository:
 ### Required Secrets
 
 #### `RESEND_API_KEY`
+
 Your Resend API key with both **send** and **read** permissions.
+
 - Get it from: https://resend.com/api-keys
 - **Important:** The key must have read permissions to retrieve test emails
 
 #### `DATABASE_URL`
+
 PostgreSQL connection string for your test database.
+
 ```
 postgresql://user:password@host:5432/database
 ```
+
 - Use a **separate test database** (not production!)
 - Can be a free PostgreSQL instance from:
   - [Neon](https://neon.tech)
@@ -31,22 +37,28 @@ postgresql://user:password@host:5432/database
   - [Railway](https://railway.app)
 
 #### `AUTH_SECRET`
+
 Secret key for NextAuth.js authentication.
+
 ```bash
 # Generate with:
 openssl rand -base64 32
 ```
 
 #### `NEXTAUTH_SECRET`
+
 Same as `AUTH_SECRET` (NextAuth requires both).
 
 #### `PHISHNET_API_KEY` (Optional)
+
 API key for Phish.net to fetch setlist data.
+
 - Get it from: https://api.phish.net/keys
 
 ## Workflow Details
 
 The workflow runs on:
+
 - Every pull request to `main`
 - Every push to `main`
 
@@ -65,6 +77,7 @@ The workflow runs on:
 ### Viewing Test Results
 
 When tests fail:
+
 1. Go to the **Actions** tab in your GitHub repository
 2. Click on the failed workflow run
 3. Scroll to **Artifacts** section at the bottom
@@ -75,12 +88,14 @@ When tests fail:
 ### Test Artifacts
 
 **In CI (enabled):**
+
 - ✅ HTML reports generated
 - ✅ Screenshots on failure
 - ✅ Traces on first retry
 - ✅ Artifacts uploaded to GitHub (30 day retention)
 
 **Locally (disabled):**
+
 - ❌ No HTML reports
 - ❌ No screenshots
 - ❌ No traces
@@ -102,21 +117,25 @@ Now pull requests **cannot be merged** until tests pass! ✅
 ## Troubleshooting
 
 ### Tests fail in CI but pass locally
+
 - Check that all secrets are set correctly
 - Verify the test database is accessible from GitHub Actions
 - Check the uploaded screenshots to see what's different
 
 ### Database connection fails
+
 - Ensure `DATABASE_URL` secret is set
 - Make sure the database allows connections from GitHub's IP ranges
 - Consider using a cloud database (Neon, Supabase) that allows external connections
 
 ### Rate limiting from Resend
+
 - Tests run sequentially (1 worker) to avoid rate limits
 - If you still hit limits, the tests will retry
 - Consider upgrading your Resend plan if needed
 
 ### Secrets not updating
+
 - After changing a secret, re-run the workflow
 - Secrets are only loaded at the start of a workflow run
 
@@ -137,15 +156,18 @@ CI=true npm test
 ## Cost Considerations
 
 **GitHub Actions:**
+
 - Free for public repositories
 - 2,000 free minutes/month for private repos
 - Each test run takes ~2-3 minutes
 
 **Database:**
+
 - Use free tier (Neon, Supabase, Railway)
 - Tests create minimal data (~5-10 test users per run)
 
 **Resend:**
+
 - Free tier: 100 emails/day, 3,000/month
 - Each test run sends ~4-8 test emails
 - Monitor your usage at: https://resend.com/dashboard

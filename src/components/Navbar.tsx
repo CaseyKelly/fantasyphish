@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
-import { useState } from "react";
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { signOut, useSession } from "next-auth/react"
+import { useState } from "react"
 import {
   Menu,
   X,
@@ -12,28 +12,31 @@ import {
   ClipboardList,
   LogOut,
   User,
-} from "lucide-react";
-import { DonutLogo } from "./DonutLogo";
+} from "lucide-react"
+import { DonutLogo } from "./DonutLogo"
 
 export function Navbar() {
-  const pathname = usePathname();
-  const { data: session } = useSession();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const pathname = usePathname()
+  const { data: session } = useSession()
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   const navItems = [
     { href: "/dashboard", label: "My Picks", icon: Music },
     { href: "/history", label: "Results", icon: ClipboardList },
     { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
-  ];
+  ]
 
-  const isActive = (href: string) => pathname === href;
+  const isActive = (href: string) => pathname === href
 
   return (
     <nav className="sticky top-0 z-50 bg-[#2d4654]/95 backdrop-blur-sm border-b border-[#3d5a6c]/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href={session ? "/dashboard" : "/"} className="flex items-center space-x-2">
+          <Link
+            href={session ? "/dashboard" : "/"}
+            className="flex items-center space-x-2"
+          >
             <DonutLogo size="md" />
             <span className="text-xl font-bold text-white">FantasyPhish</span>
           </Link>
@@ -42,7 +45,7 @@ export function Navbar() {
           {session && (
             <div className="hidden md:flex items-center space-x-1">
               {navItems.map((item) => {
-                const Icon = item.icon;
+                const Icon = item.icon
                 return (
                   <Link
                     key={item.href}
@@ -56,7 +59,7 @@ export function Navbar() {
                     <Icon className="h-4 w-4 flex-shrink-0" />
                     <span>{item.label}</span>
                   </Link>
-                );
+                )
               })}
             </div>
           )}
@@ -69,7 +72,9 @@ export function Navbar() {
                 className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50 transition-colors whitespace-nowrap"
               >
                 <User className="h-4 w-4 flex-shrink-0" />
-                <span className="truncate max-w-[150px]">{session.user.username}</span>
+                <span className="truncate max-w-[150px]">
+                  {session.user.username}
+                </span>
               </Link>
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
@@ -120,7 +125,7 @@ export function Navbar() {
         <div className="md:hidden border-t border-[#3d5a6c]/50">
           <div className="px-4 py-3 space-y-1">
             {navItems.map((item) => {
-              const Icon = item.icon;
+              const Icon = item.icon
               return (
                 <Link
                   key={item.href}
@@ -135,7 +140,7 @@ export function Navbar() {
                   <Icon className="h-5 w-5" />
                   <span>{item.label}</span>
                 </Link>
-              );
+              )
             })}
             <div className="pt-3 mt-3 border-t border-[#3d5a6c]/50">
               <Link
@@ -158,5 +163,5 @@ export function Navbar() {
         </div>
       )}
     </nav>
-  );
+  )
 }

@@ -1,7 +1,7 @@
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { redirect } from "next/navigation";
-import { format } from "date-fns";
+import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
+import { redirect } from "next/navigation"
+import { format } from "date-fns"
 import {
   Trophy,
   Target,
@@ -11,8 +11,8 @@ import {
   Check,
   X,
   Clock,
-} from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+} from "lucide-react"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
 async function getHistory(userId: string) {
   const submissions = await prisma.submission.findMany({
@@ -29,18 +29,18 @@ async function getHistory(userId: string) {
     orderBy: {
       show: { showDate: "desc" },
     },
-  });
+  })
 
-  const scoredSubmissions = submissions.filter((s) => s.isScored);
+  const scoredSubmissions = submissions.filter((s) => s.isScored)
   const totalPoints = scoredSubmissions.reduce(
     (sum, s) => sum + (s.totalPoints || 0),
     0
-  );
-  const totalPicks = scoredSubmissions.length * 13;
+  )
+  const totalPicks = scoredSubmissions.length * 13
   const correctPicks = scoredSubmissions.reduce(
     (sum, s) => sum + s.picks.filter((p) => p.wasPlayed).length,
     0
-  );
+  )
 
   return {
     submissions,
@@ -54,18 +54,19 @@ async function getHistory(userId: string) {
           : 0,
       correctPicks,
       totalPicks,
-      accuracy: totalPicks > 0 ? Math.round((correctPicks / totalPicks) * 100) : 0,
+      accuracy:
+        totalPicks > 0 ? Math.round((correctPicks / totalPicks) * 100) : 0,
     },
-  };
+  }
 }
 
 export default async function HistoryPage() {
-  const session = await auth();
+  const session = await auth()
   if (!session?.user?.id) {
-    redirect("/login");
+    redirect("/login")
   }
 
-  const { submissions, stats } = await getHistory(session.user.id);
+  const { submissions, stats } = await getHistory(session.user.id)
 
   return (
     <div className="space-y-8">
@@ -102,7 +103,9 @@ export default async function HistoryPage() {
                 <Target className="h-5 w-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{stats.avgPoints}</p>
+                <p className="text-2xl font-bold text-white">
+                  {stats.avgPoints}
+                </p>
                 <p className="text-sm text-slate-400">Avg Points</p>
               </div>
             </div>
@@ -148,7 +151,8 @@ export default async function HistoryPage() {
           <CardContent className="py-12 text-center">
             <Calendar className="h-12 w-12 text-slate-500 mx-auto mb-4" />
             <p className="text-slate-400">
-              You haven&apos;t made any picks yet. Head to the dashboard to get started!
+              You haven&apos;t made any picks yet. Head to the dashboard to get
+              started!
             </p>
           </CardContent>
         </Card>
@@ -165,7 +169,8 @@ export default async function HistoryPage() {
                     <div className="flex items-center space-x-4 text-sm text-slate-400 mt-1">
                       <span className="flex items-center">
                         <MapPin className="h-4 w-4 mr-1" />
-                        {submission.show.city}, {submission.show.state || submission.show.country}
+                        {submission.show.city},{" "}
+                        {submission.show.state || submission.show.country}
                       </span>
                       <span className="flex items-center">
                         <Calendar className="h-4 w-4 mr-1" />
@@ -219,7 +224,9 @@ export default async function HistoryPage() {
                             <div className="flex items-center space-x-2">
                               <span
                                 className={`font-bold ${
-                                  pick.wasPlayed ? "text-green-400" : "text-red-400"
+                                  pick.wasPlayed
+                                    ? "text-green-400"
+                                    : "text-red-400"
                                 }`}
                               >
                                 {pick.wasPlayed ? "+3" : "0"}
@@ -267,5 +274,5 @@ export default async function HistoryPage() {
         </div>
       )}
     </div>
-  );
+  )
 }

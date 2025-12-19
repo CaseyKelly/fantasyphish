@@ -1,16 +1,16 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { getUpcomingShows } from "@/lib/phishnet";
+import { NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
+import { getUpcomingShows } from "@/lib/phishnet"
 
 export async function GET() {
   try {
     // Fetch upcoming shows from phish.net
-    const upcomingShows = await getUpcomingShows();
+    const upcomingShows = await getUpcomingShows()
 
     // Sync with database
     for (const show of upcomingShows) {
-      const showDate = new Date(show.showdate);
-      
+      const showDate = new Date(show.showdate)
+
       await prisma.show.upsert({
         where: { showDate },
         create: {
@@ -26,7 +26,7 @@ export async function GET() {
           state: show.state,
           country: show.country,
         },
-      });
+      })
     }
 
     // Get shows from database (includes upcoming and recent)
@@ -40,14 +40,14 @@ export async function GET() {
       include: {
         tour: true,
       },
-    });
+    })
 
-    return NextResponse.json({ shows });
+    return NextResponse.json({ shows })
   } catch (error) {
-    console.error("Error fetching shows:", error);
+    console.error("Error fetching shows:", error)
     return NextResponse.json(
       { error: "Failed to fetch shows" },
       { status: 500 }
-    );
+    )
   }
 }
