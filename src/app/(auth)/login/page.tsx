@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -20,6 +20,35 @@ function LoginForm() {
 
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   const verified = searchParams.get("verified");
+  const authError = searchParams.get("error");
+
+  // Map NextAuth error codes to friendly messages
+  const getErrorMessage = (errorCode: string | null) => {
+    if (!errorCode) return "";
+    
+    // If it's already a detailed message, use it
+    if (errorCode.length > 20 || errorCode.includes("email") || errorCode.includes("account")) {
+      return errorCode;
+    }
+    
+    switch (errorCode) {
+      case "Configuration":
+        return "No account found with this email. Please sign up first.";
+      case "CredentialsSignin":
+        return "Invalid credentials. Please check your email and password.";
+      case "AccessDenied":
+        return "Access denied. Please verify your email or contact support.";
+      default:
+        return errorCode;
+    }
+  };
+
+  // Set error from URL parameter on mount
+  useEffect(() => {
+    if (authError) {
+      setError(getErrorMessage(authError));
+    }
+  }, [authError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +56,28 @@ function LoginForm() {
     setIsLoading(true);
 
     try {
+      // First, check if the user exists
+      const checkResponse = await fetch("/api/auth/check-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const checkData = await checkResponse.json();
+
+      if (!checkData.exists) {
+        setError("No account found with this email. Please sign up first.");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!checkData.verified) {
+        setError("Please verify your email before logging in. Check your inbox for the verification link.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Now attempt to sign in
       const result = await signIn("credentials", {
         email,
         password,
@@ -34,7 +85,7 @@ function LoginForm() {
       });
 
       if (result?.error) {
-        setError(result.error);
+        setError("Incorrect password. Please try again.");
       } else {
         router.push(callbackUrl);
         router.refresh();
