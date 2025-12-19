@@ -186,7 +186,7 @@ test.describe("User Authentication", () => {
     await page.getByRole("button", { name: /sign out/i }).click()
 
     // Should be redirected to home page
-    await expect(page).toHaveURL("/", { timeout: 10000 })
+    await expect(page).toHaveURL(/\/$/, { timeout: 10000 })
 
     // Should see login/signup buttons (not logged in anymore)
     await expect(page.getByRole("link", { name: /log in/i })).toBeVisible()

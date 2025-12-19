@@ -58,8 +58,10 @@ export const test = base.extend<{
   // Helper to create test users directly in DB
   createUser: async ({ prisma, cleanupEmail }, use) => {
     await use(async (options) => {
+      const result = await createTestUser(prisma, options)
+      // Register for cleanup only after successful creation
       await cleanupEmail(options.email)
-      return createTestUser(prisma, options)
+      return result
     })
   },
 
