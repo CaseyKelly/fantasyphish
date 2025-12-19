@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,10 +31,22 @@ function VerifyContent() {
         if (response.ok) {
           setStatus("success");
           setMessage(data.message);
-          // Redirect to login after 3 seconds
+          
+          // Auto-login the user after verification
+          // The user's email is now verified, but we need them to enter their password
+          // OR we can redirect them to login with a special flag
+          // Since we don't have their password stored in plaintext, 
+          // we'll redirect to a pre-filled login
+          const email = data.email;
+          if (email) {
+            // Store email in sessionStorage for the login page to use
+            sessionStorage.setItem("verified-email", email);
+          }
+          
+          // Redirect to login after 2 seconds
           setTimeout(() => {
             router.push("/login?verified=true");
-          }, 3000);
+          }, 2000);
         } else {
           setStatus("error");
           setMessage(data.error);
@@ -71,10 +84,12 @@ function VerifyContent() {
               <h1 className="text-2xl font-bold text-white mb-4">
                 Email verified!
               </h1>
-              <p className="text-gray-400 mb-6">{message}</p>
-              <p className="text-sm text-gray-500">
-                Redirecting to login...
+              <p className="text-gray-400 mb-6">
+                Your account is now active. Redirecting you to login...
               </p>
+              <div className="inline-flex items-center justify-center">
+                <Loader2 className="h-5 w-5 text-[#c23a3a] animate-spin" />
+              </div>
             </>
           )}
 

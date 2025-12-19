@@ -45,7 +45,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Email verified successfully! You can now log in.",
+      message: "Email verified successfully! Logging you in...",
+      email: user.email,
     });
   } catch (error) {
     console.error("Verification error:", error);

@@ -1,0 +1,13 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#2d4654"/>
+  
+  <!-- Donut Logo - centered and large -->
+  <circle cx="600" cy="260" r="80" stroke="#c23a3a" stroke-width="48" fill="none"/>
+  
+  <!-- Title -->
+  <text x="600" y="430" font-family="system-ui, -apple-system, sans-serif" font-size="64" font-weight="bold" fill="#ffffff" text-anchor="middle">FantasyPhish</text>
+  
+  <!-- Subtitle -->
+  <text x="600" y="490" font-family="system-ui, -apple-system, sans-serif" font-size="32" fill="#94a3b8" text-anchor="middle">Predict the Setlist</text>
+</svg>
