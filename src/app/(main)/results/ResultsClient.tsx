@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { format } from "date-fns"
 import {
@@ -110,6 +111,7 @@ export default function ResultsClient({
   stats,
   isAdmin,
 }: ResultsClientProps) {
+  const router = useRouter()
   const [adminLoading, setAdminLoading] = useState<string | null>(null)
   const [deletingSubmission, setDeletingSubmission] = useState<string | null>(
     null
@@ -169,8 +171,8 @@ export default function ResultsClient({
         throw new Error(data.error || "Failed to create test submission")
       }
 
-      // Reload the results page to show the new test submission
-      window.location.reload()
+      // Refresh the results page to show the new test submission
+      router.refresh()
     } catch (err) {
       console.error("Test submission error:", err)
       alert(

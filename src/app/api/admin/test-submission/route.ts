@@ -93,28 +93,9 @@ export async function POST() {
     )
 
     if (songs.length < 13) {
-      console.warn(
-        `[Admin] Not enough frequently played songs in database (${songs.length}), falling back to all songs`
-      )
-      // Fallback: get all songs if we don't have enough frequent ones
-      const allSongs = await prisma.song.findMany({
-        select: { id: true, name: true, slug: true },
-        orderBy: { name: "asc" },
-      })
-
-      if (allSongs.length < 13) {
-        return NextResponse.json(
-          {
-            error:
-              "Need at least 13 songs in database to create test submission",
-          },
-          { status: 400 }
-        )
-      }
-
       return NextResponse.json(
         {
-          error: `Only ${songs.length} frequently played songs found in database. Please seed more songs first.`,
+          error: `Only ${songs.length} frequently played songs found in database. Need at least 13. Please seed more songs first.`,
         },
         { status: 400 }
       )
