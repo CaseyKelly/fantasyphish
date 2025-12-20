@@ -179,74 +179,123 @@ export function HomeClient() {
           </div>
         </nav>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20 pb-8 sm:pb-12">
-          <div className="text-center">
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-white mb-6">
-              You Knew{" "}
-              <span className="text-[#c23a3a]">
-                They&apos;d Bust Out Fluffhead
-              </span>
-            </h1>
-            <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto">
-              Now prove it. Pick 13 songs before showtime, rack up points when
-              Trey plays your calls, and show the lot who really knows
-              what&apos;s coming.
-            </p>
+        {!loading && (
+          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20 pb-8 sm:pb-12">
+            <div className="text-center">
+              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-white mb-6">
+                You Knew{" "}
+                <span className="text-[#c23a3a]">
+                  They&apos;d Bust Out Fluffhead
+                </span>
+              </h1>
+              <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto">
+                Now prove it. Pick 13 songs before showtime, rack up points when
+                Trey plays your calls, and show the lot who really knows
+                what&apos;s coming.
+              </p>
+            </div>
           </div>
-        </div>
+        )}
       </header>
 
       {/* Next Show Picker Section */}
-      {!loading && nextShow && songs.length > 0 && (
-        <section className="py-6 relative z-10">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Solid background container */}
-            <div className="bg-[#1e3340] rounded-2xl shadow-2xl border border-[#3d5a6c]/50 p-6 sm:p-8">
-              {/* Header inside container */}
-              <div className="text-center mb-6">
-                <h2 className="text-3xl sm:text-4xl font-bold text-white mb-2">
-                  Make Your Picks
-                </h2>
-                {nextShow.tour && (
-                  <p className="text-gray-400 text-lg mb-2">
-                    {nextShow.tour.name}
-                  </p>
-                )}
-                <p className="text-gray-400 mb-2">
-                  {nextShow.venue} • {nextShow.city}
-                  {nextShow.state && `, ${nextShow.state}`} •{" "}
-                  {parseUTCDate(nextShow.showDate, "MMMM d, yyyy")}
-                </p>
-                {nextShow.lockTime && (
-                  <p className="text-sm text-gray-500">
-                    Picks lock at{" "}
-                    {formatLockTime(
-                      nextShow.lockTime,
-                      nextShow.timezone,
-                      nextShow.showDate
-                    )}
-                  </p>
-                )}
-              </div>
+      <section className="py-6 relative z-10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Solid background container */}
+          <div className="bg-[#1e3340] rounded-2xl shadow-2xl border border-[#3d5a6c]/50 p-6 sm:p-8">
+            {loading ? (
+              // Loading Skeleton
+              <>
+                {/* Header Skeleton */}
+                <div className="text-center mb-6">
+                  <div className="h-10 w-64 bg-[#2d4654] rounded-lg mx-auto mb-2 animate-pulse" />
+                  <div className="h-6 w-48 bg-[#2d4654] rounded-lg mx-auto mb-2 animate-pulse" />
+                  <div className="h-5 w-96 bg-[#2d4654] rounded-lg mx-auto mb-2 animate-pulse" />
+                  <div className="h-4 w-72 bg-[#2d4654] rounded-lg mx-auto animate-pulse" />
+                </div>
 
-              {/* Song Picker */}
-              <SongPicker
-                show={{
-                  id: nextShow.id,
-                  venue: nextShow.venue,
-                  city: nextShow.city || "",
-                  state: nextShow.state || "",
-                  showDate: nextShow.showDate,
-                }}
-                songs={songs}
-                isLocked={false}
-                guestMode={true}
-                onGuestSubmit={(picks) => setGuestPicks(picks)}
-              />
-            </div>
+                {/* Search Bar Skeleton */}
+                <div className="mb-6">
+                  <div className="h-12 w-full bg-[#2d4654] rounded-lg animate-pulse" />
+                </div>
+
+                {/* Pick Sections Skeleton */}
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="bg-[#2d4654] rounded-lg border border-[#3d5a6c]/50 overflow-hidden"
+                    >
+                      {/* Section Header */}
+                      <div className="p-4 border-b border-[#3d5a6c]/50">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-[#3d5a6c] rounded animate-pulse" />
+                            <div className="h-6 w-32 bg-[#3d5a6c] rounded animate-pulse" />
+                          </div>
+                          <div className="w-6 h-6 bg-[#3d5a6c] rounded animate-pulse" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Submit Button Skeleton */}
+                <div className="mt-6">
+                  <div className="h-12 w-full bg-[#2d4654] rounded-lg animate-pulse" />
+                </div>
+              </>
+            ) : (
+              nextShow &&
+              songs.length > 0 && (
+                <>
+                  {/* Header inside container */}
+                  <div className="text-center mb-6">
+                    <h2 className="text-3xl sm:text-4xl font-bold text-white mb-2">
+                      Make Your Picks
+                    </h2>
+                    {nextShow.tour && (
+                      <p className="text-gray-400 text-lg mb-2">
+                        {nextShow.tour.name}
+                      </p>
+                    )}
+                    <p className="text-gray-400 mb-2">
+                      {nextShow.venue} • {nextShow.city}
+                      {nextShow.state && `, ${nextShow.state}`} •{" "}
+                      {parseUTCDate(nextShow.showDate, "MMMM d, yyyy")}
+                    </p>
+                    {nextShow.lockTime && (
+                      <p className="text-sm text-gray-500">
+                        Picks lock at{" "}
+                        {formatLockTime(
+                          nextShow.lockTime,
+                          nextShow.timezone,
+                          nextShow.showDate
+                        )}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Song Picker */}
+                  <SongPicker
+                    show={{
+                      id: nextShow.id,
+                      venue: nextShow.venue,
+                      city: nextShow.city || "",
+                      state: nextShow.state || "",
+                      showDate: nextShow.showDate,
+                    }}
+                    songs={songs}
+                    isLocked={false}
+                    guestMode={true}
+                    onGuestSubmit={(picks) => setGuestPicks(picks)}
+                  />
+                </>
+              )
+            )}
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       {/* Guest Registration Modal */}
       {guestPicks && nextShow && (
@@ -257,93 +306,101 @@ export function HomeClient() {
         />
       )}
 
-      {/* Scoring Section */}
-      <section className="py-20 bg-[#1e3340] relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl sm:text-4xl font-bold text-center text-white mb-12">
-              Scoring
-            </h2>
+      {!loading && (
+        <>
+          {/* Scoring Section */}
+          <section className="py-20 bg-[#1e3340] relative z-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="max-w-3xl mx-auto">
+                <h2 className="text-3xl sm:text-4xl font-bold text-center text-white mb-12">
+                  Scoring
+                </h2>
 
-            <div className="bg-[#2d4654] border border-[#3d5a6c]/50 rounded-2xl overflow-hidden relative z-10">
-              <div className="divide-y divide-[#3d5a6c]/50">
-                <div className="flex items-center justify-between gap-4 p-6">
-                  <div className="flex items-center space-x-4 min-w-0">
-                    <Target className="h-6 w-6 text-[#c23a3a] flex-shrink-0" />
-                    <div className="min-w-0">
-                      <p className="font-semibold text-white">Opener Pick</p>
-                      <p className="text-sm text-gray-400">
-                        Call the first song of Set 1
-                      </p>
+                <div className="bg-[#2d4654] border border-[#3d5a6c]/50 rounded-2xl overflow-hidden relative z-10">
+                  <div className="divide-y divide-[#3d5a6c]/50">
+                    <div className="flex items-center justify-between gap-4 p-6">
+                      <div className="flex items-center space-x-4 min-w-0">
+                        <Target className="h-6 w-6 text-[#c23a3a] flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="font-semibold text-white">
+                            Opener Pick
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            Call the first song of Set 1
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-2xl font-bold text-[#c23a3a] whitespace-nowrap flex-shrink-0">
+                        3 pts
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-4 p-6">
+                      <div className="flex items-center space-x-4 min-w-0">
+                        <Target className="h-6 w-6 text-[#c23a3a] flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="font-semibold text-white">
+                            Encore Pick
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            Pick any song from the encore
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-2xl font-bold text-[#c23a3a] whitespace-nowrap flex-shrink-0">
+                        3 pts
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-4 p-6">
+                      <div className="flex items-center space-x-4 min-w-0">
+                        <Target className="h-6 w-6 text-gray-400 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="font-semibold text-white">
+                            Regular Picks (11)
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            Any song played anywhere in the show
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-2xl font-bold text-gray-300 whitespace-nowrap flex-shrink-0">
+                        1 pt each
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-4 p-6 bg-[#3d5a6c]/30">
+                      <p className="font-semibold text-white">Maximum Points</p>
+                      <span className="text-2xl font-bold text-white whitespace-nowrap flex-shrink-0">
+                        17 pts
+                      </span>
                     </div>
                   </div>
-                  <span className="text-2xl font-bold text-[#c23a3a] whitespace-nowrap flex-shrink-0">
-                    3 pts
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between gap-4 p-6">
-                  <div className="flex items-center space-x-4 min-w-0">
-                    <Target className="h-6 w-6 text-[#c23a3a] flex-shrink-0" />
-                    <div className="min-w-0">
-                      <p className="font-semibold text-white">Encore Pick</p>
-                      <p className="text-sm text-gray-400">
-                        Pick any song from the encore
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-2xl font-bold text-[#c23a3a] whitespace-nowrap flex-shrink-0">
-                    3 pts
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between gap-4 p-6">
-                  <div className="flex items-center space-x-4 min-w-0">
-                    <Target className="h-6 w-6 text-gray-400 flex-shrink-0" />
-                    <div className="min-w-0">
-                      <p className="font-semibold text-white">
-                        Regular Picks (11)
-                      </p>
-                      <p className="text-sm text-gray-400">
-                        Any song played anywhere in the show
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-2xl font-bold text-gray-300 whitespace-nowrap flex-shrink-0">
-                    1 pt each
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between gap-4 p-6 bg-[#3d5a6c]/30">
-                  <p className="font-semibold text-white">Maximum Points</p>
-                  <span className="text-2xl font-bold text-white whitespace-nowrap flex-shrink-0">
-                    17 pts
-                  </span>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
+          </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-b from-transparent to-[#c23a3a]/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
-            Your Couch Tour Just Got Competitive
-          </h2>
-          <p className="text-lg text-gray-300 mb-8 max-w-xl mx-auto">
-            Stop arguing in the group chat about who called it. Join the game,
-            make your picks, and let the scoreboard do the talking.
-          </p>
-          <Link href="/register">
-            <Button size="lg">
-              Create Your Account
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
-        </div>
-      </section>
+          {/* CTA Section */}
+          <section className="py-20 bg-gradient-to-b from-transparent to-[#c23a3a]/10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
+                Your Couch Tour Just Got Competitive
+              </h2>
+              <p className="text-lg text-gray-300 mb-8 max-w-xl mx-auto">
+                Stop arguing in the group chat about who called it. Join the
+                game, make your picks, and let the scoreboard do the talking.
+              </p>
+              <Link href="/register">
+                <Button size="lg">
+                  Create Your Account
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
+          </section>
+        </>
+      )}
 
       {/* Footer */}
       <footer className="border-t border-[#3d5a6c]/50 py-8 bg-[#1e3340] relative z-10 shadow-[0_100vh_0_100vh_#1e3340]">

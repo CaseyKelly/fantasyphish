@@ -93,7 +93,7 @@ export default function PicksPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <LoadingDonut size="xl" text="Loading your picks..." />
+        <LoadingDonut size="xl" />
       </div>
     )
   }
