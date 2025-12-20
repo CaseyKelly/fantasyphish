@@ -71,35 +71,35 @@ export default function PicksPage() {
   const [loading, setLoading] = useState(true)
   const [isLocked, setIsLocked] = useState(false)
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [showRes, songsRes] = await Promise.all([
-          fetch("/api/shows?next=true"),
-          fetch("/api/songs"),
-        ])
+  const fetchData = async () => {
+    try {
+      const [showRes, songsRes] = await Promise.all([
+        fetch("/api/shows?next=true"),
+        fetch("/api/songs"),
+      ])
 
-        const showData = await showRes.json()
-        const songsData = await songsRes.json()
+      const showData = await showRes.json()
+      const songsData = await songsRes.json()
 
-        if (showData.nextShow) {
-          setNextShow(showData.nextShow)
+      if (showData.nextShow) {
+        setNextShow(showData.nextShow)
 
-          // Check if show is locked
-          if (showData.nextShow.lockTime) {
-            const lockTime = new Date(showData.nextShow.lockTime)
-            setIsLocked(new Date() >= lockTime)
-          }
+        // Check if show is locked
+        if (showData.nextShow.lockTime) {
+          const lockTime = new Date(showData.nextShow.lockTime)
+          setIsLocked(new Date() >= lockTime)
         }
-
-        setSongs(songsData.songs || [])
-      } catch (error) {
-        console.error("Error fetching data:", error)
-      } finally {
-        setLoading(false)
       }
-    }
 
+      setSongs(songsData.songs || [])
+    } catch (error) {
+      console.error("Error fetching data:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     fetchData()
   }, [])
 
@@ -228,6 +228,7 @@ export default function PicksPage() {
         existingPicks={existingPicks}
         isLocked={isLocked}
         guestMode={true}
+        onSubmitSuccess={fetchData}
       />
     </div>
   )

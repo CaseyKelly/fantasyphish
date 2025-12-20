@@ -50,6 +50,7 @@ interface SongPickerProps {
   isTestMode?: boolean
   guestMode?: boolean
   onGuestSubmit?: (picks: Pick[]) => void
+  onSubmitSuccess?: () => void
 }
 
 export function SongPicker({
@@ -60,6 +61,7 @@ export function SongPicker({
   isTestMode = false,
   guestMode = false,
   onGuestSubmit,
+  onSubmitSuccess,
 }: SongPickerProps) {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
@@ -185,8 +187,14 @@ export function SongPicker({
             ? "Test submission created successfully!"
             : data.message || "Picks submitted successfully!"
         )
-        router.push(isTestMode ? "/results" : "/dashboard")
-        router.refresh()
+
+        // If onSubmitSuccess callback is provided, call it instead of redirecting
+        if (onSubmitSuccess) {
+          onSubmitSuccess()
+        } else {
+          router.push(isTestMode ? "/results" : "/dashboard")
+          router.refresh()
+        }
       }
     } catch {
       toast.error("An unexpected error occurred")
