@@ -1,36 +1,21 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { notFound, redirect } from "next/navigation"
-import { hasShowStarted } from "@/lib/phishnet"
 import { SongPicker } from "@/components/SongPicker"
 
-interface PickPageProps {
+interface TestPickPageProps {
   params: Promise<{ showId: string }>
 }
 
-async function getShowData(showId: string, userId: string) {
+async function getShowData(showId: string) {
   const show = await prisma.show.findUnique({
     where: { id: showId },
-    include: {
-      submissions: {
-        where: { userId },
-        include: {
-          picks: {
-            include: { song: true },
-          },
-        },
-      },
-    },
   })
 
   if (!show) return null
 
-  // Check if show has started (now timezone-aware)
-  // Extract the date in UTC to avoid timezone conversion
-  const showDateStr = show.showDate.toISOString().split("T")[0]
-  const isLocked = await hasShowStarted(showDateStr, show.timezone, show.state)
-
-  return { show, isLocked }
+  // Test submissions are never locked
+  return { show, isLocked: false }
 }
 
 async function getAllSongs() {
@@ -46,15 +31,19 @@ async function getAllSongs() {
   })
 }
 
-export default async function PickPage({ params }: PickPageProps) {
+export default async function TestPickPage({ params }: TestPickPageProps) {
   const session = await auth()
   if (!session?.user?.id) {
     redirect("/login")
   }
 
+  if (!session.user.isAdmin) {
+    redirect("/dashboard")
+  }
+
   const { showId } = await params
   const [showData, songs] = await Promise.all([
-    getShowData(showId, session.user.id),
+    getShowData(showId),
     getAllSongs(),
   ])
 
@@ -62,15 +51,7 @@ export default async function PickPage({ params }: PickPageProps) {
     notFound()
   }
 
-  const { show, isLocked } = showData
-  const existingSubmission = show.submissions[0]
-
-  // Transform existing picks for the picker
-  const existingPicks = existingSubmission?.picks.map((pick) => ({
-    songId: pick.songId,
-    songName: pick.song.name,
-    pickType: pick.pickType,
-  }))
+  const { show } = showData
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -83,8 +64,9 @@ export default async function PickPage({ params }: PickPageProps) {
           showDate: show.showDate.toISOString(),
         }}
         songs={songs}
-        existingPicks={existingPicks}
-        isLocked={isLocked}
+        existingPicks={undefined}
+        isLocked={false}
+        isTestMode={true}
       />
     </div>
   )

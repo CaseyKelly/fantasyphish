@@ -47,6 +47,7 @@ interface SongPickerProps {
   songs: Song[]
   existingPicks?: Pick[]
   isLocked: boolean
+  isTestMode?: boolean
 }
 
 export function SongPicker({
@@ -54,6 +55,7 @@ export function SongPicker({
   songs,
   existingPicks,
   isLocked,
+  isTestMode = false,
 }: SongPickerProps) {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
@@ -151,7 +153,12 @@ export function SongPicker({
         ...regularPicks.map((p) => ({ songId: p.songId, pickType: "REGULAR" })),
       ]
 
-      const response = await fetch("/api/picks", {
+      // Use different endpoint for test mode
+      const endpoint = isTestMode
+        ? "/api/admin/create-test-submission"
+        : "/api/picks"
+
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ showId: show.id, picks }),
@@ -162,8 +169,12 @@ export function SongPicker({
       if (!response.ok) {
         toast.error(data.error || "Failed to submit picks")
       } else {
-        toast.success(data.message || "Picks submitted successfully!")
-        router.push("/dashboard")
+        toast.success(
+          isTestMode
+            ? "Test submission created successfully!"
+            : data.message || "Picks submitted successfully!"
+        )
+        router.push(isTestMode ? "/results" : "/dashboard")
         router.refresh()
       }
     } catch {
@@ -216,8 +227,15 @@ export function SongPicker({
       {/* Show Header */}
       <div className="text-center">
         <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-          Make Your Picks
+          {isTestMode ? "Create Test Submission" : "Make Your Picks"}
         </h1>
+        {isTestMode && (
+          <div className="mb-2">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-500/20 text-purple-300 border border-purple-500/30">
+              Test Mode
+            </span>
+          </div>
+        )}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-gray-400">
           <span className="flex items-center">
             <Music className="h-4 w-4 mr-1" />
