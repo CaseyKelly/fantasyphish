@@ -8,7 +8,6 @@ import { Target, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DonutLogo } from "@/components/DonutLogo"
 import { SongPicker } from "@/components/SongPicker"
-import { LoadingDonut } from "@/components/LoadingDonut"
 import { GuestRegistrationModal } from "@/components/GuestRegistrationModal"
 import { getTimezoneAbbr, parseUTCDate } from "@/lib/date-utils"
 
