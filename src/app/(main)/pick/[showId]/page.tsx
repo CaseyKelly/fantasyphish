@@ -27,7 +27,8 @@ async function getShowData(showId: string, userId: string) {
   if (!show) return null
 
   // Check if show has started (now timezone-aware)
-  const showDateStr = format(show.showDate, "yyyy-MM-dd")
+  // Extract the date in UTC to avoid timezone conversion
+  const showDateStr = show.showDate.toISOString().split("T")[0]
   const isLocked = await hasShowStarted(showDateStr, show.timezone, show.state)
 
   return { show, isLocked }

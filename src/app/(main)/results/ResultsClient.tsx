@@ -20,6 +20,16 @@ import {
 } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
+// Helper to format show dates consistently without timezone issues
+function formatShowDate(showDate: Date | string, formatStr: string): string {
+  const dateStr =
+    typeof showDate === "string" ? showDate : showDate.toISOString()
+  const datePart = dateStr.split("T")[0] // Extract YYYY-MM-DD
+  // Parse at noon UTC to avoid timezone conversion issues
+  const date = new Date(datePart + "T12:00:00.000Z")
+  return format(date, formatStr)
+}
+
 interface Pick {
   id: string
   pickType: string
@@ -299,7 +309,10 @@ export default function ResultsClient({
                       </span>
                       <span className="flex items-center">
                         <Calendar className="h-4 w-4 mr-1" />
-                        {format(submission.show.showDate, "MMM d, yyyy")}
+                        {formatShowDate(
+                          submission.show.showDate,
+                          "MMM d, yyyy"
+                        )}
                       </span>
                     </div>
                   </div>
