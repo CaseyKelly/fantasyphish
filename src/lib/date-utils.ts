@@ -66,7 +66,20 @@ export function parseUTCDate(
   }
 
   // Create date object (month is 0-indexed in JavaScript Date)
+  // JavaScript's Date constructor will handle invalid dates by rolling over
   const dateObj = new Date(year, month - 1, day)
+
+  // Validate that the date didn't roll over to a different month
+  // (e.g., Feb 31 becomes Mar 3)
+  if (
+    dateObj.getFullYear() !== year ||
+    dateObj.getMonth() !== month - 1 ||
+    dateObj.getDate() !== day
+  ) {
+    throw new Error(
+      `Invalid date: ${year}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")} does not exist`
+    )
+  }
 
   // Return formatted string or Date object
   return formatStr ? format(dateObj, formatStr) : dateObj
