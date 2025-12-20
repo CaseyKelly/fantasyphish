@@ -4,6 +4,7 @@ import { randomBytes } from "crypto"
 import { prisma } from "@/lib/prisma"
 import { sendVerificationEmail } from "@/lib/email"
 import { z } from "zod"
+import { PickType } from "@prisma/client"
 
 const registerSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -16,12 +17,22 @@ const registerSchema = z.object({
       "Username can only contain letters, numbers, and underscores"
     ),
   password: z.string().min(8, "Password must be at least 8 characters"),
+  showId: z.string().optional(),
+  picks: z
+    .array(
+      z.object({
+        songId: z.string(),
+        pickType: z.enum(["OPENER", "ENCORE", "REGULAR"]),
+      })
+    )
+    .optional(),
 })
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, username, password } = registerSchema.parse(body)
+    const { email, username, password, showId, picks } =
+      registerSchema.parse(body)
 
     // Check if email already exists
     const existingEmail = await prisma.user.findUnique({
@@ -55,20 +66,47 @@ export async function POST(request: NextRequest) {
     const verificationToken = randomBytes(32).toString("hex")
     const verificationExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
 
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        email: email.toLowerCase(),
-        username,
-        passwordHash,
-        verificationToken,
-        verificationExpiry,
-      },
+    // Create user and optionally their picks in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email: email.toLowerCase(),
+          username,
+          passwordHash,
+          verificationToken,
+          verificationExpiry,
+        },
+      })
+
+      let submission = null
+
+      // If picks are provided, create submission
+      if (showId && picks && picks.length === 13) {
+        submission = await tx.submission.create({
+          data: {
+            userId: user.id,
+            showId,
+            picks: {
+              create: picks.map((pick) => ({
+                songId: pick.songId,
+                pickType: pick.pickType as PickType,
+              })),
+            },
+          },
+          include: {
+            picks: {
+              include: { song: true },
+            },
+          },
+        })
+      }
+
+      return { user, submission }
     })
 
     // Send verification email
     const { success, error } = await sendVerificationEmail(
-      user.email,
+      result.user.email,
       verificationToken
     )
 
@@ -79,8 +117,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message:
-        "Registration successful! Please check your email to verify your account.",
+      message: result.submission
+        ? "Registration successful! Your picks have been saved. Please check your email to verify your account."
+        : "Registration successful! Please check your email to verify your account.",
     })
   } catch (error) {
     console.error("Registration error:", error)

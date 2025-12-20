@@ -1,9 +1,66 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getUpcomingShows } from "@/lib/phishnet"
+import { auth } from "@/lib/auth"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const nextOnly = searchParams.get("next")
+
+    // If requesting next show only
+    if (nextOnly === "true") {
+      const session = await auth()
+
+      const nextShow = await prisma.show.findFirst({
+        where: {
+          isComplete: false,
+          showDate: {
+            gte: new Date(),
+          },
+        },
+        orderBy: { showDate: "asc" },
+        include: {
+          tour: true,
+          submissions: session?.user?.id
+            ? {
+                where: { userId: session.user.id },
+                include: {
+                  picks: {
+                    include: { song: true },
+                  },
+                },
+              }
+            : false,
+        },
+      })
+
+      if (!nextShow) {
+        return NextResponse.json({ nextShow: null })
+      }
+
+      const userSubmission =
+        session?.user?.id && Array.isArray(nextShow.submissions)
+          ? nextShow.submissions[0]
+          : null
+
+      return NextResponse.json({
+        nextShow: {
+          id: nextShow.id,
+          venue: nextShow.venue,
+          city: nextShow.city,
+          state: nextShow.state,
+          country: nextShow.country,
+          showDate: nextShow.showDate,
+          isComplete: nextShow.isComplete,
+          lockTime: nextShow.lockTime,
+          timezone: nextShow.timezone,
+          tour: nextShow.tour,
+          userSubmission,
+        },
+      })
+    }
+
     // Fetch upcoming shows from phish.net
     const upcomingShows = await getUpcomingShows()
 
