@@ -30,19 +30,47 @@ export async function GET() {
     }
 
     // Get shows from database (includes upcoming and recent)
+    // For admin, we want all shows; for users, we could filter differently
     const shows = await prisma.show.findMany({
       where: {
-        showDate: {
-          gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
-        },
+        OR: [
+          // Shows in the last 7 days
+          {
+            showDate: {
+              gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+            },
+          },
+          // OR shows with submissions (for admin testing)
+          {
+            submissions: {
+              some: {},
+            },
+          },
+        ],
       },
       orderBy: { showDate: "asc" },
       include: {
         tour: true,
+        _count: {
+          select: { submissions: true },
+        },
       },
     })
 
-    return NextResponse.json({ shows })
+    // Format response with submission counts
+    const formattedShows = shows.map((show) => ({
+      id: show.id,
+      venue: show.venue,
+      city: show.city,
+      state: show.state,
+      showDate: show.showDate,
+      isComplete: show.isComplete,
+      lockTime: show.lockTime,
+      submissionCount: show._count.submissions,
+      tour: show.tour,
+    }))
+
+    return NextResponse.json({ shows: formattedShows })
   } catch (error) {
     console.error("Error fetching shows:", error)
     return NextResponse.json(

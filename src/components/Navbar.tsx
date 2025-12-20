@@ -22,7 +22,7 @@ export function Navbar() {
 
   const navItems = [
     { href: "/dashboard", label: "My Picks", icon: Music },
-    { href: "/history", label: "Results", icon: ClipboardList },
+    { href: "/results", label: "Results", icon: ClipboardList },
     { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   ]
 

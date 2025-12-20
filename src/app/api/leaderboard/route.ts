@@ -18,9 +18,10 @@ export async function GET(request: NextRequest) {
           isScored: true,
         }
 
-    // Get all scored submissions grouped by user
+    // Get all scored submissions grouped by user (exclude admin users)
     const leaderboard = await prisma.user.findMany({
       where: {
+        isAdmin: false, // Exclude admin users from leaderboard
         submissions: {
           some: whereClause,
         },

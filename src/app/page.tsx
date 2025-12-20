@@ -1,9 +1,16 @@
+import { auth } from "@/lib/auth"
+import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Target, Trophy, Calendar, ArrowRight, Music } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DonutLogo } from "@/components/DonutLogo"
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  // Redirect logged-in users to dashboard
+  const session = await auth()
+  if (session?.user?.id) {
+    redirect("/dashboard")
+  }
   return (
     <div className="min-h-screen bg-[#2d4654] relative">
       {/* Repeating donut pattern background */}
