@@ -22,11 +22,33 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
 // Helper to format show dates consistently without timezone issues
 function formatShowDate(showDate: Date | string, formatStr: string): string {
+  // Handle Date input and ensure it's valid
+  if (showDate instanceof Date) {
+    if (isNaN(showDate.getTime())) {
+      return "Invalid date"
+    }
+  }
+
   const dateStr =
     typeof showDate === "string" ? showDate : showDate.toISOString()
+
+  // Basic validation for string input (expecting an ISO-like value)
+  if (typeof showDate === "string") {
+    const isoDatePrefixPattern = /^\d{4}-\d{2}-\d{2}/
+    if (!isoDatePrefixPattern.test(showDate)) {
+      return "Invalid date"
+    }
+  }
+
   const datePart = dateStr.split("T")[0] // Extract YYYY-MM-DD
   // Parse at noon UTC to avoid timezone conversion issues
   const date = new Date(datePart + "T12:00:00.000Z")
+
+  // Ensure the constructed Date is valid before formatting
+  if (isNaN(date.getTime())) {
+    return "Invalid date"
+  }
+
   return format(date, formatStr)
 }
 

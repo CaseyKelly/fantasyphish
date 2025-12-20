@@ -168,7 +168,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
   // Parse as UTC to avoid timezone conversion issues
   // The showDate is stored as UTC midnight (e.g., "2025-07-23T00:00:00.000Z")
   // We need to display it as the actual show date, not convert to local timezone
-  const showDateStr = show.showDate.split("T")[0] // Extract YYYY-MM-DD
+  const showDateStr = show.showDate.split("T")[0] // Extract YYYY-MM-DD from ISO string
   const showDate = parseISO(showDateStr + "T12:00:00.000Z") // Parse at noon UTC to avoid timezone issues
   const isInProgress =
     !show.isComplete && setlist && setlist.songs && setlist.songs.length > 0
