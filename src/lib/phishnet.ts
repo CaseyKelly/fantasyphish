@@ -1,3 +1,5 @@
+import { getTimezoneForLocation } from "./timezone"
+
 const PHISHNET_API_BASE = "https://api.phish.net/v5"
 
 interface PhishNetResponse<T> {
@@ -28,6 +30,16 @@ interface PhishNetSetlistSong {
   isreprise: number
   transition: string
   footnote: string
+  // Additional properties from the API response
+  showid: number
+  showdate: string
+  venue: string
+  city: string
+  state: string
+  country: string
+  setlistnotes: string
+  tourname: string
+  tourid: number
 }
 
 interface PhishNetSetlist {
@@ -107,11 +119,33 @@ export async function getSetlist(
 ): Promise<PhishNetSetlist | null> {
   try {
     // Format: YYYY-MM-DD
-    const setlists = await fetchPhishNet<PhishNetSetlist[]>(
+    const songData = await fetchPhishNet<PhishNetSetlistSong[]>(
       `/setlists/showdate/${showDate}`
     )
-    if (setlists && setlists.length > 0) {
-      return setlists[0]
+
+    if (songData && songData.length > 0) {
+      // The API returns an array of song objects, but we need to transform it
+      // into a setlist object with a songs array and show metadata
+      const firstSong = songData[0]
+
+      // Create a proper setlist object using metadata from the first song
+      const setlist: PhishNetSetlist = {
+        showid: firstSong.showid,
+        showdate: showDate, // Use the requested date, not the API response date
+        venue: firstSong.venue,
+        city: firstSong.city,
+        state: firstSong.state,
+        country: firstSong.country,
+        setlistnotes: firstSong.setlistnotes,
+        tour_name: firstSong.tourname || "",
+        tourid: firstSong.tourid,
+        songs: songData.map((song) => ({
+          ...song,
+          showdate: showDate, // Also fix the individual song dates
+        })), // The full array of songs with corrected dates
+      }
+
+      return setlist
     }
     return null
   } catch (error) {
@@ -141,7 +175,24 @@ export async function getShowsByYear(year: number): Promise<PhishNetShow[]> {
 }
 
 // Helper to check if a show has started (has at least one song in setlist)
-export async function hasShowStarted(showDate: string): Promise<boolean> {
+// Now with timezone-aware locking
+export async function hasShowStarted(
+  showDate: string,
+  timezone?: string | null,
+  state?: string | null
+): Promise<boolean> {
+  // If we have timezone info, use time-based locking (7 PM in venue timezone)
+  if (timezone || state) {
+    const { calculateIsShowLocked } = await import("./timezone")
+    const date = new Date(showDate + "T00:00:00")
+    const isLocked = calculateIsShowLocked(date, timezone, state)
+
+    if (isLocked) {
+      return true
+    }
+  }
+
+  // Fallback: check if setlist has started
   const setlist = await getSetlist(showDate)
   return setlist !== null && setlist.songs && setlist.songs.length > 0
 }
@@ -214,6 +265,11 @@ export function normalizeSongName(name: string): string {
     .trim()
     .replace(/[^\w\s]/g, "")
     .replace(/\s+/g, " ")
+}
+
+// Helper to extract timezone from show data
+export function extractTimezone(show: PhishNetShow): string {
+  return getTimezoneForLocation(show.state)
 }
 
 export type { PhishNetShow, PhishNetSetlist, PhishNetSetlistSong, PhishNetSong }
