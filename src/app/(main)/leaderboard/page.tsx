@@ -17,6 +17,7 @@ async function getLeaderboard(tourId?: string) {
 
   const users = await prisma.user.findMany({
     where: {
+      isAdmin: false,
       submissions: {
         some: whereClause,
       },
