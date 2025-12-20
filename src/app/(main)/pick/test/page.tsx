@@ -37,7 +37,7 @@ export default async function TestPickPage() {
   }
 
   if (!session.user.isAdmin) {
-    redirect("/dashboard")
+    redirect("/picks")
   }
 
   const shows = await getCompletedShows()

@@ -48,6 +48,9 @@ interface SongPickerProps {
   existingPicks?: Pick[]
   isLocked: boolean
   isTestMode?: boolean
+  guestMode?: boolean
+  onGuestSubmit?: (picks: Pick[]) => void
+  onSubmitSuccess?: () => void
 }
 
 export function SongPicker({
@@ -56,6 +59,9 @@ export function SongPicker({
   existingPicks,
   isLocked,
   isTestMode = false,
+  guestMode = false,
+  onGuestSubmit,
+  onSubmitSuccess,
 }: SongPickerProps) {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
@@ -144,6 +150,13 @@ export function SongPicker({
       return
     }
 
+    // If in guest mode, call the onGuestSubmit callback
+    if (guestMode && onGuestSubmit) {
+      const allPicks = [openerPick, encorePick, ...regularPicks]
+      onGuestSubmit(allPicks)
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -174,8 +187,14 @@ export function SongPicker({
             ? "Test submission created successfully!"
             : data.message || "Picks submitted successfully!"
         )
-        router.push(isTestMode ? "/results" : "/dashboard")
-        router.refresh()
+
+        // If onSubmitSuccess callback is provided, call it instead of redirecting
+        if (onSubmitSuccess) {
+          onSubmitSuccess()
+        } else {
+          router.push(isTestMode ? "/results" : "/picks")
+          router.refresh()
+        }
       }
     } catch {
       toast.error("An unexpected error occurred")
@@ -224,36 +243,38 @@ export function SongPicker({
 
   return (
     <div className="space-y-6">
-      {/* Show Header */}
-      <div className="text-center">
-        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-          {isTestMode ? "Create Test Submission" : "Make Your Picks"}
-        </h1>
-        {isTestMode && (
-          <div className="mb-2">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-500/20 text-purple-300 border border-purple-500/30">
-              Test Mode
+      {/* Show Header - only show if not in guest mode */}
+      {!guestMode && (
+        <div className="text-center">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+            {isTestMode ? "Create Test Submission" : "Make Your Picks"}
+          </h1>
+          {isTestMode && (
+            <div className="mb-2">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                Test Mode
+              </span>
+            </div>
+          )}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-gray-400">
+            <span className="flex items-center">
+              <Music className="h-4 w-4 mr-1" />
+              {show.venue}
+            </span>
+            <span className="flex items-center">
+              <MapPin className="h-4 w-4 mr-1" />
+              {show.city}, {show.state}
+            </span>
+            <span className="flex items-center">
+              <Calendar className="h-4 w-4 mr-1" />
+              {format(
+                new Date(show.showDate.split("T")[0] + "T12:00:00.000Z"),
+                "MMMM d, yyyy"
+              )}
             </span>
           </div>
-        )}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-gray-400">
-          <span className="flex items-center">
-            <Music className="h-4 w-4 mr-1" />
-            {show.venue}
-          </span>
-          <span className="flex items-center">
-            <MapPin className="h-4 w-4 mr-1" />
-            {show.city}, {show.state}
-          </span>
-          <span className="flex items-center">
-            <Calendar className="h-4 w-4 mr-1" />
-            {format(
-              new Date(show.showDate.split("T")[0] + "T12:00:00.000Z"),
-              "MMMM d, yyyy"
-            )}
-          </span>
         </div>
-      </div>
+      )}
 
       {/* Locked Banner */}
       {isLocked && (
@@ -457,13 +478,17 @@ export function SongPicker({
 
       {/* Submit Button */}
       {!isLocked && (
-        <div className="sticky bottom-4 bg-[#2d4654]/95 backdrop-blur-sm p-4 rounded-xl border border-[#3d5a6c]">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-white">
-                {isComplete ? "Ready to submit!" : "Complete your picks"}
+        <div className="max-sm:sticky bottom-4 bg-[#2d4654]/95 backdrop-blur-sm p-3 sm:p-4 rounded-xl border border-[#3d5a6c]">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-white text-sm sm:text-base">
+                {isComplete
+                  ? existingPicks
+                    ? "Picks saved"
+                    : "Ready to submit!"
+                  : "Complete your picks"}
               </p>
-              <p className="text-sm text-gray-400">
+              <p className="text-xs sm:text-sm text-gray-400">
                 {13 - selectedSongIds.size} picks remaining
               </p>
             </div>
@@ -472,8 +497,14 @@ export function SongPicker({
               disabled={!isComplete || isSubmitting}
               isLoading={isSubmitting}
               size="lg"
+              className="flex-shrink-0"
             >
-              {existingPicks ? "Update Picks" : "Submit Picks"}
+              <span className="hidden sm:inline">
+                {existingPicks ? "Update Picks" : "Submit Picks"}
+              </span>
+              <span className="sm:hidden">
+                {existingPicks ? "Update" : "Submit"}
+              </span>
             </Button>
           </div>
         </div>
