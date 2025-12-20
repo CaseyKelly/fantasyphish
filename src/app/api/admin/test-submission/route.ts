@@ -5,6 +5,71 @@ import { getSetlist } from "@/lib/phishnet"
 import { scoreSubmission } from "@/lib/scoring"
 import { format } from "date-fns"
 
+// Top 60 most frequently played songs (as of 2025)
+// These are songs that Phish plays regularly, making test submissions more realistic
+const FREQUENT_SONG_SLUGS = [
+  "you-enjoy-myself",
+  "possum",
+  "mikes-song",
+  "chalk-dust-torture",
+  "weekapaug-groove",
+  "bouncing-around-the-room",
+  "run-like-an-antelope",
+  "golgi-apparatus",
+  "cavern",
+  "david-bowie",
+  "stash",
+  "suzy-greenberg",
+  "divided-sky",
+  "harry-hood",
+  "reba",
+  "tweezer",
+  "runaway-jim",
+  "the-squirming-coil",
+  "foam",
+  "i-am-hydrogen",
+  "split-open-and-melt",
+  "maze",
+  "acdc-bag",
+  "sparkle",
+  "the-lizards",
+  "tweezer-reprise",
+  "llama",
+  "down-with-disease",
+  "bathtub-gin",
+  "rift",
+  "hold-your-head-up",
+  "sample-in-a-jar",
+  "poor-heart",
+  "wilson",
+  "slave-to-the-traffic-light",
+  "fluffhead",
+  "fee",
+  "also-sprach-zarathustra",
+  "i-didnt-know",
+  "character-zero",
+  "my-sweet-one",
+  "its-ice",
+  "wolfmans-brother",
+  "julius",
+  "funky-bitch",
+  "ya-mar",
+  "free",
+  "good-times-bad-times",
+  "ghost",
+  "lawn-boy",
+  "the-oh-kee-pa-ceremony",
+  "the-landlady",
+  "the-moma-dance",
+  "guelah-papyrus",
+  "piper",
+  "simple",
+  "rocky-top",
+  "tube",
+  "theme-from-the-bottom",
+  "silent-in-the-morning",
+]
+
 export async function POST() {
   try {
     // Check admin auth
@@ -13,16 +78,24 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get all songs for random selection
+    // Get frequently played songs from our hardcoded list
     const songs = await prisma.song.findMany({
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
+      where: {
+        slug: {
+          in: FREQUENT_SONG_SLUGS,
+        },
+      },
+      select: { id: true, name: true, slug: true },
     })
+
+    console.log(
+      `[Admin] Found ${songs.length} frequently played songs in database`
+    )
 
     if (songs.length < 13) {
       return NextResponse.json(
         {
-          error: "Need at least 13 songs in database to create test submission",
+          error: `Only ${songs.length} frequently played songs found in database. Need at least 13. Please seed more songs first.`,
         },
         { status: 400 }
       )
@@ -304,7 +377,7 @@ export async function POST() {
 
     return NextResponse.json({
       success: true,
-      message: `Test submission created for ${format(testShow.showDate, "yyyy-MM-dd")}`,
+      message: `Test submission created for ${format(testShow.showDate, "yyyy-MM-dd")} using frequently played songs`,
       testShow: {
         id: testShow.id,
         showDate: format(testShow.showDate, "yyyy-MM-dd"),

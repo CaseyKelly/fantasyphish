@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { format } from "date-fns"
 import {
@@ -110,6 +111,7 @@ export default function ResultsClient({
   stats,
   isAdmin,
 }: ResultsClientProps) {
+  const router = useRouter()
   const [adminLoading, setAdminLoading] = useState<string | null>(null)
   const [deletingSubmission, setDeletingSubmission] = useState<string | null>(
     null
@@ -169,8 +171,8 @@ export default function ResultsClient({
         throw new Error(data.error || "Failed to create test submission")
       }
 
-      // Redirect to the new test show
-      window.location.href = `/results_detail/${data.testShow.id}`
+      // Refresh the results page to show the new test submission
+      router.refresh()
     } catch (err) {
       console.error("Test submission error:", err)
       alert(
@@ -202,7 +204,7 @@ export default function ResultsClient({
                   Admin Testing Controls
                 </h3>
                 <p className="text-sm text-slate-400 mt-1">
-                  Create a test submission from a historical show to test the
+                  Create test submissions from historical shows to test the
                   scoring system
                 </p>
               </div>
@@ -220,9 +222,17 @@ export default function ResultsClient({
                   ) : (
                     <>
                       <Plus className="h-4 w-4" />
-                      Create Test Submission
+                      Create Random Test Submission
                     </>
                   )}
+                </button>
+                <button
+                  onClick={() => (window.location.href = "/pick/test")}
+                  disabled={!!adminLoading}
+                  className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Create Test Submission
                 </button>
               </div>
             </div>
@@ -352,10 +362,10 @@ export default function ResultsClient({
                         Awaiting results
                       </span>
                     )}
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-2 mt-3">
                       <Link
                         href={`/results_detail/${submission.show.id}`}
-                        className="inline-flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 hover:text-blue-300 rounded-lg border border-blue-500/30 hover:border-blue-500/50 transition-all font-medium"
                       >
                         <Eye className="h-4 w-4" />
                         View Details
@@ -369,7 +379,7 @@ export default function ResultsClient({
                             )
                           }
                           disabled={deletingSubmission === submission.id}
-                          className="inline-flex items-center gap-1 text-sm text-red-400 hover:text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 hover:text-red-300 rounded-lg border border-red-500/30 hover:border-red-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                           title="Delete submission"
                         >
                           {deletingSubmission === submission.id ? (

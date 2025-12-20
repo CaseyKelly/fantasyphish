@@ -254,7 +254,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-white">Results</h1>
@@ -310,180 +310,183 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
         </div>
       </Card>
 
-      {/* Setlist */}
-      {setlist && setlist.songs && setlist.songs.length > 0 && (
-        <Card className="p-6">
-          <h2 className="text-xl font-bold text-white mb-4">Setlist</h2>
-          <div className="space-y-4">
-            {Object.entries(setlistBySets || {}).map(([setName, songs]) => (
-              <div key={setName}>
-                <h3 className="text-sm font-semibold text-slate-400 uppercase mb-2">
-                  {setName}
-                </h3>
-                <div className="space-y-1">
-                  {songs.map((song, idx) => {
-                    const pickInfo = getSongPickInfo(song.song, song.position)
-                    return (
-                      <div
-                        key={idx}
-                        className="flex items-center gap-3 py-1.5 border-b border-slate-700"
-                      >
-                        <span className="text-slate-500 w-6 text-right text-sm">
-                          {song.position}
-                        </span>
-                        {pickInfo ? (
-                          <span
-                            className={`text-xl ${pickInfo.isCorrectPosition ? "text-green-400" : "text-yellow-400"}`}
-                          >
-                            ✓
-                          </span>
-                        ) : (
-                          <span className="text-xl text-slate-600">-</span>
-                        )}
-                        <span
-                          className={
-                            pickInfo
-                              ? "text-white font-medium"
-                              : "text-slate-300"
-                          }
+      {/* Setlist and Picks - Side by side on wide screens */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Setlist */}
+        {setlist && setlist.songs && setlist.songs.length > 0 && (
+          <Card className="p-6">
+            <h2 className="text-xl font-bold text-white mb-4">Setlist</h2>
+            <div className="space-y-4">
+              {Object.entries(setlistBySets || {}).map(([setName, songs]) => (
+                <div key={setName}>
+                  <h3 className="text-sm font-semibold text-slate-400 uppercase mb-2">
+                    {setName}
+                  </h3>
+                  <div className="space-y-1">
+                    {songs.map((song, idx) => {
+                      const pickInfo = getSongPickInfo(song.song, song.position)
+                      return (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-3 py-1.5 border-b border-slate-700"
                         >
-                          {song.song}
-                        </span>
-                        {pickInfo && (
-                          <>
+                          <span className="text-slate-500 w-6 text-right text-sm">
+                            {song.position}
+                          </span>
+                          {pickInfo ? (
                             <span
-                              className={`text-xs px-2 py-0.5 rounded-full ${
-                                pickInfo.isCorrectPosition
-                                  ? "bg-green-500/20 text-green-400"
-                                  : "bg-yellow-500/20 text-yellow-400"
-                              }`}
+                              className={`text-xl ${pickInfo.isCorrectPosition ? "text-green-400" : "text-yellow-400"}`}
                             >
-                              {pickInfo.pickType}
+                              ✓
                             </span>
-                            {pickInfo.points > 0 && (
-                              <span className="ml-auto text-green-400 font-semibold text-sm">
-                                +{pickInfo.points}
+                          ) : (
+                            <span className="text-xl text-slate-600">-</span>
+                          )}
+                          <span
+                            className={
+                              pickInfo
+                                ? "text-white font-medium"
+                                : "text-slate-300"
+                            }
+                          >
+                            {song.song}
+                          </span>
+                          {pickInfo && (
+                            <>
+                              <span
+                                className={`text-xs px-2 py-0.5 rounded-full ${
+                                  pickInfo.isCorrectPosition
+                                    ? "bg-green-500/20 text-green-400"
+                                    : "bg-yellow-500/20 text-yellow-400"
+                                }`}
+                              >
+                                {pickInfo.pickType}
                               </span>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    )
-                  })}
+                              {pickInfo.points > 0 && (
+                                <span className="ml-auto text-green-400 font-semibold text-sm">
+                                  +{pickInfo.points}
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Your Picks Summary */}
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-white">
+              {data?.submission?.username && isAdmin
+                ? `${data.submission.username}'s Picks`
+                : "Your Picks"}
+            </h2>
+            {isAdmin && data?.submission && (
+              <button
+                onClick={handleDeleteSubmission}
+                disabled={deletingSubmission}
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-red-500/30 hover:border-red-500/50 rounded-lg"
+                title="Delete this submission"
+              >
+                {deletingSubmission ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    Delete Submission
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+
+          {/* Opener */}
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-slate-400 uppercase mb-2">
+              Opener (3 pts)
+            </h3>
+            <div className="space-y-2">
+              {openerPicks.map((pick) => (
+                <div
+                  key={pick.id}
+                  className="flex items-center justify-between py-2 border-b border-slate-700"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={`text-xl ${getPickStatus(pick)}`}>
+                      {getPickIcon(pick)}
+                    </span>
+                    <span className={getPickStatus(pick)}>{pick.song}</span>
+                  </div>
+                  <span className={`font-semibold ${getPickStatus(pick)}`}>
+                    {pick.pointsEarned > 0 ? `+${pick.pointsEarned}` : ""}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Encore */}
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-slate-400 uppercase mb-2">
+              Encore (3 pts)
+            </h3>
+            <div className="space-y-2">
+              {encorePicks.map((pick) => (
+                <div
+                  key={pick.id}
+                  className="flex items-center justify-between py-2 border-b border-slate-700"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={`text-xl ${getPickStatus(pick)}`}>
+                      {getPickIcon(pick)}
+                    </span>
+                    <span className={getPickStatus(pick)}>{pick.song}</span>
+                  </div>
+                  <span className={`font-semibold ${getPickStatus(pick)}`}>
+                    {pick.pointsEarned > 0 ? `+${pick.pointsEarned}` : ""}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Regular Picks */}
+          <div>
+            <h3 className="text-sm font-semibold text-slate-400 uppercase mb-2">
+              Regular Picks (1 pt each)
+            </h3>
+            <div className="space-y-2">
+              {regularPicks.map((pick) => (
+                <div
+                  key={pick.id}
+                  className="flex items-center gap-3 py-2 border-b border-slate-700"
+                >
+                  <span className={`text-xl ${getPickStatus(pick)}`}>
+                    {getPickIcon(pick)}
+                  </span>
+                  <span className={getPickStatus(pick)}>{pick.song}</span>
+                  {pick.pointsEarned > 0 && (
+                    <span
+                      className={`ml-auto font-semibold ${getPickStatus(pick)}`}
+                    >
+                      +{pick.pointsEarned}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </Card>
-      )}
-
-      {/* Your Picks Summary */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-white">
-            {data?.submission?.username && isAdmin
-              ? `${data.submission.username}'s Picks`
-              : "Your Picks"}
-          </h2>
-          {isAdmin && data?.submission && (
-            <button
-              onClick={handleDeleteSubmission}
-              disabled={deletingSubmission}
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-red-500/30 hover:border-red-500/50 rounded-lg"
-              title="Delete this submission"
-            >
-              {deletingSubmission ? (
-                <>
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4" />
-                  Delete Submission
-                </>
-              )}
-            </button>
-          )}
-        </div>
-
-        {/* Opener */}
-        <div className="mb-6">
-          <h3 className="text-sm font-semibold text-slate-400 uppercase mb-2">
-            Opener (3 pts)
-          </h3>
-          <div className="space-y-2">
-            {openerPicks.map((pick) => (
-              <div
-                key={pick.id}
-                className="flex items-center justify-between py-2 border-b border-slate-700"
-              >
-                <div className="flex items-center gap-3">
-                  <span className={`text-xl ${getPickStatus(pick)}`}>
-                    {getPickIcon(pick)}
-                  </span>
-                  <span className={getPickStatus(pick)}>{pick.song}</span>
-                </div>
-                <span className={`font-semibold ${getPickStatus(pick)}`}>
-                  {pick.pointsEarned > 0 ? `+${pick.pointsEarned}` : ""}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Encore */}
-        <div className="mb-6">
-          <h3 className="text-sm font-semibold text-slate-400 uppercase mb-2">
-            Encore (3 pts)
-          </h3>
-          <div className="space-y-2">
-            {encorePicks.map((pick) => (
-              <div
-                key={pick.id}
-                className="flex items-center justify-between py-2 border-b border-slate-700"
-              >
-                <div className="flex items-center gap-3">
-                  <span className={`text-xl ${getPickStatus(pick)}`}>
-                    {getPickIcon(pick)}
-                  </span>
-                  <span className={getPickStatus(pick)}>{pick.song}</span>
-                </div>
-                <span className={`font-semibold ${getPickStatus(pick)}`}>
-                  {pick.pointsEarned > 0 ? `+${pick.pointsEarned}` : ""}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Regular Picks */}
-        <div>
-          <h3 className="text-sm font-semibold text-slate-400 uppercase mb-2">
-            Regular Picks (1 pt each)
-          </h3>
-          <div className="space-y-2">
-            {regularPicks.map((pick) => (
-              <div
-                key={pick.id}
-                className="flex items-center gap-3 py-2 border-b border-slate-700"
-              >
-                <span className={`text-xl ${getPickStatus(pick)}`}>
-                  {getPickIcon(pick)}
-                </span>
-                <span className={getPickStatus(pick)}>{pick.song}</span>
-                {pick.pointsEarned > 0 && (
-                  <span
-                    className={`ml-auto font-semibold ${getPickStatus(pick)}`}
-                  >
-                    +{pick.pointsEarned}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </Card>
+      </div>
     </div>
   )
 }
