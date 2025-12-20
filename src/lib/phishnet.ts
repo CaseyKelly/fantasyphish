@@ -128,10 +128,15 @@ export async function getSetlist(
       // into a setlist object with a songs array and show metadata
       const firstSong = songData[0]
 
+      // Log the actual API response date vs requested date to debug timezone issues
+      console.log(
+        `[getSetlist] Requested date: ${showDate}, API returned date: ${firstSong.showdate}`
+      )
+
       // Create a proper setlist object using metadata from the first song
       const setlist: PhishNetSetlist = {
         showid: firstSong.showid,
-        showdate: showDate, // Use the requested date, not the API response date
+        showdate: firstSong.showdate, // Use the API response date (the actual show date)
         venue: firstSong.venue,
         city: firstSong.city,
         state: firstSong.state,
@@ -139,10 +144,7 @@ export async function getSetlist(
         setlistnotes: firstSong.setlistnotes,
         tour_name: firstSong.tourname || "",
         tourid: firstSong.tourid,
-        songs: songData.map((song) => ({
-          ...song,
-          showdate: showDate, // Also fix the individual song dates
-        })), // The full array of songs with corrected dates
+        songs: songData, // The full array of songs with their original dates
       }
 
       return setlist
