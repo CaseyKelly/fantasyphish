@@ -100,7 +100,8 @@ export function GuestRegistrationModal({
         router.push("/picks")
         router.refresh()
       }
-    } catch {
+    } catch (error) {
+      console.error("Error during guest sign-in and pick submission:", error)
       toast.error("An unexpected error occurred")
     } finally {
       setIsSubmitting(false)
@@ -147,7 +148,8 @@ export function GuestRegistrationModal({
         toast.success("Account created and picks submitted!")
         router.push("/login?registered=true")
       }
-    } catch {
+    } catch (error) {
+      console.error("Error during guest registration:", error)
       toast.error("An unexpected error occurred")
     } finally {
       setIsSubmitting(false)
