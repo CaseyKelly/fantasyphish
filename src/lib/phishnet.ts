@@ -1,3 +1,5 @@
+import { getTimezoneForLocation } from "./timezone"
+
 const PHISHNET_API_BASE = "https://api.phish.net/v5"
 
 interface PhishNetResponse<T> {
@@ -264,8 +266,6 @@ export function normalizeSongName(name: string): string {
     .replace(/[^\w\s]/g, "")
     .replace(/\s+/g, " ")
 }
-
-import { getTimezoneForLocation } from "./timezone"
 
 // Helper to extract timezone from show data
 export function extractTimezone(show: PhishNetShow): string {

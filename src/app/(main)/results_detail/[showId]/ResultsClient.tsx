@@ -129,7 +129,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
   // Initial fetch
   useEffect(() => {
     fetchResults()
-  }, [showId])
+  }, [showId, fetchResults])
 
   // Poll every 60 seconds if show is not complete
   useEffect(() => {
@@ -140,7 +140,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
 
       return () => clearInterval(interval)
     }
-  }, [data?.show.isComplete, showId])
+  }, [data?.show.isComplete, showId, fetchResults])
 
   if (loading) {
     return (
