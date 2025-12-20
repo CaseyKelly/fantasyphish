@@ -6,7 +6,7 @@ export default async function RegisterPage() {
   // Redirect logged-in users to dashboard
   const session = await auth()
   if (session?.user?.id) {
-    redirect("/dashboard")
+    redirect("/picks")
   }
 
   return <RegisterClient />

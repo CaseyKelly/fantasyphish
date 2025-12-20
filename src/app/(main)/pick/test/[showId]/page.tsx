@@ -38,7 +38,7 @@ export default async function TestPickPage({ params }: TestPickPageProps) {
   }
 
   if (!session.user.isAdmin) {
-    redirect("/dashboard")
+    redirect("/picks")
   }
 
   const { showId } = await params
