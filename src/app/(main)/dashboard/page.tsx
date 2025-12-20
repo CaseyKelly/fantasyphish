@@ -175,10 +175,25 @@ export default function PicksPage() {
       <div className="text-center mb-4">
         <h1 className="text-3xl font-bold text-white mb-2">Make Your Picks</h1>
         {nextShow.tour && (
-          <p className="text-slate-400">{nextShow.tour.name}</p>
+          <p className="text-slate-400 mb-2">{nextShow.tour.name}</p>
         )}
+        <p className="text-gray-400 mb-2">
+          {nextShow.venue} • {nextShow.city}
+          {nextShow.state && `, ${nextShow.state}`} •{" "}
+          {(() => {
+            const [year, month, day] = nextShow.showDate
+              .split("T")[0]
+              .split("-")
+            const dateObj = new Date(
+              parseInt(year),
+              parseInt(month) - 1,
+              parseInt(day)
+            )
+            return formatInTimeZone(dateObj, "UTC", "MMMM d, yyyy")
+          })()}
+        </p>
         {!isLocked && nextShow.lockTime && nextShow.timezone && (
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500">
             Picks lock at{" "}
             {formatInTimeZone(
               new Date(nextShow.lockTime),

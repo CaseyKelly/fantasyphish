@@ -229,6 +229,21 @@ export function HomeClient() {
                     {nextShow.tour.name}
                   </p>
                 )}
+                <p className="text-gray-400 mb-2">
+                  {nextShow.venue} • {nextShow.city}
+                  {nextShow.state && `, ${nextShow.state}`} •{" "}
+                  {(() => {
+                    const [year, month, day] = nextShow.showDate
+                      .split("T")[0]
+                      .split("-")
+                    const dateObj = new Date(
+                      parseInt(year),
+                      parseInt(month) - 1,
+                      parseInt(day)
+                    )
+                    return format(dateObj, "MMMM d, yyyy")
+                  })()}
+                </p>
                 {nextShow.lockTime && (
                   <p className="text-sm text-gray-500">
                     Picks lock at{" "}
