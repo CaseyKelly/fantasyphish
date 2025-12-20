@@ -100,6 +100,8 @@ test.describe("User Authentication", () => {
     const logoutButton = page.getByRole("button", { name: /logout|sign out/i })
     if (await logoutButton.isVisible()) {
       await logoutButton.click()
+      // Wait for logout to complete and redirect to home page
+      await page.waitForURL(/\/$/, { timeout: 10000 })
     } else {
       await page.goto("/login")
     }
