@@ -172,7 +172,7 @@ export default function PicksPage() {
   return (
     <div className="space-y-6 pb-8">
       {/* Header */}
-      <div className="text-center">
+      <div className="text-center mb-4">
         <h1 className="text-3xl font-bold text-white mb-2">Make Your Picks</h1>
         {nextShow.tour && (
           <p className="text-slate-400">{nextShow.tour.name}</p>
@@ -212,6 +212,7 @@ export default function PicksPage() {
         songs={songs}
         existingPicks={existingPicks}
         isLocked={isLocked}
+        guestMode={true}
       />
     </div>
   )

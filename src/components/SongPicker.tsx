@@ -474,7 +474,11 @@ export function SongPicker({
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
               <p className="font-medium text-white text-sm sm:text-base">
-                {isComplete ? "Ready to submit!" : "Complete your picks"}
+                {isComplete
+                  ? existingPicks
+                    ? "Picks saved"
+                    : "Ready to submit!"
+                  : "Complete your picks"}
               </p>
               <p className="text-xs sm:text-sm text-gray-400">
                 {13 - selectedSongIds.size} picks remaining
