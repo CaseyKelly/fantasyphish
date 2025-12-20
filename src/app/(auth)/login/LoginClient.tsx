@@ -18,7 +18,7 @@ function LoginForm() {
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
 
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
+  const callbackUrl = searchParams.get("callbackUrl") || "/picks"
   const verified = searchParams.get("verified")
   const authError = searchParams.get("error")
 

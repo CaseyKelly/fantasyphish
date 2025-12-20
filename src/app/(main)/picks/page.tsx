@@ -5,7 +5,9 @@ import { Sparkles } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { DonutLogo } from "@/components/DonutLogo"
 import { SongPicker } from "@/components/SongPicker"
+import { LoadingDonut } from "@/components/LoadingDonut"
 import { formatInTimeZone } from "date-fns-tz"
+import { getTimezoneAbbr, parseUTCDate } from "@/lib/date-utils"
 
 interface Song {
   id: string
@@ -50,21 +52,6 @@ interface Show {
   } | null
 }
 
-// Timezone abbreviation mapping
-const TIMEZONE_ABBR: Record<string, string> = {
-  "America/New_York": "ET",
-  "America/Chicago": "CT",
-  "America/Denver": "MT",
-  "America/Los_Angeles": "PT",
-  "America/Phoenix": "MST",
-  "America/Anchorage": "AKT",
-  "America/Honolulu": "HST",
-}
-
-function getTimezoneAbbr(timezone: string): string {
-  return TIMEZONE_ABBR[timezone] || timezone
-}
-
 export default function PicksPage() {
   const [nextShow, setNextShow] = useState<Show | null>(null)
   const [songs, setSongs] = useState<Song[]>([])
@@ -106,7 +93,7 @@ export default function PicksPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <DonutLogo size="xl" />
+        <LoadingDonut size="xl" text="Loading your picks..." />
       </div>
     )
   }
@@ -180,17 +167,7 @@ export default function PicksPage() {
         <p className="text-gray-400 mb-2">
           {nextShow.venue} • {nextShow.city}
           {nextShow.state && `, ${nextShow.state}`} •{" "}
-          {(() => {
-            const [year, month, day] = nextShow.showDate
-              .split("T")[0]
-              .split("-")
-            const dateObj = new Date(
-              parseInt(year),
-              parseInt(month) - 1,
-              parseInt(day)
-            )
-            return formatInTimeZone(dateObj, "UTC", "MMMM d, yyyy")
-          })()}
+          {parseUTCDate(nextShow.showDate, "MMMM d, yyyy")}
         </p>
         {!isLocked && nextShow.lockTime && nextShow.timezone && (
           <p className="text-sm text-gray-500">
@@ -201,17 +178,7 @@ export default function PicksPage() {
               "h a"
             )}{" "}
             {getTimezoneAbbr(nextShow.timezone)} on{" "}
-            {(() => {
-              const [year, month, day] = nextShow.showDate
-                .split("T")[0]
-                .split("-")
-              const dateObj = new Date(
-                parseInt(year),
-                parseInt(month) - 1,
-                parseInt(day)
-              )
-              return formatInTimeZone(dateObj, "UTC", "MMM d")
-            })()}
+            {parseUTCDate(nextShow.showDate, "MMM d")}
           </p>
         )}
       </div>

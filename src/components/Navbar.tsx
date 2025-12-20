@@ -21,7 +21,7 @@ export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   const navItems = [
-    { href: "/dashboard", label: "My Picks", icon: Music },
+    { href: "/picks", label: "My Picks", icon: Music },
     { href: "/results", label: "Results", icon: ClipboardList },
     { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   ]
@@ -34,7 +34,7 @@ export function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link
-            href={session ? "/dashboard" : "/"}
+            href={session ? "/picks" : "/"}
             className="flex items-center space-x-2"
           >
             <DonutLogo size="md" />

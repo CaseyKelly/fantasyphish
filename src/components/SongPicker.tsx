@@ -192,7 +192,7 @@ export function SongPicker({
         if (onSubmitSuccess) {
           onSubmitSuccess()
         } else {
-          router.push(isTestMode ? "/results" : "/dashboard")
+          router.push(isTestMode ? "/results" : "/picks")
           router.refresh()
         }
       }

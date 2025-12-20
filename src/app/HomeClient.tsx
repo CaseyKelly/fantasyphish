@@ -8,7 +8,9 @@ import { Target, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DonutLogo } from "@/components/DonutLogo"
 import { SongPicker } from "@/components/SongPicker"
+import { LoadingDonut } from "@/components/LoadingDonut"
 import { GuestRegistrationModal } from "@/components/GuestRegistrationModal"
+import { getTimezoneAbbr, parseUTCDate } from "@/lib/date-utils"
 
 interface Song {
   id: string
@@ -36,21 +38,6 @@ interface Show {
   lockTime: string | null
   timezone: string | null
   tour: Tour | null
-}
-
-// Timezone abbreviation mapping
-const TIMEZONE_ABBR: Record<string, string> = {
-  "America/New_York": "ET",
-  "America/Chicago": "CT",
-  "America/Denver": "MT",
-  "America/Los_Angeles": "PT",
-  "America/Phoenix": "MST",
-  "America/Anchorage": "AKT",
-  "America/Honolulu": "HST",
-}
-
-function getTimezoneAbbr(timezone: string): string {
-  return TIMEZONE_ABBR[timezone] || timezone
 }
 
 export function HomeClient() {
@@ -95,11 +82,7 @@ export function HomeClient() {
     const lockDate = new Date(lockTime)
 
     // Parse showDate as UTC to avoid timezone conversion issues
-    // The showDate is stored as UTC midnight (e.g., "2025-12-28T00:00:00.000Z")
-    // Extract YYYY-MM-DD and format as "Dec 28"
-    const [year, month, day] = showDate.split("T")[0].split("-")
-    const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
-    const formattedDate = format(dateObj, "MMM d")
+    const formattedDate = parseUTCDate(showDate, "MMM d")
 
     if (timezone) {
       // Show venue time (7 PM MT)
@@ -232,17 +215,7 @@ export function HomeClient() {
                 <p className="text-gray-400 mb-2">
                   {nextShow.venue} • {nextShow.city}
                   {nextShow.state && `, ${nextShow.state}`} •{" "}
-                  {(() => {
-                    const [year, month, day] = nextShow.showDate
-                      .split("T")[0]
-                      .split("-")
-                    const dateObj = new Date(
-                      parseInt(year),
-                      parseInt(month) - 1,
-                      parseInt(day)
-                    )
-                    return format(dateObj, "MMMM d, yyyy")
-                  })()}
+                  {parseUTCDate(nextShow.showDate, "MMMM d, yyyy")}
                 </p>
                 {nextShow.lockTime && (
                   <p className="text-sm text-gray-500">
