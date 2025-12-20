@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { toast } from "sonner"
@@ -49,6 +49,7 @@ interface SongPickerProps {
   isLocked: boolean
   isTestMode?: boolean
   guestMode?: boolean
+  hideHeader?: boolean
   onGuestSubmit?: (picks: Pick[]) => void
   onSubmitSuccess?: () => void
 }
@@ -60,6 +61,7 @@ export function SongPicker({
   isLocked,
   isTestMode = false,
   guestMode = false,
+  hideHeader = false,
   onGuestSubmit,
   onSubmitSuccess,
 }: SongPickerProps) {
@@ -69,6 +71,20 @@ export function SongPicker({
   const [expandedSection, setExpandedSection] = useState<string | null>(
     "opener"
   )
+  const [isMobile, setIsMobile] = useState(false)
+  const [mobileModalOpen, setMobileModalOpen] = useState<
+    "OPENER" | "ENCORE" | "REGULAR" | null
+  >(null)
+
+  // Detect mobile viewport
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640)
+    }
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
 
   // Initialize picks from existing submission
   const [openerPick, setOpenerPick] = useState<Pick | null>(
@@ -115,15 +131,27 @@ export function SongPicker({
 
     if (pickType === "OPENER") {
       setOpenerPick(pick)
-      setExpandedSection("encore")
+      if (isMobile) {
+        setMobileModalOpen(null)
+      } else {
+        setExpandedSection("encore")
+      }
     } else if (pickType === "ENCORE") {
       setEncorePick(pick)
-      setExpandedSection("regular")
+      if (isMobile) {
+        setMobileModalOpen(null)
+      } else {
+        setExpandedSection("regular")
+      }
     } else {
       if (regularPicks.length < 11) {
         setRegularPicks([...regularPicks, pick])
         if (regularPicks.length === 10) {
-          setExpandedSection(null)
+          if (isMobile) {
+            setMobileModalOpen(null)
+          } else {
+            setExpandedSection(null)
+          }
         }
       }
     }
@@ -241,10 +269,217 @@ export function SongPicker({
     </div>
   )
 
+  const renderMobileModal = () => {
+    if (!mobileModalOpen) return null
+
+    const pickType = mobileModalOpen
+    let title = ""
+    let currentPick = null
+    let picks: Pick[] = []
+
+    if (pickType === "OPENER") {
+      title = "Select Opener"
+      currentPick = openerPick
+    } else if (pickType === "ENCORE") {
+      title = "Select Encore"
+      currentPick = encorePick
+    } else {
+      title = "Select Regular Picks"
+      picks = regularPicks
+    }
+
+    return (
+      <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+        <div className="bg-[#2d4654] w-full max-w-2xl rounded-lg max-h-[90vh] flex flex-col">
+          {/* Modal Header */}
+          <div className="flex items-center justify-between p-4 border-b border-[#3d5a6c]">
+            <h2 className="text-xl font-semibold text-white">{title}</h2>
+            <button
+              onClick={() => setMobileModalOpen(null)}
+              className="p-2 hover:bg-[#3d5a6c] rounded-lg transition-colors"
+            >
+              <X className="h-5 w-5 text-gray-400" />
+            </button>
+          </div>
+
+          {/* Current Selection */}
+          {pickType !== "REGULAR" && currentPick && !isLocked && (
+            <div className="p-4 border-b border-[#3d5a6c]">
+              <button
+                onClick={() => handleRemovePick(pickType)}
+                className="w-full flex items-center justify-between px-4 py-3 bg-[#3d5a6c] rounded-lg text-white hover:bg-[#4a6b7d]"
+              >
+                <span>Current: {currentPick.songName}</span>
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+
+          {pickType === "REGULAR" && picks.length > 0 && !isLocked && (
+            <div className="p-4 border-b border-[#3d5a6c]">
+              <p className="text-sm text-gray-400 mb-2">
+                Selected ({picks.length}/11):
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {picks.map((pick) => (
+                  <button
+                    key={pick.songId}
+                    onClick={() => handleRemovePick("REGULAR", pick.songId)}
+                    className="flex items-center space-x-1 px-3 py-1.5 bg-[#3d5a6c] rounded-full text-sm text-white hover:bg-[#4a6b7d]"
+                  >
+                    <span>{pick.songName}</span>
+                    <X className="h-3 w-3" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Search */}
+          <div className="p-4 border-b border-[#3d5a6c]">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search songs..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Song List */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {pickType === "REGULAR" && picks.length === 11 ? (
+              <p className="text-center text-green-400 py-4">
+                All 11 regular picks selected!
+              </p>
+            ) : (
+              renderSongList(pickType)
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const renderPickCard = (
+    pickType: "OPENER" | "ENCORE" | "REGULAR",
+    title: string,
+    subtitle: string,
+    icon: React.ReactNode,
+    currentPick: Pick | null,
+    pickCount?: number
+  ) => {
+    const isExpanded = expandedSection === pickType.toLowerCase()
+
+    return (
+      <Card>
+        <CardHeader
+          className="cursor-pointer"
+          onClick={() => {
+            if (isMobile && !isLocked) {
+              setMobileModalOpen(pickType)
+            } else {
+              setExpandedSection(isExpanded ? null : pickType.toLowerCase())
+            }
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div
+                className={`p-2 rounded-lg ${
+                  pickType === "REGULAR" ? "bg-[#3d5a6c]" : "bg-[#c23a3a]/20"
+                }`}
+              >
+                {icon}
+              </div>
+              <div>
+                <h3 className="font-semibold text-white">{title}</h3>
+                <p className="text-sm text-gray-400">{subtitle}</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              {pickType === "REGULAR" ? (
+                pickCount === 11 ? (
+                  <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium">
+                    Complete
+                  </span>
+                ) : (
+                  <span className="text-gray-500 text-sm">
+                    {11 - (pickCount || 0)} more needed
+                  </span>
+                )
+              ) : currentPick ? (
+                <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium max-w-[150px] truncate">
+                  {currentPick.songName}
+                </span>
+              ) : (
+                <span className="text-gray-500 text-sm">Not selected</span>
+              )}
+              {!isMobile &&
+                (isExpanded ? (
+                  <ChevronUp className="h-5 w-5 text-gray-400" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-gray-400" />
+                ))}
+            </div>
+          </div>
+        </CardHeader>
+        {!isMobile && isExpanded && (
+          <CardContent>
+            {pickType !== "REGULAR" && currentPick && !isLocked && (
+              <button
+                onClick={() => handleRemovePick(pickType)}
+                className="mb-4 flex items-center space-x-2 px-3 py-2 bg-[#3d5a6c] rounded-lg text-sm text-white hover:bg-[#4a6b7d]"
+              >
+                <X className="h-4 w-4" />
+                <span>Remove: {currentPick.songName}</span>
+              </button>
+            )}
+            {pickType === "REGULAR" && (pickCount || 0) > 0 && !isLocked && (
+              <div className="mb-4 flex flex-wrap gap-2">
+                {regularPicks.map((pick) => (
+                  <button
+                    key={pick.songId}
+                    onClick={() => handleRemovePick("REGULAR", pick.songId)}
+                    className="flex items-center space-x-1 px-3 py-1.5 bg-[#3d5a6c] rounded-full text-sm text-white hover:bg-[#4a6b7d]"
+                  >
+                    <span>{pick.songName}</span>
+                    <X className="h-3 w-3" />
+                  </button>
+                ))}
+              </div>
+            )}
+            {pickType === "REGULAR" && pickCount === 11 ? (
+              <p className="text-center text-green-400 py-4">
+                All 11 regular picks selected!
+              </p>
+            ) : (
+              renderSongList(pickType)
+            )}
+          </CardContent>
+        )}
+      </Card>
+    )
+  }
+
   return (
     <div className="space-y-6">
-      {/* Show Header - only show if not in guest mode */}
-      {!guestMode && (
+      {/* Mobile Modal */}
+      {isMobile && renderMobileModal()}
+
+      {/* Show Header - only show if not in guest mode and not hidden */}
+      {!guestMode && !hideHeader && (
         <div className="text-center">
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
             {isTestMode ? "Create Test Submission" : "Make Your Picks"}
@@ -286,194 +521,52 @@ export function SongPicker({
         </div>
       )}
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-        <Input
-          type="text"
-          placeholder="Search songs..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
-        {searchQuery && (
-          <button
-            onClick={() => setSearchQuery("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        )}
-      </div>
+      {/* Search - only show on desktop */}
+      {!isMobile && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Search songs..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Pick Sections */}
       <div className="space-y-4">
-        {/* Opener Section */}
-        <Card>
-          <CardHeader
-            className="cursor-pointer"
-            onClick={() =>
-              setExpandedSection(expandedSection === "opener" ? null : "opener")
-            }
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-[#c23a3a]/20 rounded-lg">
-                  <Star className="h-5 w-5 text-[#c23a3a]" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-white">Opener Pick</h3>
-                  <p className="text-sm text-gray-400">3 points if correct</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                {openerPick ? (
-                  <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium">
-                    {openerPick.songName}
-                  </span>
-                ) : (
-                  <span className="text-gray-500 text-sm">Not selected</span>
-                )}
-                {expandedSection === "opener" ? (
-                  <ChevronUp className="h-5 w-5 text-gray-400" />
-                ) : (
-                  <ChevronDown className="h-5 w-5 text-gray-400" />
-                )}
-              </div>
-            </div>
-          </CardHeader>
-          {expandedSection === "opener" && (
-            <CardContent>
-              {openerPick && !isLocked && (
-                <button
-                  onClick={() => handleRemovePick("OPENER")}
-                  className="mb-4 flex items-center space-x-2 px-3 py-2 bg-[#3d5a6c] rounded-lg text-sm text-white hover:bg-[#4a6b7d]"
-                >
-                  <X className="h-4 w-4" />
-                  <span>Remove: {openerPick.songName}</span>
-                </button>
-              )}
-              {renderSongList("OPENER")}
-            </CardContent>
-          )}
-        </Card>
-
-        {/* Encore Section */}
-        <Card>
-          <CardHeader
-            className="cursor-pointer"
-            onClick={() =>
-              setExpandedSection(expandedSection === "encore" ? null : "encore")
-            }
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-[#c23a3a]/20 rounded-lg">
-                  <Star className="h-5 w-5 text-[#c23a3a]" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-white">Encore Pick</h3>
-                  <p className="text-sm text-gray-400">3 points if correct</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                {encorePick ? (
-                  <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium">
-                    {encorePick.songName}
-                  </span>
-                ) : (
-                  <span className="text-gray-500 text-sm">Not selected</span>
-                )}
-                {expandedSection === "encore" ? (
-                  <ChevronUp className="h-5 w-5 text-gray-400" />
-                ) : (
-                  <ChevronDown className="h-5 w-5 text-gray-400" />
-                )}
-              </div>
-            </div>
-          </CardHeader>
-          {expandedSection === "encore" && (
-            <CardContent>
-              {encorePick && !isLocked && (
-                <button
-                  onClick={() => handleRemovePick("ENCORE")}
-                  className="mb-4 flex items-center space-x-2 px-3 py-2 bg-[#3d5a6c] rounded-lg text-sm text-white hover:bg-[#4a6b7d]"
-                >
-                  <X className="h-4 w-4" />
-                  <span>Remove: {encorePick.songName}</span>
-                </button>
-              )}
-              {renderSongList("ENCORE")}
-            </CardContent>
-          )}
-        </Card>
-
-        {/* Regular Picks Section */}
-        <Card>
-          <CardHeader
-            className="cursor-pointer"
-            onClick={() =>
-              setExpandedSection(
-                expandedSection === "regular" ? null : "regular"
-              )
-            }
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-[#3d5a6c] rounded-lg">
-                  <Music className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-white">Regular Picks</h3>
-                  <p className="text-sm text-gray-400">
-                    1 point each ({regularPicks.length}/11 selected)
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                {regularPicks.length === 11 ? (
-                  <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium">
-                    Complete
-                  </span>
-                ) : (
-                  <span className="text-gray-500 text-sm">
-                    {11 - regularPicks.length} more needed
-                  </span>
-                )}
-                {expandedSection === "regular" ? (
-                  <ChevronUp className="h-5 w-5 text-gray-400" />
-                ) : (
-                  <ChevronDown className="h-5 w-5 text-gray-400" />
-                )}
-              </div>
-            </div>
-          </CardHeader>
-          {expandedSection === "regular" && (
-            <CardContent>
-              {/* Selected regular picks */}
-              {regularPicks.length > 0 && !isLocked && (
-                <div className="mb-4 flex flex-wrap gap-2">
-                  {regularPicks.map((pick) => (
-                    <button
-                      key={pick.songId}
-                      onClick={() => handleRemovePick("REGULAR", pick.songId)}
-                      className="flex items-center space-x-1 px-3 py-1.5 bg-[#3d5a6c] rounded-full text-sm text-white hover:bg-[#4a6b7d]"
-                    >
-                      <span>{pick.songName}</span>
-                      <X className="h-3 w-3" />
-                    </button>
-                  ))}
-                </div>
-              )}
-              {regularPicks.length < 11 && renderSongList("REGULAR")}
-              {regularPicks.length === 11 && (
-                <p className="text-center text-green-400 py-4">
-                  All 11 regular picks selected!
-                </p>
-              )}
-            </CardContent>
-          )}
-        </Card>
+        {renderPickCard(
+          "OPENER",
+          "Opener Pick",
+          "3 points if correct",
+          <Star className="h-5 w-5 text-[#c23a3a]" />,
+          openerPick
+        )}
+        {renderPickCard(
+          "ENCORE",
+          "Encore Pick",
+          "3 points if correct",
+          <Star className="h-5 w-5 text-[#c23a3a]" />,
+          encorePick
+        )}
+        {renderPickCard(
+          "REGULAR",
+          "Regular Picks",
+          `1 point each (${regularPicks.length}/11 selected)`,
+          <Music className="h-5 w-5 text-white" />,
+          null,
+          regularPicks.length
+        )}
       </div>
 
       {/* Submit Button */}
