@@ -84,18 +84,26 @@ export async function POST() {
       // Pick a random show from the available shows
       const randomShow =
         existingShows[Math.floor(Math.random() * existingShows.length)]
+
       // Use UTC date to avoid timezone shifting
       const dateString = randomShow.showDate.toISOString().split("T")[0] // Gets YYYY-MM-DD in UTC
 
       console.log(
         `[Admin] Attempt ${attempts + 1}: Checking show ${dateString} (${randomShow.venue})`
       )
-      console.log(`[Admin] Debug - Original showDate:`, randomShow.showDate)
+      console.log(
+        `[Admin] Debug - Original showDate object:`,
+        randomShow.showDate
+      )
+      console.log(`[Admin] Debug - Type:`, typeof randomShow.showDate)
       console.log(
         `[Admin] Debug - UTC ISO string:`,
         randomShow.showDate.toISOString()
       )
-      console.log(`[Admin] Debug - Date string for phish.net:`, dateString)
+      console.log(
+        `[Admin] Debug - Extracted date string for phish.net API:`,
+        dateString
+      )
 
       try {
         // Verify this show has setlist data in phish.net
@@ -107,6 +115,9 @@ export async function POST() {
 
         if (setlist) {
           console.log(
+            `[Admin] Setlist metadata - showdate: ${setlist.showdate}, venue: ${setlist.venue}`
+          )
+          console.log(
             `[Admin] Setlist songs array:`,
             setlist.songs ? `${setlist.songs.length} songs` : "No songs array"
           )
@@ -116,10 +127,16 @@ export async function POST() {
               setlist.songs[0]?.song || "No first song"
             )
           }
+          // Check for date mismatch
+          if (setlist.showdate !== dateString) {
+            console.warn(
+              `[Admin] DATE MISMATCH! Requested ${dateString} but got setlist for ${setlist.showdate}`
+            )
+          }
         }
 
         if (setlist && setlist.songs && setlist.songs.length >= 10) {
-          // Create a test show based on this existing show
+          // Use the existing real show for this date
           testShow = await prisma.show.upsert({
             where: { showDate: new Date(dateString + "T00:00:00.000Z") },
             update: {},
@@ -137,7 +154,7 @@ export async function POST() {
             },
           })
           console.log(
-            `[Admin] Created test show based on ${randomShow.venue} (${dateString})`
+            `[Admin] Created test show based on ${randomShow.venue} (dateString: ${dateString}, actual DB date: ${testShow.showDate.toISOString()})`
           )
           break
         }
@@ -214,18 +231,29 @@ export async function POST() {
     })
 
     console.log(
-      `[Admin] Created test submission for ${testShow.venue} (${format(testShow.showDate, "yyyy-MM-dd")})`
+      `[Admin] Created test submission for ${testShow.venue} (UTC: ${testShow.showDate.toISOString().split("T")[0]})`
     )
 
     // Now score the submission immediately since it's a test submission
     try {
       const dateString = testShow.showDate.toISOString().split("T")[0]
+      console.log(
+        `[Admin] Fetching setlist for scoring - testShow.showDate: ${testShow.showDate.toISOString()}, dateString: ${dateString}`
+      )
       const setlist = await getSetlist(dateString)
 
       if (setlist && setlist.songs) {
         console.log(
           `[Admin] Scoring test submission with ${setlist.songs.length} songs from setlist`
         )
+        console.log(
+          `[Admin] Setlist date verification - requested: ${dateString}, received: ${setlist.showdate}`
+        )
+        if (setlist.showdate !== dateString) {
+          console.error(
+            `[Admin] ERROR: Date mismatch when scoring! Test show date is ${dateString} but setlist is for ${setlist.showdate}`
+          )
+        }
 
         // Score the submission
         const { scoredPicks, totalPoints } = scoreSubmission(

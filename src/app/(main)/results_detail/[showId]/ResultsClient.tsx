@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
-import { format } from "date-fns"
+import { format, parseISO } from "date-fns"
 import { RefreshCw, Trash2 } from "lucide-react"
 
 interface Pick {
@@ -165,7 +165,11 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
   }
 
   const { show, submission, setlist } = data
-  const showDate = new Date(show.showDate)
+  // Parse as UTC to avoid timezone conversion issues
+  // The showDate is stored as UTC midnight (e.g., "2025-07-23T00:00:00.000Z")
+  // We need to display it as the actual show date, not convert to local timezone
+  const showDateStr = show.showDate.split("T")[0] // Extract YYYY-MM-DD from ISO string
+  const showDate = parseISO(showDateStr + "T12:00:00.000Z") // Parse at noon UTC to avoid timezone issues
   const isInProgress =
     !show.isComplete && setlist && setlist.songs && setlist.songs.length > 0
   const isTestShow = show.venue.includes("Test Venue")

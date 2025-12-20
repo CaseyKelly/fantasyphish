@@ -229,7 +229,10 @@ export function SongPicker({
           </span>
           <span className="flex items-center">
             <Calendar className="h-4 w-4 mr-1" />
-            {format(new Date(show.showDate), "MMMM d, yyyy")}
+            {format(
+              new Date(show.showDate.split("T")[0] + "T12:00:00.000Z"),
+              "MMMM d, yyyy"
+            )}
           </span>
         </div>
       </div>
