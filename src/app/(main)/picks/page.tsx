@@ -194,7 +194,7 @@ export default function PicksPage() {
         songs={songs}
         existingPicks={existingPicks}
         isLocked={isLocked}
-        guestMode={false}
+        hideHeader={true}
         onSubmitSuccess={fetchData}
       />
     </div>
