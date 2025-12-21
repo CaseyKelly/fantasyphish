@@ -144,18 +144,11 @@ export default async function LeaderboardPage({
                     {nextShow.tour.name}
                   </p>
                   <p className="text-sm text-slate-400">
-                    {parseUTCDate(
-                      new Date(nextShow.tour.startDate).toISOString(),
-                      "MMM d, yyyy"
-                    )}
+                    {parseUTCDate(nextShow.tour.startDate, "MMM d, yyyy")}
                     {nextShow.tour.endDate && (
                       <>
                         {" "}
-                        -{" "}
-                        {parseUTCDate(
-                          new Date(nextShow.tour.endDate).toISOString(),
-                          "MMM d, yyyy"
-                        )}
+                        - {parseUTCDate(nextShow.tour.endDate, "MMM d, yyyy")}
                       </>
                     )}
                   </p>
@@ -168,10 +161,7 @@ export default async function LeaderboardPage({
                     Next: {nextShow.venue}
                     {nextShow.city && `, ${nextShow.city}`}
                     {nextShow.state && `, ${nextShow.state}`} •{" "}
-                    {parseUTCDate(
-                      new Date(nextShow.showDate).toISOString(),
-                      "MMM d"
-                    )}
+                    {parseUTCDate(nextShow.showDate, "MMM d")}
                   </span>
                 </div>
               )}
