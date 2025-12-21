@@ -1,10 +1,28 @@
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
-import { Trophy, Medal, User, TrendingUp } from "lucide-react"
+import { Trophy, Medal, User, TrendingUp, Calendar, MapPin } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { parseUTCDate } from "@/lib/date-utils"
 
 interface LeaderboardPageProps {
   searchParams: Promise<{ tourId?: string }>
+}
+
+async function getNextShow() {
+  const nextShow = await prisma.show.findFirst({
+    where: {
+      isComplete: false,
+      showDate: {
+        gte: new Date(),
+      },
+    },
+    orderBy: { showDate: "asc" },
+    include: {
+      tour: true,
+    },
+  })
+
+  return nextShow
 }
 
 async function getLeaderboard(tourId?: string) {
@@ -80,7 +98,9 @@ export default async function LeaderboardPage({
   const params = await searchParams
   const tourId = params.tourId
 
-  const leaderboard = await getLeaderboard(tourId)
+  const nextShow = await getNextShow()
+  const currentTourId = tourId || nextShow?.tourId || undefined
+  const leaderboard = await getLeaderboard(currentTourId)
 
   const currentUserRank = session?.user?.id
     ? leaderboard.find((u) => u.userId === session.user.id)
@@ -109,6 +129,46 @@ export default async function LeaderboardPage({
       <div>
         <h1 className="text-3xl font-bold text-white">Leaderboard</h1>
       </div>
+
+      {/* Current Tour Info */}
+      {nextShow?.tour && (
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardContent className="py-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center space-x-4">
+                <div className="p-2 bg-orange-500/20 rounded-lg">
+                  <Calendar className="h-5 w-5 text-orange-500" />
+                </div>
+                <div>
+                  <p className="font-semibold text-white">
+                    {nextShow.tour.name}
+                  </p>
+                  <p className="text-sm text-slate-400">
+                    {parseUTCDate(nextShow.tour.startDate, "MMM d, yyyy")}
+                    {nextShow.tour.endDate && (
+                      <>
+                        {" "}
+                        - {parseUTCDate(nextShow.tour.endDate, "MMM d, yyyy")}
+                      </>
+                    )}
+                  </p>
+                </div>
+              </div>
+              {nextShow.venue && (
+                <div className="flex items-center space-x-2 text-sm text-slate-400">
+                  <MapPin className="h-4 w-4" />
+                  <span>
+                    Next: {nextShow.venue}
+                    {nextShow.city && `, ${nextShow.city}`}
+                    {nextShow.state && `, ${nextShow.state}`} •{" "}
+                    {parseUTCDate(nextShow.showDate, "MMM d")}
+                  </span>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Current User Rank */}
       {currentUserRank && (
