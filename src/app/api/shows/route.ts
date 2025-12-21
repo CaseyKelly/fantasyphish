@@ -12,11 +12,15 @@ export async function GET(request: NextRequest) {
     if (nextOnly === "true") {
       const session = await auth()
 
+      // Get start of today in UTC to properly compare dates
+      const today = new Date()
+      today.setUTCHours(0, 0, 0, 0)
+
       const nextShow = await prisma.show.findFirst({
         where: {
           isComplete: false,
           showDate: {
-            gte: new Date(),
+            gte: today,
           },
         },
         orderBy: { showDate: "asc" },
@@ -66,7 +70,9 @@ export async function GET(request: NextRequest) {
 
     // Sync with database
     for (const show of upcomingShows) {
+      // Normalize showDate to midnight UTC to prevent duplicate shows
       const showDate = new Date(show.showdate)
+      showDate.setUTCHours(0, 0, 0, 0)
 
       await prisma.show.upsert({
         where: { showDate },
