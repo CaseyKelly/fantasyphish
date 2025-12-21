@@ -16,9 +16,16 @@ export async function createTestUser(
     username: string
     password: string
     verified?: boolean
+    isAdmin?: boolean
   }
 ): Promise<{ email: string; username: string; password: string }> {
-  const { email, username, password, verified = true } = options
+  const {
+    email,
+    username,
+    password,
+    verified = true,
+    isAdmin = false,
+  } = options
 
   const hashedPassword = await hashPassword(password)
 
@@ -31,6 +38,7 @@ export async function createTestUser(
       verificationToken: verified
         ? null
         : crypto.randomBytes(32).toString("hex"),
+      isAdmin,
     },
   })
 
@@ -47,22 +55,18 @@ export const test = base.extend<{
     password: string
     verified?: boolean
   }) => Promise<{ email: string; username: string; password: string }>
+  createAdmin: (options: {
+    email: string
+    username: string
+    password: string
+    verified?: boolean
+  }) => Promise<{ email: string; username: string; password: string }>
 }>({
   // Provide a Prisma client for tests
   prisma: async ({}, use) => {
     const prisma = new PrismaClient()
     await use(prisma)
     await prisma.$disconnect()
-  },
-
-  // Helper to create test users directly in DB
-  createUser: async ({ prisma, cleanupEmail }, use) => {
-    await use(async (options) => {
-      const result = await createTestUser(prisma, options)
-      // Register for cleanup only after successful creation
-      await cleanupEmail(options.email)
-      return result
-    })
   },
 
   // Automatically cleanup test users after each test
@@ -85,6 +89,26 @@ export const test = base.extend<{
         console.log(`Could not delete user ${email}:`, error)
       }
     }
+  },
+
+  // Helper to create test users directly in DB
+  createUser: async ({ prisma, cleanupEmail }, use) => {
+    await use(async (options) => {
+      const result = await createTestUser(prisma, options)
+      // Register for cleanup only after successful creation
+      await cleanupEmail(options.email)
+      return result
+    })
+  },
+
+  // Helper to create admin users directly in DB
+  createAdmin: async ({ prisma, cleanupEmail }, use) => {
+    await use(async (options) => {
+      const result = await createTestUser(prisma, { ...options, isAdmin: true })
+      // Register for cleanup only after successful creation
+      await cleanupEmail(options.email)
+      return result
+    })
   },
 })
 
