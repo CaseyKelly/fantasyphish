@@ -103,7 +103,10 @@ async function syncYear(year: number): Promise<void> {
 
     // Create/update shows
     for (const show of tourData.shows) {
+      // Normalize showDate to midnight UTC to prevent duplicate shows
       const showDate = new Date(show.showdate)
+      showDate.setUTCHours(0, 0, 0, 0)
+
       const timezone = getTimezoneForLocation(show.state)
       const lockTime = getShowLockTime(showDate, timezone)
 
