@@ -53,9 +53,9 @@ test.describe("Admin Authorization", () => {
       },
     })
 
-    // Get a song to use for picks
-    const song = await prisma.song.findFirst()
-    if (!song) throw new Error("No songs found in database")
+    // Get songs to use for picks
+    const songs = await prisma.song.findMany({ take: 2 })
+    if (songs.length < 2) throw new Error("Not enough songs in database")
 
     // Create submission for the user
     const submission = await prisma.submission.create({
@@ -64,8 +64,8 @@ test.describe("Admin Authorization", () => {
         showId: show.id,
         picks: {
           create: [
-            { songId: song.id, pickType: "OPENER" },
-            { songId: song.id, pickType: "ENCORE" },
+            { songId: songs[0].id, pickType: "OPENER" },
+            { songId: songs[1].id, pickType: "ENCORE" },
           ],
         },
       },
@@ -132,9 +132,9 @@ test.describe("Admin Authorization", () => {
       },
     })
 
-    // Get a song to use for picks
-    const song = await prisma.song.findFirst()
-    if (!song) throw new Error("No songs found in database")
+    // Get songs to use for picks
+    const songs = await prisma.song.findMany({ take: 2 })
+    if (songs.length < 2) throw new Error("Not enough songs in database")
 
     // Create submission for the user
     const submission = await prisma.submission.create({
@@ -143,8 +143,8 @@ test.describe("Admin Authorization", () => {
         showId: show.id,
         picks: {
           create: [
-            { songId: song.id, pickType: "OPENER" },
-            { songId: song.id, pickType: "ENCORE" },
+            { songId: songs[0].id, pickType: "OPENER" },
+            { songId: songs[1].id, pickType: "ENCORE" },
           ],
         },
       },
