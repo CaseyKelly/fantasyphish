@@ -12,8 +12,18 @@ export async function POST(request: NextRequest) {
     const body = await request.text()
     const event = JSON.parse(body)
 
-    // Verify webhook signature (optional but recommended for production)
-    if (process.env.RESEND_WEBHOOK_SECRET) {
+    // Verify webhook signature (required in production for security)
+    const webhookSecret = process.env.RESEND_WEBHOOK_SECRET
+
+    if (process.env.NODE_ENV === "production" && !webhookSecret) {
+      console.error("RESEND_WEBHOOK_SECRET not configured in production")
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      )
+    }
+
+    if (webhookSecret) {
       const svixId = request.headers.get("svix-id")
       const svixTimestamp = request.headers.get("svix-timestamp")
       const svixSignature = request.headers.get("svix-signature")
@@ -34,7 +44,7 @@ export async function POST(request: NextRequest) {
             timestamp: svixTimestamp,
             signature: svixSignature,
           },
-          webhookSecret: process.env.RESEND_WEBHOOK_SECRET,
+          webhookSecret,
         })
       } catch (error) {
         console.error("Webhook verification failed:", error)

@@ -7,11 +7,24 @@ import { format } from "date-fns"
 // This endpoint is called by the cron job to score completed shows
 export async function POST(request: NextRequest) {
   try {
-    // Verify cron secret (optional, for security)
+    // Verify cron secret (required in production)
     const authHeader = request.headers.get("authorization")
     const cronSecret = process.env.CRON_SECRET
 
+    // In production, CRON_SECRET is mandatory
+    if (process.env.NODE_ENV === "production" && !cronSecret) {
+      console.error("CRON_SECRET not configured in production environment")
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      )
+    }
+
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+      console.warn("Unauthorized cron job attempt", {
+        hasAuth: !!authHeader,
+        timestamp: new Date().toISOString(),
+      })
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 

@@ -5,6 +5,7 @@ import { hasShowStarted } from "@/lib/phishnet"
 import { format } from "date-fns"
 import { z } from "zod"
 import { PickType } from "@prisma/client"
+import { withRateLimit, rateLimits } from "@/lib/rate-limit"
 
 const submitPicksSchema = z.object({
   showId: z.string(),
@@ -17,7 +18,7 @@ const submitPicksSchema = z.object({
 })
 
 // GET - Get user's submission for a show
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
     const session = await auth()
     if (!session?.user?.id) {
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
 }
 
 // POST - Submit picks for a show
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
     const session = await auth()
     if (!session?.user?.id) {
@@ -223,3 +224,7 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+// Apply rate limiting to both GET and POST
+export const GET = withRateLimit(handleGet, rateLimits.api)
+export const POST = withRateLimit(handlePost, rateLimits.api)

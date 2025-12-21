@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma"
 import { sendVerificationEmail } from "@/lib/email"
 import { z } from "zod"
 import { PickType } from "@prisma/client"
+import { withRateLimit, rateLimits } from "@/lib/rate-limit"
+import { handleApiError } from "@/lib/error-handler"
 
 const registerSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -28,7 +30,7 @@ const registerSchema = z.object({
     .optional(),
 })
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
     const body = await request.json()
     const { email, username, password, showId, picks } =
@@ -122,14 +124,6 @@ export async function POST(request: NextRequest) {
         : "Registration successful! Please check your email to verify your account.",
     })
   } catch (error) {
-    console.error("Registration error:", error)
-
-    // Log more details for debugging
-    if (error instanceof Error) {
-      console.error("Error message:", error.message)
-      console.error("Error stack:", error.stack)
-    }
-
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: error.issues[0].message },
@@ -137,12 +131,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    return NextResponse.json(
-      {
-        error: "An error occurred during registration",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    )
+    return handleApiError(error, "Registration")
   }
 }
+
+export const POST = withRateLimit(handlePost, rateLimits.auth)

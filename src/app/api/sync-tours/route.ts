@@ -150,11 +150,23 @@ export async function POST(request: Request) {
   console.log(`[Sync Tours] Cron job started at ${new Date().toISOString()}`)
 
   try {
-    // Verify cron secret
+    // Verify cron secret (required in production)
     const authHeader = request.headers.get("authorization")
     const token = authHeader?.replace("Bearer ", "")
+    const cronSecret = process.env.CRON_SECRET
 
-    if (token !== process.env.CRON_SECRET) {
+    // In production, CRON_SECRET is mandatory
+    if (process.env.NODE_ENV === "production" && !cronSecret) {
+      console.error(
+        "[Sync Tours] CRON_SECRET not configured in production environment"
+      )
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      )
+    }
+
+    if (token !== cronSecret) {
       console.error("[Sync Tours] Unauthorized: Invalid or missing CRON_SECRET")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
