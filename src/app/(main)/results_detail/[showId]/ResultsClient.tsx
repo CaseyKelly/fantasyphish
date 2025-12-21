@@ -421,9 +421,6 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
                   className="flex items-center justify-between py-2 border-b border-slate-700"
                 >
                   <div className="flex items-center gap-3">
-                    <span className={`text-xl ${getPickStatus(pick)}`}>
-                      {getPickIcon(pick)}
-                    </span>
                     <span className={getPickStatus(pick)}>{pick.song}</span>
                   </div>
                   <span className={`font-semibold ${getPickStatus(pick)}`}>
@@ -446,9 +443,6 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
                   className="flex items-center justify-between py-2 border-b border-slate-700"
                 >
                   <div className="flex items-center gap-3">
-                    <span className={`text-xl ${getPickStatus(pick)}`}>
-                      {getPickIcon(pick)}
-                    </span>
                     <span className={getPickStatus(pick)}>{pick.song}</span>
                   </div>
                   <span className={`font-semibold ${getPickStatus(pick)}`}>
