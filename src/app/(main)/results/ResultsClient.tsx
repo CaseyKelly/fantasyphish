@@ -430,11 +430,6 @@ export default function ResultsClient({
                               >
                                 {pick.wasPlayed ? "+3" : "0"}
                               </span>
-                              {pick.wasPlayed ? (
-                                <Check className="h-5 w-5 text-green-400" />
-                              ) : (
-                                <X className="h-5 w-5 text-red-400" />
-                              )}
                             </div>
                           )}
                         </div>
