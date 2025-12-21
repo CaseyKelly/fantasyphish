@@ -35,10 +35,29 @@ export function parseUTCDate(isoDateString: string): Date
  * @returns Formatted date string
  */
 export function parseUTCDate(isoDateString: string, formatStr: string): string
+/**
+ * Parse a Date object to a Date object in UTC
+ *
+ * @param date - Date object
+ * @returns Date object
+ */
+export function parseUTCDate(date: Date): Date
+/**
+ * Parse a Date object and format it
+ *
+ * @param date - Date object
+ * @param formatStr - Format string for date-fns format function
+ * @returns Formatted date string
+ */
+export function parseUTCDate(date: Date, formatStr: string): string
 export function parseUTCDate(
-  isoDateString: string,
+  dateInput: string | Date,
   formatStr?: string
 ): Date | string {
+  // Convert Date objects to ISO strings
+  const isoDateString =
+    dateInput instanceof Date ? dateInput.toISOString() : dateInput
+
   // Validate input
   if (!isoDateString || typeof isoDateString !== "string") {
     throw new Error("Invalid date string provided")
