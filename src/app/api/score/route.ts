@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    if (authHeader !== `Bearer ${cronSecret}`) {
       console.warn("Unauthorized cron job attempt", {
         hasAuth: !!authHeader,
         timestamp: new Date().toISOString(),

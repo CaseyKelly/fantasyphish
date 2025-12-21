@@ -36,7 +36,7 @@ export function rateLimit(config: RateLimitConfig) {
     keyGenerator = (req) => {
       // Default: use IP address or fallback to a general key
       const forwarded = req.headers.get("x-forwarded-for")
-      const ip = forwarded ? forwarded.split(",")[0] : "unknown"
+      const ip = forwarded ? forwarded.split(",")[0].trim() : "unknown"
       return ip
     },
   } = config
@@ -54,12 +54,12 @@ export function rateLimit(config: RateLimitConfig) {
 
     if (!entry || entry.resetTime < now) {
       // Create new entry or reset expired one
-      entry = { count: 1, resetTime }
+      entry = { count: 0, resetTime }
       rateLimitStore.set(key, entry)
-    } else {
-      // Increment counter
-      entry.count++
     }
+
+    // Increment counter
+    entry.count++
 
     // Check if limit exceeded
     if (entry.count > max) {
@@ -137,7 +137,7 @@ export const rateLimits = {
       max: 20,
       keyGenerator: (req) => {
         const forwarded = req.headers.get("x-forwarded-for")
-        const ip = forwarded ? forwarded.split(",")[0] : "unknown"
+        const ip = forwarded ? forwarded.split(",")[0].trim() : "unknown"
         return userId ? `${ip}:${userId}` : ip
       },
     }),

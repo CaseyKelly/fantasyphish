@@ -5,13 +5,7 @@
 
 const requiredEnvVars = {
   // Always required
-  always: [
-    "DATABASE_URL",
-    "AUTH_SECRET",
-    "NEXTAUTH_SECRET",
-    "RESEND_API_KEY",
-    "PHISHNET_API_KEY",
-  ],
+  always: ["DATABASE_URL", "RESEND_API_KEY", "PHISHNET_API_KEY"],
   // Required in production only
   production: ["CRON_SECRET", "RESEND_WEBHOOK_SECRET", "NEXT_PUBLIC_APP_URL"],
 } as const
