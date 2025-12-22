@@ -1,16 +1,22 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, lazy, Suspense } from "react"
 import Link from "next/link"
-import { format } from "date-fns"
-import { formatInTimeZone } from "date-fns-tz"
+import { format } from "date-fns/format"
+import { formatInTimeZone } from "date-fns-tz/formatInTimeZone"
 import { Target, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DonutLogo } from "@/components/DonutLogo"
-import { SongPicker } from "@/components/SongPicker"
-import { LoadingDonut } from "@/components/LoadingDonut"
-import { GuestRegistrationModal } from "@/components/GuestRegistrationModal"
 import { getTimezoneAbbr, parseUTCDate } from "@/lib/date-utils"
+
+const SongPicker = lazy(() =>
+  import("@/components/SongPicker").then((mod) => ({ default: mod.SongPicker }))
+)
+const GuestRegistrationModal = lazy(() =>
+  import("@/components/GuestRegistrationModal").then((mod) => ({
+    default: mod.GuestRegistrationModal,
+  }))
+)
 
 interface Song {
   id: string
@@ -108,54 +114,13 @@ export function HomeClient() {
   return (
     <div className="min-h-screen bg-[#2d4654] relative">
       {/* Repeating donut pattern background */}
-      <div className="fixed inset-0 opacity-10 pointer-events-none">
-        <svg width="100%" height="100%">
-          <defs>
-            <pattern
-              id="donut-pattern"
-              x="0"
-              y="0"
-              width="120"
-              height="120"
-              patternUnits="userSpaceOnUse"
-            >
-              <circle
-                cx="30"
-                cy="30"
-                r="22"
-                stroke="#c23a3a"
-                strokeWidth="12"
-                fill="none"
-              />
-              <circle
-                cx="150"
-                cy="30"
-                r="22"
-                stroke="#c23a3a"
-                strokeWidth="12"
-                fill="none"
-              />
-              <circle
-                cx="90"
-                cy="90"
-                r="22"
-                stroke="#c23a3a"
-                strokeWidth="12"
-                fill="none"
-              />
-              <circle
-                cx="-30"
-                cy="90"
-                r="22"
-                stroke="#c23a3a"
-                strokeWidth="12"
-                fill="none"
-              />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#donut-pattern)" />
-        </svg>
-      </div>
+      <div
+        className="fixed inset-0 opacity-10 pointer-events-none"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='120' height='120' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='30' r='22' stroke='%23c23a3a' stroke-width='12' fill='none'/%3E%3Ccircle cx='90' cy='90' r='22' stroke='%23c23a3a' stroke-width='12' fill='none'/%3E%3C/svg%3E")`,
+          backgroundRepeat: "repeat",
+        }}
+      />
 
       {/* Hero Section */}
       <header className="relative overflow-hidden">
@@ -181,13 +146,13 @@ export function HomeClient() {
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20 pb-8 sm:pb-12">
           <div className="text-center">
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-white mb-6">
+            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 will-change-auto">
               You Knew{" "}
               <span className="text-[#c23a3a]">
                 They&apos;d Bust Out Fluffhead
               </span>
             </h1>
-            <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto will-change-auto">
               Now prove it. Pick 13 songs before showtime, rack up points when
               Trey plays your calls, and show the lot who really knows
               what&apos;s coming.
@@ -275,19 +240,27 @@ export function HomeClient() {
                   </div>
 
                   {/* Song Picker */}
-                  <SongPicker
-                    show={{
-                      id: nextShow.id,
-                      venue: nextShow.venue,
-                      city: nextShow.city || "",
-                      state: nextShow.state || "",
-                      showDate: nextShow.showDate,
-                    }}
-                    songs={songs}
-                    isLocked={false}
-                    guestMode={true}
-                    onGuestSubmit={(picks) => setGuestPicks(picks)}
-                  />
+                  <Suspense
+                    fallback={
+                      <div className="h-64 flex items-center justify-center text-gray-400">
+                        Loading picker...
+                      </div>
+                    }
+                  >
+                    <SongPicker
+                      show={{
+                        id: nextShow.id,
+                        venue: nextShow.venue,
+                        city: nextShow.city || "",
+                        state: nextShow.state || "",
+                        showDate: nextShow.showDate,
+                      }}
+                      songs={songs}
+                      isLocked={false}
+                      guestMode={true}
+                      onGuestSubmit={(picks) => setGuestPicks(picks)}
+                    />
+                  </Suspense>
                 </>
               )
             )}
@@ -297,11 +270,13 @@ export function HomeClient() {
 
       {/* Guest Registration Modal */}
       {guestPicks && nextShow && (
-        <GuestRegistrationModal
-          showId={nextShow.id}
-          picks={guestPicks}
-          onClose={() => setGuestPicks(null)}
-        />
+        <Suspense fallback={null}>
+          <GuestRegistrationModal
+            showId={nextShow.id}
+            picks={guestPicks}
+            onClose={() => setGuestPicks(null)}
+          />
+        </Suspense>
       )}
 
       {/* Scoring Section */}
