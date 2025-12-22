@@ -86,13 +86,15 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            const links = JSON.parse(fs.readFileSync('.lighthouseci/links.json', 'utf8'));
             const results = JSON.parse(fs.readFileSync('.lighthouseci/manifest.json', 'utf8'));
 
             let comment = '## Lighthouse Report\n\n';
             comment += '| URL | Performance | Accessibility | Best Practices | SEO | Report |\n';
             comment += '|-----|-------------|---------------|----------------|-----|--------|\n';
 
-            for (const result of results) {
+            for (let i = 0; i < results.length; i++) {
+              const result = results[i];
               const report = JSON.parse(fs.readFileSync(result.jsonPath, 'utf8'));
               const url = new URL(report.finalUrl).pathname || '/';
               const scores = report.categories;
@@ -105,7 +107,9 @@ jobs:
                 return `${emoji} ${percentage}`;
               };
               
-              const reportLink = result.summary ? `[View Report](${result.summary})` : 'N/A';
+              // Get the report link from links.json
+              const reportUrl = links[report.finalUrl] || result.summary;
+              const reportLink = reportUrl ? `[📊 View](${reportUrl})` : 'N/A';
               
               comment += `| ${url} | ${formatScore(scores.performance.score)} | ${formatScore(scores.accessibility.score)} | ${formatScore(scores['best-practices'].score)} | ${formatScore(scores.seo.score)} | ${reportLink} |\n`;
             }
