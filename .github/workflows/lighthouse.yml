@@ -30,6 +30,7 @@ jobs:
           NEXTAUTH_SECRET: "lighthouse-test-secret"
           NEXT_PUBLIC_APP_URL: http://localhost:3000
           PHISHNET_API_KEY: "mock-key"
+          RESEND_API_KEY: "re_mock_key_for_lighthouse"
 
       - name: Start Next.js app
         run: npm start &
@@ -39,6 +40,7 @@ jobs:
           NEXTAUTH_SECRET: "lighthouse-test-secret"
           NEXT_PUBLIC_APP_URL: http://localhost:3000
           PHISHNET_API_KEY: "mock-key"
+          RESEND_API_KEY: "re_mock_key_for_lighthouse"
 
       - name: Wait for app to be ready
         run: npx wait-on http://localhost:3000 --timeout 60000
