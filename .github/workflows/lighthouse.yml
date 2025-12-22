@@ -89,8 +89,8 @@ jobs:
             const results = JSON.parse(fs.readFileSync('.lighthouseci/manifest.json', 'utf8'));
 
             let comment = '## Lighthouse Report\n\n';
-            comment += '| URL | Performance | Accessibility | Best Practices | SEO |\n';
-            comment += '|-----|-------------|---------------|----------------|-----|\n';
+            comment += '| URL | Performance | Accessibility | Best Practices | SEO | Report |\n';
+            comment += '|-----|-------------|---------------|----------------|-----|--------|\n';
 
             for (const result of results) {
               const report = JSON.parse(fs.readFileSync(result.jsonPath, 'utf8'));
@@ -105,7 +105,9 @@ jobs:
                 return `${emoji} ${percentage}`;
               };
               
-              comment += `| ${url} | ${formatScore(scores.performance.score)} | ${formatScore(scores.accessibility.score)} | ${formatScore(scores['best-practices'].score)} | ${formatScore(scores.seo.score)} |\n`;
+              const reportLink = result.summary ? `[View Report](${result.summary})` : 'N/A';
+              
+              comment += `| ${url} | ${formatScore(scores.performance.score)} | ${formatScore(scores.accessibility.score)} | ${formatScore(scores['best-practices'].score)} | ${formatScore(scores.seo.score)} | ${reportLink} |\n`;
             }
 
             comment += '\n---\n';
