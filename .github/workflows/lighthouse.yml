@@ -9,6 +9,21 @@ jobs:
     timeout-minutes: 10
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: lighthouse_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -22,10 +37,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Setup database schema
+        run: npm run db:push
+        env:
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/lighthouse_test"
+
       - name: Build Next.js app
         run: npm run build
         env:
-          DATABASE_URL: "postgresql://localhost:5432/lighthouse_mock"
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/lighthouse_test"
           AUTH_SECRET: "lighthouse-test-secret"
           NEXTAUTH_SECRET: "lighthouse-test-secret"
           NEXT_PUBLIC_APP_URL: http://localhost:3000
@@ -35,7 +55,7 @@ jobs:
       - name: Start Next.js app
         run: npm start &
         env:
-          DATABASE_URL: "postgresql://localhost:5432/lighthouse_mock"
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/lighthouse_test"
           AUTH_SECRET: "lighthouse-test-secret"
           NEXTAUTH_SECRET: "lighthouse-test-secret"
           NEXT_PUBLIC_APP_URL: http://localhost:3000
