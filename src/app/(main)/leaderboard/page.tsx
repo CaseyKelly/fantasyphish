@@ -3,6 +3,21 @@ import { auth } from "@/lib/auth"
 import { Trophy, Medal, User, TrendingUp, Calendar, MapPin } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { parseUTCDate } from "@/lib/date-utils"
+import { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: "Leaderboard",
+  description:
+    "View the FantasyPhish tour leaderboard and see how you rank against other Phish fans in predicting setlists.",
+  openGraph: {
+    title: "Leaderboard | FantasyPhish",
+    description:
+      "View the FantasyPhish tour leaderboard and see how you rank against other Phish fans in predicting setlists.",
+  },
+  alternates: {
+    canonical: "/leaderboard",
+  },
+}
 
 interface LeaderboardPageProps {
   searchParams: Promise<{ tourId?: string }>
