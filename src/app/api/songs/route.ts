@@ -14,7 +14,15 @@ export async function GET() {
       },
     })
 
-    return NextResponse.json({ songs })
+    const response = NextResponse.json({ songs })
+
+    // Songs list rarely changes, cache for 1 hour
+    response.headers.set(
+      "Cache-Control",
+      "public, s-maxage=3600, stale-while-revalidate=7200"
+    )
+
+    return response
   } catch (error) {
     console.error("Error fetching songs:", error)
     return NextResponse.json(

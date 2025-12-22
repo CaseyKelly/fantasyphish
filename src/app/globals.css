@@ -52,3 +52,21 @@ body {
   background: var(--color-phish-blue-darker);
   min-height: 100vh;
 }
+
+/* Performance optimizations */
+section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px;
+}
+
+/* Reduce paint areas */
+.will-change-auto {
+  will-change: auto;
+}
+
+/* Optimize animations */
+@media (prefers-reduced-motion: no-preference) {
+  * {
+    scroll-behavior: smooth;
+  }
+}
