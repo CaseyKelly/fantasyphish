@@ -2,6 +2,10 @@ import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import { compare } from "bcryptjs"
 import { prisma } from "./prisma"
+import { checkEnvVars } from "./env-validation"
+
+// Validate environment variables on module load
+checkEnvVars()
 
 const authSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET
 

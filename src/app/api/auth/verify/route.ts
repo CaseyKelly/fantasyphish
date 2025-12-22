@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { handleApiError } from "@/lib/error-handler"
 
 export async function GET(request: NextRequest) {
   try {
@@ -49,20 +50,6 @@ export async function GET(request: NextRequest) {
       email: user.email,
     })
   } catch (error) {
-    console.error("Verification error:", error)
-
-    // Log more details
-    if (error instanceof Error) {
-      console.error("Error message:", error.message)
-      console.error("Error stack:", error.stack)
-    }
-
-    return NextResponse.json(
-      {
-        error: "An error occurred during verification",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    )
+    return handleApiError(error, "Email verification")
   }
 }
