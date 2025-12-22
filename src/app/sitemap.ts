@@ -15,13 +15,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     take: 50, // Include last 50 shows
     select: {
       id: true,
-      showDate: true,
+      updatedAt: true,
     },
   })
 
   const showUrls = completedShows.map((show) => ({
     url: `${baseUrl}/results_detail/${show.id}`,
-    lastModified: new Date(show.showDate),
+    lastModified: show.updatedAt,
     changeFrequency: "monthly" as const,
     priority: 0.5,
   }))
