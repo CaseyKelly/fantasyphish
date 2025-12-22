@@ -6,8 +6,23 @@ on:
 
 jobs:
   lighthouse:
-    timeout-minutes: 10
+    timeout-minutes: 15
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: lighthouse_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
 
     steps:
       - name: Checkout code
@@ -22,21 +37,36 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright browsers
+      - name: Install Playwright
         run: npx playwright install --with-deps chromium
 
-      - name: Start dev server in background
-        run: npm run dev &
+      - name: Setup database schema
+        run: npm run db:push
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
-          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-          NEXT_PUBLIC_APP_URL: http://localhost:3000
-          PHISHNET_API_KEY: ${{ secrets.PHISHNET_API_KEY }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/lighthouse_test"
 
-      - name: Wait for dev server
-        run: npx wait-on http://localhost:3000 --timeout 120000
+      - name: Build production app
+        run: npm run build
+        env:
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/lighthouse_test"
+          AUTH_SECRET: "lighthouse-test-secret"
+          NEXTAUTH_SECRET: "lighthouse-test-secret"
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          PHISHNET_API_KEY: "mock-key"
+          RESEND_API_KEY: "re_mock_key_for_lighthouse"
+
+      - name: Start production server
+        run: npm start &
+        env:
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/lighthouse_test"
+          AUTH_SECRET: "lighthouse-test-secret"
+          NEXTAUTH_SECRET: "lighthouse-test-secret"
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          PHISHNET_API_KEY: "mock-key"
+          RESEND_API_KEY: "re_mock_key_for_lighthouse"
+
+      - name: Wait for server
+        run: npx wait-on http://localhost:3000 --timeout 60000
 
       - name: Run Lighthouse CI
         uses: treosh/lighthouse-ci-action@v12
