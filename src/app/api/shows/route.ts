@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
           ? nextShow.submissions[0]
           : null
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         nextShow: {
           id: nextShow.id,
           venue: nextShow.venue,
@@ -63,6 +63,14 @@ export async function GET(request: NextRequest) {
           userSubmission,
         },
       })
+
+      // Cache for 5 minutes since show info doesn't change frequently
+      response.headers.set(
+        "Cache-Control",
+        "public, s-maxage=300, stale-while-revalidate=600"
+      )
+
+      return response
     }
 
     // Fetch upcoming shows from phish.net

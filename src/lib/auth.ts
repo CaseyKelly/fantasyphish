@@ -6,7 +6,9 @@ import { prisma } from "./prisma"
 const authSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET
 
 if (!authSecret) {
-  console.error("AUTH_SECRET is not set in environment variables")
+  throw new Error(
+    "AUTH_SECRET is not set in environment variables. Please set AUTH_SECRET in your .env.local file."
+  )
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
