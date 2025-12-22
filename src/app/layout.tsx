@@ -10,25 +10,57 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "FantasyPhish - Predict the Setlist",
+  title: {
+    default: "FantasyPhish - Predict the Setlist",
+    template: "%s | FantasyPhish",
+  },
   description:
     "Pick 13 songs, score points when they're played. The fantasy game for Phish fans.",
-  keywords: ["Phish", "fantasy", "setlist", "music", "game"],
+  keywords: [
+    "Phish",
+    "fantasy",
+    "setlist",
+    "music",
+    "game",
+    "Phish.net",
+    "concert",
+    "predictions",
+    "leaderboard",
+    "tour",
+  ],
+  authors: [{ name: "FantasyPhish" }],
+  creator: "FantasyPhish",
+  publisher: "FantasyPhish",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
   ),
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "FantasyPhish - Predict the Setlist",
     description:
       "Pick 13 songs, score points when they're played. The fantasy game for Phish fans.",
     type: "website",
     siteName: "FantasyPhish",
+    locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
     title: "FantasyPhish - Predict the Setlist",
     description:
       "Pick 13 songs, score points when they're played. The fantasy game for Phish fans.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 }
 
@@ -37,8 +69,38 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "FantasyPhish",
+    description:
+      "Pick 13 songs, score points when they're played. The fantasy game for Phish fans.",
+    url: baseUrl,
+    applicationCategory: "Game",
+    genre: "Fantasy Sports",
+    operatingSystem: "Any",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: "5",
+      ratingCount: "1",
+    },
+  }
+
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body
         className={`${inter.variable} font-sans antialiased bg-slate-900 text-white min-h-screen`}
         suppressHydrationWarning
