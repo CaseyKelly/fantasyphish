@@ -74,10 +74,11 @@ async function createBranch(): Promise<void> {
       // Use pooler host if available for better connection pooling
       let finalUri = connectionUri
       if (poolerHost) {
-        finalUri = connectionUri.replace(
-          /ep-[^.]+\./,
-          `${poolerHost.split(".")[0]}.`
-        )
+        const poolerHostParts = poolerHost.split(".")
+        const poolerSubdomain = poolerHostParts[0]
+        if (poolerSubdomain) {
+          finalUri = connectionUri.replace(/ep-[^.]+\./, `${poolerSubdomain}.`)
+        }
       }
 
       console.log("\nConnection string:")

@@ -76,12 +76,23 @@ async function main() {
   }
 
   // SAFETY CHECK: Ensure non-Neon cloud databases are localhost only
+  let localDbHost: string | null = null
+  try {
+    localDbHost = new URL(localDbUrl).hostname
+  } catch {
+    // If URL parsing fails, treat as invalid
+    localDbHost = null
+  }
+
   const isOtherCloudDb =
     !isNeonDb &&
-    (localDbUrl.includes("amazonaws.com") ||
-      localDbUrl.includes("supabase.co") ||
-      localDbUrl.includes("planetscale.com")) &&
-    !localDbUrl.includes("localhost")
+    localDbHost !== null &&
+    (localDbHost.endsWith("amazonaws.com") ||
+      localDbHost.endsWith("supabase.co") ||
+      localDbHost.endsWith("planetscale.com")) &&
+    localDbHost !== "localhost" &&
+    localDbHost !== "127.0.0.1" &&
+    localDbHost !== "::1"
 
   if (isOtherCloudDb) {
     console.error("\n❌ SAFETY CHECK FAILED!")
@@ -104,7 +115,9 @@ async function main() {
 
   // SAFETY CHECK: Ensure we're using localhost or Neon for local database
   const isLocalhost =
-    localDbUrl.includes("localhost") || localDbUrl.includes("127.0.0.1")
+    localDbHost === "localhost" ||
+    localDbHost === "127.0.0.1" ||
+    localDbHost === "::1"
 
   if (!isLocalhost && !isNeonDb) {
     console.error("\n⚠️  WARNING: DATABASE_URL is not localhost or Neon")
