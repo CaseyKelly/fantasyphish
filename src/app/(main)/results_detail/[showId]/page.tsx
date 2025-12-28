@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
+import { isAdminFeaturesEnabled } from "@/lib/env"
 import ResultsClient from "./ResultsClient"
 
 interface ResultsPageProps {
@@ -13,6 +14,7 @@ export default async function ResultsPage({ params }: ResultsPageProps) {
   }
 
   const { showId } = await params
+  const showAdminControls = !!session.user.isAdmin && isAdminFeaturesEnabled()
 
-  return <ResultsClient showId={showId} isAdmin={!!session.user.isAdmin} />
+  return <ResultsClient showId={showId} isAdmin={showAdminControls} />
 }

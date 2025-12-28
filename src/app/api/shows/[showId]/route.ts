@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { hasShowStarted } from "@/lib/phishnet"
-import { format } from "date-fns"
 
 export async function GET(
   request: NextRequest,
@@ -22,8 +21,13 @@ export async function GET(
     }
 
     // Check if show has started
-    const showDateStr = format(show.showDate, "yyyy-MM-dd")
-    const isLocked = await hasShowStarted(showDateStr)
+    // Extract the date in UTC to avoid timezone conversion
+    const showDateStr = show.showDate.toISOString().split("T")[0]
+    const isLocked = await hasShowStarted(
+      showDateStr,
+      show.timezone,
+      show.state
+    )
 
     return NextResponse.json({
       show: {

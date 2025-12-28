@@ -113,12 +113,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if show has started (now timezone-aware)
-    // Use UTC components directly to avoid local timezone issues
-    const year = show.showDate.getUTCFullYear()
-    const month = String(show.showDate.getUTCMonth() + 1).padStart(2, "0")
-    const day = String(show.showDate.getUTCDate()).padStart(2, "0")
-    const showDateStr = `${year}-${month}-${day}`
-
+    // Extract the date in UTC to avoid timezone conversion
+    const showDateStr = show.showDate.toISOString().split("T")[0]
     const showStarted = await hasShowStarted(
       showDateStr,
       show.timezone,
