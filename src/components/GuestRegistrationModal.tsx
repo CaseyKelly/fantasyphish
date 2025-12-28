@@ -299,11 +299,6 @@ export function GuestRegistrationModal({
                   Already have an account? Sign in
                 </button>
               </div>
-
-              <p className="text-sm text-gray-400 text-center">
-                By creating an account, you agree to receive emails about your
-                picks and game updates.
-              </p>
             </form>
           ) : (
             <form onSubmit={handleSignIn} className="space-y-4">
