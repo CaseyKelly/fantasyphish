@@ -137,12 +137,17 @@ async function main() {
             )
 
             if (setlist && setlist.length > 0) {
-              // Count each unique song in the setlist
-              const uniqueSlugs = new Set(setlist.map((song) => song.slug))
-
-              uniqueSlugs.forEach((slug) => {
-                songCounts.set(slug, (songCounts.get(slug) || 0) + 1)
-              })
+              // Count each unique song once per show (ignore reprises/duplicates)
+              const seenSlugs = new Set<string>()
+              for (const song of setlist) {
+                if (!seenSlugs.has(song.slug)) {
+                  seenSlugs.add(song.slug)
+                  songCounts.set(
+                    song.slug,
+                    (songCounts.get(song.slug) || 0) + 1
+                  )
+                }
+              }
 
               showsProcessed++
             }
@@ -171,35 +176,42 @@ async function main() {
     console.log(`\nCounted ${songCounts.size} unique songs`)
     console.log("Updating database...\n")
 
-    // Reset all recentTimesPlayed counts to 0 first
-    await prisma.song.updateMany({
-      data: { recentTimesPlayed: 0 },
-    })
-
-    // Update each song's recent count
+    // Perform all updates in a transaction for better performance
     let updated = 0
     let notFound = 0
 
-    for (const [slug, count] of songCounts.entries()) {
-      try {
-        const result = await prisma.song.updateMany({
-          where: { slug },
-          data: { recentTimesPlayed: count },
-        })
+    await prisma.$transaction(async (tx) => {
+      // Reset all recentTimesPlayed counts to 0 first
+      await tx.song.updateMany({
+        data: { recentTimesPlayed: 0 },
+      })
 
-        if (result.count > 0) {
-          updated++
-        } else {
-          notFound++
-          console.log(`  Warning: Song with slug "${slug}" not found in DB`)
+      // Update each song's recent count
+      const updatePromises = Array.from(songCounts.entries()).map(
+        async ([slug, count]) => {
+          try {
+            const result = await tx.song.updateMany({
+              where: { slug },
+              data: { recentTimesPlayed: count },
+            })
+
+            if (result.count > 0) {
+              updated++
+            } else {
+              notFound++
+              console.log(`  Warning: Song with slug "${slug}" not found in DB`)
+            }
+          } catch (error) {
+            console.error(
+              `  Error updating song "${slug}":`,
+              error instanceof Error ? error.message : error
+            )
+          }
         }
-      } catch (error) {
-        console.error(
-          `  Error updating song "${slug}":`,
-          error instanceof Error ? error.message : error
-        )
-      }
-    }
+      )
+
+      await Promise.all(updatePromises)
+    })
 
     console.log(`\nSync complete!`)
     console.log(`- Updated: ${updated} songs`)
