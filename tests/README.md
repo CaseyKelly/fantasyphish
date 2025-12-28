@@ -179,11 +179,30 @@ test("should do something", async ({ page, cleanupEmail }) => {
 
 ## Debugging
 
-### View test results
+### View test results locally
 
 ```bash
 npx playwright show-report
 ```
+
+### View CI test traces (GitHub Actions)
+
+```bash
+npm run test:trace
+```
+
+This will automatically:
+
+1. Download the latest test results from GitHub Actions
+2. Open the trace viewer if tests failed
+3. Open the HTML report if tests passed
+
+Traces include:
+
+- Interactive timeline with screenshots
+- Network requests and responses
+- Console logs
+- DOM snapshots at each step
 
 ### Debug specific test
 

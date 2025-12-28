@@ -8,6 +8,7 @@
 - **All tests:** `npm test`
 - **Single test:** `npm test -- tests/e2e/auth.spec.ts` or `npm test -- -g "test name"`
 - **Debug test:** `npm run test:debug`
+- **View CI traces:** `npm run test:trace` (downloads and opens latest GitHub Actions test results)
 - **Database:** `npm run db:push` (sync schema), `npm run db:migrate` (migrations)
 
 ## Code Style
