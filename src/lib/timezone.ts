@@ -110,11 +110,13 @@ export function getShowLockTime(showDate: Date, timezone: string): Date {
   const month = showDate.getUTCMonth() + 1
   const day = showDate.getUTCDate()
 
-  // Create a date at 7 PM in the show's timezone
-  const lockTimeInVenueTz = new Date(year, month - 1, day, 19, 0, 0, 0)
+  // Create an ISO-like date string for the show date at 7 PM
+  // Format: YYYY-MM-DD 19:00:00
+  const dateStr = `${year}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")} 19:00:00`
 
-  // Convert 7 PM in venue timezone to UTC
-  return fromZonedTime(lockTimeInVenueTz, timezone)
+  // fromZonedTime interprets this date string as being in the venue's timezone
+  // and converts it to UTC
+  return fromZonedTime(dateStr, timezone)
 }
 
 /**
