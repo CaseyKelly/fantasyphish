@@ -54,12 +54,57 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id
         token.username = user.username
         token.isAdmin = user.isAdmin
       }
+
+      // Handle impersonation updates from session update
+      if (trigger === "update" && session) {
+        const updateSession = session as {
+          impersonating?: {
+            originalUserId: string
+            originalUsername: string
+            originalIsAdmin: boolean
+            targetUserId: string
+            targetUsername: string
+            targetEmail: string
+            targetIsAdmin: boolean
+          }
+          stopImpersonating?: boolean
+        }
+
+        if (updateSession.impersonating) {
+          // Store original user info
+          token.impersonating = {
+            originalUserId: updateSession.impersonating.originalUserId,
+            originalUsername: updateSession.impersonating.originalUsername,
+            originalIsAdmin: updateSession.impersonating.originalIsAdmin,
+          }
+          // Switch to target user
+          token.id = updateSession.impersonating.targetUserId
+          token.username = updateSession.impersonating.targetUsername
+          token.isAdmin = updateSession.impersonating.targetIsAdmin
+        } else if (updateSession.stopImpersonating) {
+          // Restore original user
+          const impersonation = token.impersonating as
+            | {
+                originalUserId: string
+                originalUsername: string
+                originalIsAdmin: boolean
+              }
+            | undefined
+          if (impersonation) {
+            token.id = impersonation.originalUserId
+            token.username = impersonation.originalUsername
+            token.isAdmin = impersonation.originalIsAdmin
+            delete token.impersonating
+          }
+        }
+      }
+
       return token
     },
     async session({ session, token }) {
@@ -67,6 +112,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.id as string
         session.user.username = token.username as string
         session.user.isAdmin = token.isAdmin as boolean
+
+        const impersonation = token.impersonating as
+          | {
+              originalUserId: string
+              originalUsername: string
+              originalIsAdmin: boolean
+            }
+          | undefined
+        if (impersonation) {
+          session.impersonating = impersonation
+        }
       }
       return session
     },
