@@ -132,15 +132,27 @@ Response will show detailed scoring results:
 
 Assuming the show starts at **7 PM** (when picks lock):
 
-| Time      | What Happens            | Expected Logs                               |
-| --------- | ----------------------- | ------------------------------------------- |
-| 7:00 PM   | Picks lock, show starts | `Found 0 show(s) to check` (no setlist yet) |
-| 7:05 PM   | Cron checks             | `No setlist data returned from API`         |
-| 7:15 PM   | First songs posted      | `✓ Fetched setlist with 3 song(s)`          |
-| 7:20 PM   | More songs added        | `Updated submission: 3 → 5 songs, 6 points` |
-| 7:25 PM   | More songs added        | `Updated submission: 5 → 8 songs, 9 points` |
-| ...       | Every 5 minutes         | Progressive updates...                      |
-| ~10:30 PM | Encore played           | `Show complete: true`, `1 completed`        |
+| Time           | What Happens            | Expected Logs                                                                                          |
+| -------------- | ----------------------- | ------------------------------------------------------------------------------------------------------ |
+| 7:00 PM        | Picks lock, show starts | `Found 0 show(s) to check` (no setlist yet)                                                            |
+| 7:05 PM        | Cron checks             | `No setlist data returned from API`                                                                    |
+| 7:15 PM        | First songs posted      | `✓ Fetched setlist with 3 song(s)`                                                                     |
+| 7:20 PM        | More songs added        | `Updated submission: 3 → 5 songs, 6 points`                                                            |
+| 7:25 PM        | More songs added        | `Updated submission: 5 → 8 songs, 9 points`                                                            |
+| ...            | Every 5 minutes         | Progressive updates...                                                                                 |
+| ~10:30 PM      | Encore detected         | `Show complete (encore detected): true`<br/>`✓ Encore just started - will continue scoring for 1 hour` |
+| 10:35-11:30 PM | Grace period (1 hr)     | Cron continues checking for new encore songs                                                           |
+| ~11:30 PM      | Grace period expires    | `✓ Grace period expired`<br/>Cron stops checking this show                                             |
+
+### Why the 1-Hour Grace Period?
+
+After the encore starts, the cron will **continue checking for 1 hour** to handle:
+
+- Multiple encore songs added over time
+- Late additions to the setlist
+- Corrections to the setlist on Phish.net
+
+This ensures final scores are accurate even if Phish.net updates the setlist after the encore begins.
 
 ## What to Look For Tomorrow
 
