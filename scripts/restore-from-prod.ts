@@ -57,18 +57,22 @@ async function main() {
   // Check if DATABASE_URL points to a Neon database
   const isNeonDb = localDbUrl.includes("neon.tech")
 
-  // For Neon databases, recommend using db:reset-branch as it's faster and simpler
+  // For Neon databases, use db:reset-branch instead (much faster and simpler)
   if (isNeonDb) {
-    console.log("\n💡 Tip: You're using a Neon database")
-    console.log("For Neon, it's faster to use:")
-    console.log("   npm run db:reset-branch")
-    console.log("\nThis command will:")
-    console.log("  • Delete and recreate your dev branch in seconds")
-    console.log("  • Copy all data from production")
-    console.log("  • No need for pg_dump/restore")
-    console.log("\nContinuing with pg_dump/restore method...")
-    console.log("(This will take longer but works the same way)")
-    console.log()
+    console.error("\n⚠️  Neon database detected!")
+    console.error(
+      "This script uses pg_dump/psql which is slow and complex with Neon."
+    )
+    console.error("\nFor Neon databases, use the faster built-in branching:")
+    console.error("   npm run db:reset-branch")
+    console.error("\nThis command will:")
+    console.error("  • Delete and recreate your dev branch in seconds")
+    console.error("  • Copy all data from production instantly")
+    console.error("  • No need for pg_dump/restore/endpoint parameters")
+    console.error(
+      "\n❌ Aborting. Use npm run db:reset-branch for Neon databases."
+    )
+    process.exit(1)
   }
 
   // SAFETY CHECK: Ensure non-Neon cloud databases are localhost only
