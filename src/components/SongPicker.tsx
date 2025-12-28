@@ -108,6 +108,20 @@ export function SongPicker({
     }
   }, [justSaved])
 
+  // Prevent background scroll when mobile modal is open and clear search when closed
+  useEffect(() => {
+    if (mobileModalOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+      setSearchQuery("")
+    }
+
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [mobileModalOpen, setSearchQuery])
+
   // Filter songs based on search
   const filteredSongs = useMemo(() => {
     if (!searchQuery) return songs
@@ -612,7 +626,7 @@ export function SongPicker({
       {/* Submit Button */}
       {!isLocked && (
         <div
-          className={`max-sm:sticky bottom-4 bg-[#2d4654]/95 backdrop-blur-sm p-3 sm:p-4 rounded-xl border transition-colors ${
+          className={`bg-[#2d4654]/95 backdrop-blur-sm p-3 sm:p-4 rounded-xl border transition-colors ${
             hasUnsavedChanges && isComplete
               ? "border-yellow-500/50 bg-yellow-500/5"
               : justSaved && isComplete
