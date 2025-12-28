@@ -343,8 +343,11 @@ export function SongPicker({
     }
 
     return (
-      <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-        <div className="bg-[#2d4654] w-full max-w-2xl rounded-lg max-h-[90vh] flex flex-col">
+      <div
+        className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+        style={{ minHeight: "100dvh" }}
+      >
+        <div className="bg-[#2d4654] w-full max-w-2xl rounded-lg max-h-[90dvh] flex flex-col">
           {/* Modal Header */}
           <div className="flex items-center justify-between p-4 border-b border-[#3d5a6c]">
             <h2 className="text-xl font-semibold text-white">{title}</h2>
