@@ -14,11 +14,15 @@ export const metadata: Metadata = {
     default: "FantasyPhish - Predict the Setlist",
     template: "%s | FantasyPhish",
   },
+  icons: {
+    icon: "/favicon.ico",
+  },
   description:
-    "Pick 13 songs, score points when they're played. The fantasy game for Phish fans.",
+    "Pick 13 songs, score points when they're played. Fantasy Phish - the fantasy game for Phish fans.",
   keywords: [
     "Phish",
     "fantasy",
+    "fantasy phish",
     "setlist",
     "music",
     "game",
@@ -27,6 +31,7 @@ export const metadata: Metadata = {
     "predictions",
     "leaderboard",
     "tour",
+    "fantasyphish",
   ],
   authors: [{ name: "FantasyPhish" }],
   creator: "FantasyPhish",
@@ -44,6 +49,13 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "FantasyPhish",
     locale: "en_US",
+    images: [
+      {
+        url: "/og-image.svg",
+        width: 1200,
+        height: 630,
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
