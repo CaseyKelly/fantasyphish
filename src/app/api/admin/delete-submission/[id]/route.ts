@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { isAdminFeaturesEnabled } from "@/lib/env"
 
 export async function DELETE(
   _request: NextRequest,
@@ -9,7 +10,11 @@ export async function DELETE(
   try {
     // Check admin auth
     const session = await auth()
-    if (!session?.user?.id || !session.user.isAdmin) {
+    if (
+      !session?.user?.id ||
+      !session.user.isAdmin ||
+      !isAdminFeaturesEnabled()
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 

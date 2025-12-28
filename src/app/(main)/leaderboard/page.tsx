@@ -24,12 +24,25 @@ interface LeaderboardPageProps {
 }
 
 async function getNextShow() {
+  const now = new Date()
+
+  // First try to find shows with lockTime set (timezone-aware)
   const nextShow = await prisma.show.findFirst({
     where: {
       isComplete: false,
-      showDate: {
-        gte: new Date(),
-      },
+      OR: [
+        {
+          lockTime: {
+            gte: now,
+          },
+        },
+        {
+          lockTime: null,
+          showDate: {
+            gte: now,
+          },
+        },
+      ],
     },
     orderBy: { showDate: "asc" },
     include: {

@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { notFound, redirect } from "next/navigation"
+import { isAdminFeaturesEnabled } from "@/lib/env"
 import { SongPicker } from "@/components/SongPicker"
 
 interface TestPickPageProps {
@@ -37,7 +38,7 @@ export default async function TestPickPage({ params }: TestPickPageProps) {
     redirect("/login")
   }
 
-  if (!session.user.isAdmin) {
+  if (!session.user.isAdmin || !isAdminFeaturesEnabled()) {
     redirect("/picks")
   }
 

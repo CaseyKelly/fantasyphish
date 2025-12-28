@@ -15,6 +15,8 @@ import {
   Check,
   MapPin,
   Calendar,
+  AlertCircle,
+  CheckCircle,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -75,6 +77,7 @@ export function SongPicker({
   const [mobileModalOpen, setMobileModalOpen] = useState<
     "OPENER" | "ENCORE" | "REGULAR" | null
   >(null)
+  const [justSaved, setJustSaved] = useState(false)
 
   // Detect mobile viewport
   useEffect(() => {
@@ -97,6 +100,14 @@ export function SongPicker({
     existingPicks?.filter((p) => p.pickType === "REGULAR") || []
   )
 
+  // Auto-clear justSaved state after a delay to avoid showing both icons
+  useEffect(() => {
+    if (justSaved) {
+      const timer = setTimeout(() => setJustSaved(false), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [justSaved])
+
   // Filter songs based on search
   const filteredSongs = useMemo(() => {
     if (!searchQuery) return songs
@@ -117,11 +128,39 @@ export function SongPicker({
     return ids
   }, [openerPick, encorePick, regularPicks])
 
+  // Track if current picks differ from existing picks (unsaved changes)
+  const hasUnsavedChanges = useMemo(() => {
+    if (!existingPicks || existingPicks.length === 0) return false
+
+    // Check if all current picks match existing picks
+    const existingOpener = existingPicks.find((p) => p.pickType === "OPENER")
+    const existingEncore = existingPicks.find((p) => p.pickType === "ENCORE")
+    const existingRegular = existingPicks.filter(
+      (p) => p.pickType === "REGULAR"
+    )
+
+    if (openerPick?.songId !== existingOpener?.songId) return true
+    if (encorePick?.songId !== existingEncore?.songId) return true
+    if (regularPicks.length !== existingRegular.length) return true
+
+    const regularSongIds = new Set(regularPicks.map((p) => p.songId))
+    const existingRegularIds = new Set(existingRegular.map((p) => p.songId))
+
+    for (const id of regularSongIds) {
+      if (!existingRegularIds.has(id)) return true
+    }
+
+    return false
+  }, [openerPick, encorePick, regularPicks, existingPicks])
+
   const handleSelectSong = (
     song: Song,
     pickType: "OPENER" | "ENCORE" | "REGULAR"
   ) => {
     if (isLocked) return
+
+    // Clear "just saved" state when making changes
+    if (justSaved) setJustSaved(false)
 
     const pick: Pick = {
       songId: song.id,
@@ -162,6 +201,9 @@ export function SongPicker({
     songId?: string
   ) => {
     if (isLocked) return
+
+    // Clear "just saved" state when making changes
+    if (justSaved) setJustSaved(false)
 
     if (pickType === "OPENER") {
       setOpenerPick(null)
@@ -210,6 +252,9 @@ export function SongPicker({
       if (!response.ok) {
         toast.error(data.error || "Failed to submit picks")
       } else {
+        // Set justSaved state to show success feedback
+        setJustSaved(true)
+
         toast.success(
           isTestMode
             ? "Test submission created successfully!"
@@ -571,25 +616,52 @@ export function SongPicker({
 
       {/* Submit Button */}
       {!isLocked && (
-        <div className="max-sm:sticky bottom-4 bg-[#2d4654]/95 backdrop-blur-sm p-3 sm:p-4 rounded-xl border border-[#3d5a6c]">
+        <div
+          className={`max-sm:sticky bottom-4 bg-[#2d4654]/95 backdrop-blur-sm p-3 sm:p-4 rounded-xl border transition-colors ${
+            hasUnsavedChanges && isComplete
+              ? "border-yellow-500/50 bg-yellow-500/5"
+              : justSaved && isComplete
+                ? "border-green-500/50 bg-green-500/5"
+                : "border-[#3d5a6c]"
+          }`}
+        >
           <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <p className="font-medium text-white text-sm sm:text-base">
-                {isComplete
-                  ? existingPicks
-                    ? "Picks saved"
-                    : "Ready to submit!"
-                  : "Complete your picks"}
-              </p>
-              <p className="text-xs sm:text-sm text-gray-400">
-                {13 - selectedSongIds.size} picks remaining
-              </p>
+            <div className="min-w-0 flex-1 flex items-center gap-2">
+              {isComplete && justSaved && !hasUnsavedChanges && (
+                <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+              )}
+              {isComplete && hasUnsavedChanges && (
+                <AlertCircle className="h-5 w-5 text-yellow-500 flex-shrink-0" />
+              )}
+              <div className="min-w-0">
+                <p className="font-medium text-white text-sm sm:text-base">
+                  {isComplete
+                    ? hasUnsavedChanges
+                      ? "Unsaved changes"
+                      : justSaved
+                        ? "Picks saved!"
+                        : existingPicks
+                          ? "Picks saved"
+                          : "Ready to submit!"
+                    : "Complete your picks"}
+                </p>
+                <p className="text-xs sm:text-sm text-gray-400">
+                  {isComplete
+                    ? hasUnsavedChanges
+                      ? "Click update to save your changes"
+                      : justSaved
+                        ? "Your picks have been saved successfully"
+                        : "All picks completed"
+                    : `${13 - selectedSongIds.size} picks remaining`}
+                </p>
+              </div>
             </div>
             <Button
               onClick={handleSubmit}
               disabled={!isComplete || isSubmitting}
               isLoading={isSubmitting}
               size="lg"
+              variant="success"
               className="flex-shrink-0"
             >
               <span className="hidden sm:inline">

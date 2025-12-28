@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { getSetlist } from "@/lib/phishnet"
 import { scoreSubmission } from "@/lib/scoring"
+import { isAdminFeaturesEnabled } from "@/lib/env"
 import { format } from "date-fns"
 
 // Top 60 most frequently played songs (as of 2025)
@@ -74,7 +75,11 @@ export async function POST() {
   try {
     // Check admin auth
     const session = await auth()
-    if (!session?.user?.id || !session.user.isAdmin) {
+    if (
+      !session?.user?.id ||
+      !session.user.isAdmin ||
+      !isAdminFeaturesEnabled()
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 

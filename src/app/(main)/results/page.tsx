@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
+import { isAdminFeaturesEnabled } from "@/lib/env"
 import ResultsClient from "./ResultsClient"
 
 async function getResults(userId: string) {
@@ -57,11 +58,14 @@ export default async function ResultsPage() {
 
   const { submissions, stats } = await getResults(session.user.id)
 
+  const showAdminControls =
+    (session.user.isAdmin || false) && isAdminFeaturesEnabled()
+
   return (
     <ResultsClient
       submissions={submissions}
       stats={stats}
-      isAdmin={session.user.isAdmin || false}
+      isAdmin={showAdminControls}
     />
   )
 }
