@@ -65,7 +65,7 @@ async function main() {
   )
 
   try {
-    // Safety check: Prevent accidental production database writes in development
+    // Safety check: Prevent accidental writes to production database from development environment
     const nodeEnv = process.env.NODE_ENV || "development"
     const dbUrl = process.env.DATABASE_URL || ""
     const prodDbUrl = process.env.PROD_DATABASE_URL || ""
@@ -89,7 +89,7 @@ async function main() {
       console.error("2. Update your .env.local with the branch URL")
       console.error("3. Set NODE_ENV=development in your .env.local")
       console.error("\nOr, if you really want to update production, run:")
-      console.error("   NODE_ENV=production npm run sync:recent-songs")
+      console.error("   NODE_ENV=production npm run db:sync-recent-songs")
       process.exit(1)
     }
 
