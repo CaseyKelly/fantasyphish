@@ -5,8 +5,8 @@ set -e
 
 echo "📦 Fetching latest Playwright test results..."
 
-# Get the latest workflow run ID
-RUN_ID=$(gh run list --workflow=e2e-tests.yml --limit 1 --json databaseId --jq '.[0].databaseId')
+# Get the latest completed workflow run ID
+RUN_ID=$(gh run list --workflow=e2e-tests.yml --limit 10 --json databaseId,status,conclusion --jq '.[] | select(.status == "completed") | .databaseId' | head -1)
 
 if [ -z "$RUN_ID" ]; then
   echo "❌ No workflow runs found"
