@@ -25,7 +25,8 @@
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
-    "test:clean": "rm -rf test-results playwright-report"
+    "test:clean": "rm -rf test-results playwright-report",
+    "test:trace": "./scripts/view-trace.sh"
   },
   "dependencies": {
     "@prisma/client": "^6.19.1",
