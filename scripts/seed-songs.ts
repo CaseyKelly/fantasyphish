@@ -88,12 +88,6 @@ async function main() {
       console.log("\n✅ Using Neon branch database (safe for development)")
     }
 
-    if (isProductionDb) {
-      console.log("\n⚠️  Running against PRODUCTION database")
-      console.log("Waiting 3 seconds... Press Ctrl+C to cancel")
-      await new Promise((resolve) => setTimeout(resolve, 3000))
-    }
-
     const songs = await fetchSongs()
     console.log(`Fetched ${songs.length} songs from phish.net`)
 

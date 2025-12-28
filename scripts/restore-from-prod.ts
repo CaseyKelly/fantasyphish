@@ -116,21 +116,6 @@ async function main() {
     process.exit(1)
   }
 
-  // SAFETY CHECK: Ensure we're using localhost for local database
-  if (!localDbUrl.includes("localhost") && !localDbUrl.includes("127.0.0.1")) {
-    console.error("\n⚠️  WARNING: DATABASE_URL is not localhost")
-    console.error(
-      "This script will DROP and RECREATE the database at:",
-      localDbUrl.replace(/:[^:@]+@/, ":****@")
-    )
-    console.error("\nAre you sure you want to continue? (yes/no)")
-
-    // Note: In a real scenario, you'd want to prompt for user input
-    // For now, we'll just fail safe
-    console.error("\n❌ Aborting for safety. Please use a localhost database.")
-    process.exit(1)
-  }
-
   // Parse local database name from URL
   const localDbMatch = localDbUrl.match(/\/([^/?]+)(\?|$)/)
   const localDbName = localDbMatch ? localDbMatch[1] : "fantasyphish_local"

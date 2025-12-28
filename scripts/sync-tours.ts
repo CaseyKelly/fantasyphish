@@ -189,12 +189,6 @@ async function main() {
       console.log("\n✅ Using Neon branch database (safe for development)")
     }
 
-    if (isProductionDb) {
-      console.log("\n⚠️  Running against PRODUCTION database")
-      console.log("Waiting 3 seconds... Press Ctrl+C to cancel")
-      await new Promise((resolve) => setTimeout(resolve, 3000))
-    }
-
     // If a year is specified, sync only that year
     // Otherwise, sync current year and next year
     if (process.argv[2]) {
