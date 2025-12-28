@@ -138,6 +138,18 @@ async function resetBranch(): Promise<void> {
   console.log(
     "Your development database now has a fresh copy of production data"
   )
+  console.log()
+  console.log("🔧 Updating .env.local with new connection string...")
+
+  // Update .env.local with the new connection string
+  try {
+    await execAsync("npx tsx scripts/update-env-with-branch.ts")
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error("\n⚠️  Could not auto-update .env.local:", errorMessage)
+    console.error("Please run manually:")
+    console.error("   npm run db:update-env")
+  }
 }
 
 async function listBranches(): Promise<void> {
