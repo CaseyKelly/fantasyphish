@@ -55,11 +55,26 @@ Error scoring shows: [error message]
    - Or filter by path: `/api/score`
    - Set time range to "Last hour" or "Live"
 
-4. **What You'll See**
-   - Every 5 minutes, new `[Score]` logs will appear
+4. **IMPORTANT: Don't Click Individual Requests!**
+   - ❌ If you click on a specific request, you'll only see request metadata (status, headers, etc.)
+   - ✅ Instead, look at the **main log stream** - all `console.log()` output appears there
+   - Each `[Score]` log line appears as a separate entry in the stream
+
+5. **What You'll See**
+   - Every 5 minutes, new `[Score]` logs will appear in the stream
    - You'll see exactly which songs are in the setlist
    - You'll see score updates for each submission
    - You'll see timing information
+
+**Screenshot of what to look for:**
+
+```
+12:00:01  [Score] Cron job started at 2025-12-28T00:00:00.000Z
+12:00:01  [Score] ✓ Authorization successful
+12:00:01  [Score] Found 1 show(s) to check
+12:00:02  [Score]   ✓ Fetched setlist with 8 song(s)
+...
+```
 
 ### Method 2: Vercel CLI (Real-Time Terminal)
 
