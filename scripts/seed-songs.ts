@@ -1,4 +1,9 @@
 import { PrismaClient } from "@prisma/client"
+import { config } from "dotenv"
+
+// Load environment variables from .env.local
+config({ path: ".env.local" })
+config({ path: ".env" })
 
 const prisma = new PrismaClient()
 
@@ -47,6 +52,48 @@ async function main() {
   console.log("Starting song seed...")
 
   try {
+    // Safety check: Prevent accidental production database writes in development
+    const nodeEnv = process.env.NODE_ENV || "development"
+    const dbUrl = process.env.DATABASE_URL || ""
+    const prodDbUrl = process.env.PROD_DATABASE_URL || ""
+
+    // Check if DATABASE_URL is exactly the same as PROD_DATABASE_URL
+    const isProductionDb = dbUrl === prodDbUrl
+
+    // For Neon: check if we're using a branch (safe) or main (dangerous)
+    const isNeonBranch =
+      dbUrl.includes("neon.tech") &&
+      (dbUrl.includes("branch=") || dbUrl.includes("branch%3D"))
+
+    if (nodeEnv !== "production" && isProductionDb) {
+      console.error("\n⚠️  SAFETY CHECK FAILED!")
+      console.error("You are trying to seed songs to the PRODUCTION database.")
+      console.error("Your NODE_ENV is:", nodeEnv)
+      console.error("But DATABASE_URL is identical to PROD_DATABASE_URL.")
+      console.error("\nTo fix this:")
+      console.error("1. Create a Neon branch for development:")
+      console.error("   npm run db:create-branch")
+      console.error("2. Update your .env.local with the branch URL")
+      console.error("3. Set NODE_ENV=development in your .env.local")
+      console.error("\nOr, if you really want to seed production, run:")
+      console.error("   NODE_ENV=production npm run db:seed")
+      process.exit(1)
+    }
+
+    if (isProductionDb && !isNeonBranch) {
+      console.log("\n⚠️  Running against PRODUCTION database")
+      console.log("Waiting 3 seconds... Press Ctrl+C to cancel")
+      await new Promise((resolve) => setTimeout(resolve, 3000))
+    } else if (isNeonBranch) {
+      console.log("\n✅ Using Neon branch database (safe for development)")
+    }
+
+    if (isProductionDb) {
+      console.log("\n⚠️  Running against PRODUCTION database")
+      console.log("Waiting 3 seconds... Press Ctrl+C to cancel")
+      await new Promise((resolve) => setTimeout(resolve, 3000))
+    }
+
     const songs = await fetchSongs()
     console.log(`Fetched ${songs.length} songs from phish.net`)
 

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { hasShowStarted } from "@/lib/phishnet"
-import { format } from "date-fns"
 import { z } from "zod"
 import { PickType } from "@prisma/client"
 
@@ -114,7 +113,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if show has started (now timezone-aware)
-    const showDateStr = format(show.showDate, "yyyy-MM-dd")
+    // Use UTC components directly to avoid local timezone issues
+    const year = show.showDate.getUTCFullYear()
+    const month = String(show.showDate.getUTCMonth() + 1).padStart(2, "0")
+    const day = String(show.showDate.getUTCDate()).padStart(2, "0")
+    const showDateStr = `${year}-${month}-${day}`
+
     const showStarted = await hasShowStarted(
       showDateStr,
       show.timezone,
