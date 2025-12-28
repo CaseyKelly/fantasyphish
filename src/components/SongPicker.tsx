@@ -120,7 +120,7 @@ export function SongPicker({
     return () => {
       document.body.style.overflow = ""
     }
-  }, [mobileModalOpen])
+  }, [mobileModalOpen, setSearchQuery])
 
   // Filter songs based on search
   const filteredSongs = useMemo(() => {
