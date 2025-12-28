@@ -108,12 +108,13 @@ export function SongPicker({
     }
   }, [justSaved])
 
-  // Prevent background scroll when mobile modal is open
+  // Prevent background scroll when mobile modal is open and clear search when closed
   useEffect(() => {
     if (mobileModalOpen) {
       document.body.style.overflow = "hidden"
     } else {
       document.body.style.overflow = ""
+      setSearchQuery("")
     }
 
     return () => {
