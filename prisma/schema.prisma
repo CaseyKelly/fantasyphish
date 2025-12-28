@@ -99,14 +99,15 @@ model Pick {
 }
 
 model Song {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique // For matching with phish.net
-  artist      String   @default("Phish") // Some covers have different artists
-  timesPlayed Int      @default(0)
-  picks       Pick[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  name               String
+  slug               String   @unique // For matching with phish.net
+  artist             String   @default("Phish") // Some covers have different artists
+  timesPlayed        Int      @default(0)
+  recentTimesPlayed  Int      @default(0) // Times played in last 5 years
+  picks              Pick[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   @@index([name])
   @@index([slug])

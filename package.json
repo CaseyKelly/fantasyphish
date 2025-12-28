@@ -15,6 +15,7 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "npx tsx scripts/seed-songs.ts",
     "db:sync-tours": "npx tsx scripts/sync-tours.ts",
+    "db:sync-recent-songs": "npx tsx scripts/sync-recent-song-counts.ts",
     "db:restore-from-prod": "npx tsx scripts/restore-from-prod.ts",
     "db:branch": "npx tsx scripts/neon-branch.ts",
     "db:create-branch": "npx tsx scripts/neon-branch.ts create",
