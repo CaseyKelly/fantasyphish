@@ -8,6 +8,11 @@ declare module "next-auth" {
       username: string
       isAdmin: boolean
     }
+    impersonating?: {
+      originalUserId: string
+      originalUsername: string
+      originalIsAdmin: boolean
+    }
   }
 
   interface User {
@@ -23,5 +28,10 @@ declare module "next-auth/jwt" {
     id: string
     username: string
     isAdmin: boolean
+    impersonating?: {
+      originalUserId: string
+      originalUsername: string
+      originalIsAdmin: boolean
+    }
   }
 }
