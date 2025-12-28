@@ -26,7 +26,16 @@ if [ -z "$TRACE_FILES" ]; then
   echo "✅ No traces found (tests may have passed!)"
   echo "📊 Opening HTML report instead..."
   if [ -f /tmp/playwright-results/playwright-report/index.html ]; then
-    open /tmp/playwright-results/playwright-report/index.html
+    # Cross-platform file opening
+    if command -v open &> /dev/null; then
+      open /tmp/playwright-results/playwright-report/index.html
+    elif command -v xdg-open &> /dev/null; then
+      xdg-open /tmp/playwright-results/playwright-report/index.html
+    elif command -v start &> /dev/null; then
+      start /tmp/playwright-results/playwright-report/index.html
+    else
+      echo "📄 Report saved at: /tmp/playwright-results/playwright-report/index.html"
+    fi
   else
     echo "❌ No HTML report found either"
   fi

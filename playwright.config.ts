@@ -16,7 +16,7 @@ export default defineConfig({
 
   use: {
     baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-    // In CI, always capture traces (retain all on success, all on failure)
+    // In CI, capture traces for all test runs
     trace: process.env.CI ? "on" : "off",
     screenshot: process.env.CI ? "only-on-failure" : "off",
     video: "off", // Keep video off (too large)
