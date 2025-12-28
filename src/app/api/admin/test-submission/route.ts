@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { getSetlist } from "@/lib/phishnet"
 import { scoreSubmission } from "@/lib/scoring"
-import { format } from "date-fns"
+import { isAdminFeaturesEnabled } from "@/lib/env"
 
 // Top 60 most frequently played songs (as of 2025)
 // These are songs that Phish plays regularly, making test submissions more realistic
@@ -74,7 +74,11 @@ export async function POST() {
   try {
     // Check admin auth
     const session = await auth()
-    if (!session?.user?.id || !session.user.isAdmin) {
+    if (
+      !session?.user?.id ||
+      !session.user.isAdmin ||
+      !isAdminFeaturesEnabled()
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -137,7 +141,7 @@ export async function POST() {
         console.log(
           `[Admin] Sample shows:`,
           existingShows.slice(0, 3).map((s) => ({
-            date: format(s.showDate, "yyyy-MM-dd"),
+            date: s.showDate.toISOString().split("T")[0],
             venue: s.venue,
             city: s.city,
           }))
@@ -377,10 +381,10 @@ export async function POST() {
 
     return NextResponse.json({
       success: true,
-      message: `Test submission created for ${format(testShow.showDate, "yyyy-MM-dd")} using frequently played songs`,
+      message: `Test submission created for ${testShow.showDate.toISOString().split("T")[0]} using frequently played songs`,
       testShow: {
         id: testShow.id,
-        showDate: format(testShow.showDate, "yyyy-MM-dd"),
+        showDate: testShow.showDate.toISOString().split("T")[0],
         venue: testShow.venue,
       },
       submission: {

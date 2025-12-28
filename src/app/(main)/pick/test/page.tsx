@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
+import { isAdminFeaturesEnabled } from "@/lib/env"
 import { Card } from "@/components/ui/card"
 import Link from "next/link"
 import { Calendar, MapPin, Target } from "lucide-react"
@@ -36,7 +37,7 @@ export default async function TestPickPage() {
     redirect("/login")
   }
 
-  if (!session.user.isAdmin) {
+  if (!session.user.isAdmin || !isAdminFeaturesEnabled()) {
     redirect("/picks")
   }
 

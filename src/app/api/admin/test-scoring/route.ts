@@ -3,13 +3,17 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { getSetlist } from "@/lib/phishnet"
 import { scoreSubmission } from "@/lib/scoring"
-import { format } from "date-fns"
+import { isAdminFeaturesEnabled } from "@/lib/env"
 
 export async function POST(request: NextRequest) {
   try {
     // Check admin auth
     const session = await auth()
-    if (!session?.user?.id || !session.user.isAdmin) {
+    if (
+      !session?.user?.id ||
+      !session.user.isAdmin ||
+      !isAdminFeaturesEnabled()
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -46,7 +50,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the actual setlist from phish.net for this date
-    const showDateStr = format(show.showDate, "yyyy-MM-dd")
+    // Extract the date in UTC to avoid timezone conversion
+    const showDateStr = show.showDate.toISOString().split("T")[0]
     const setlist = await getSetlist(showDateStr)
 
     if (!setlist || !setlist.songs || setlist.songs.length === 0) {

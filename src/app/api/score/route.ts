@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getSetlist, isShowComplete, parseSetlist } from "@/lib/phishnet"
 import { scoreSubmission } from "@/lib/scoring"
-import { format } from "date-fns"
 
 // This endpoint is called by the cron job to score completed shows
 export async function POST(request: NextRequest) {
@@ -40,7 +39,8 @@ export async function POST(request: NextRequest) {
     const results = []
 
     for (const show of showsToScore) {
-      const showDateStr = format(show.showDate, "yyyy-MM-dd")
+      // Extract the date in UTC to avoid timezone conversion
+      const showDateStr = show.showDate.toISOString().split("T")[0]
       const setlist = await getSetlist(showDateStr)
 
       if (!setlist || !isShowComplete(setlist)) {
@@ -136,7 +136,7 @@ export async function GET() {
     return NextResponse.json({
       pendingShows: pendingShows.map((show) => ({
         id: show.id,
-        showDate: format(show.showDate, "yyyy-MM-dd"),
+        showDate: show.showDate.toISOString().split("T")[0],
         venue: show.venue,
         isComplete: show.isComplete,
         submissionCount: show._count.submissions,

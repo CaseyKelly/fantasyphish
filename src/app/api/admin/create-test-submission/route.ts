@@ -3,13 +3,17 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { getSetlist } from "@/lib/phishnet"
 import { scoreSubmission } from "@/lib/scoring"
-import { format } from "date-fns"
+import { isAdminFeaturesEnabled } from "@/lib/env"
 
 export async function POST(request: Request) {
   try {
     // Check admin auth
     const session = await auth()
-    if (!session?.user?.id || !session.user.isAdmin) {
+    if (
+      !session?.user?.id ||
+      !session.user.isAdmin ||
+      !isAdminFeaturesEnabled()
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -144,10 +148,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `Test submission created for ${format(show.showDate, "yyyy-MM-dd")}`,
+      message: `Test submission created for ${show.showDate.toISOString().split("T")[0]}`,
       testShow: {
         id: show.id,
-        showDate: format(show.showDate, "yyyy-MM-dd"),
+        showDate: show.showDate.toISOString().split("T")[0],
         venue: show.venue,
       },
       submission: {

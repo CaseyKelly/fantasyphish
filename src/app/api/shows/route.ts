@@ -12,16 +12,25 @@ export async function GET(request: NextRequest) {
     if (nextOnly === "true") {
       const session = await auth()
 
-      // Get start of today in UTC to properly compare dates
-      const today = new Date()
-      today.setUTCHours(0, 0, 0, 0)
+      // Use current time to compare with lockTime (timezone-aware)
+      const now = new Date()
 
       const nextShow = await prisma.show.findFirst({
         where: {
           isComplete: false,
-          showDate: {
-            gte: today,
-          },
+          OR: [
+            {
+              lockTime: {
+                gte: now,
+              },
+            },
+            {
+              lockTime: null,
+              showDate: {
+                gte: now,
+              },
+            },
+          ],
         },
         orderBy: { showDate: "asc" },
         include: {
