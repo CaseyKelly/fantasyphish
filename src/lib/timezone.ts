@@ -105,9 +105,10 @@ export function getTimezoneForLocation(state?: string | null): string {
  * Returns a UTC Date object
  */
 export function getShowLockTime(showDate: Date, timezone: string): Date {
-  const year = showDate.getFullYear()
-  const month = showDate.getMonth() + 1
-  const day = showDate.getDate()
+  // Get the date components in UTC to avoid timezone conversion issues
+  const year = showDate.getUTCFullYear()
+  const month = showDate.getUTCMonth() + 1
+  const day = showDate.getUTCDate()
 
   // Create a date at 7 PM in the show's timezone
   const lockTimeInVenueTz = new Date(year, month - 1, day, 19, 0, 0, 0)

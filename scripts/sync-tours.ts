@@ -110,9 +110,11 @@ async function syncYear(year: number): Promise<void> {
       const timezone = getTimezoneForLocation(show.state)
       const lockTime = getShowLockTime(showDate, timezone)
 
-      // Determine if show is complete (in the past)
+      // Determine if show is complete
+      // A show is complete if we're past the lock time (7 PM venue time)
+      // This ensures the show date remains available until showtime
       const now = new Date()
-      const isComplete = showDate < now
+      const isComplete = now > lockTime
 
       await prisma.show.upsert({
         where: { showDate: showDate },
