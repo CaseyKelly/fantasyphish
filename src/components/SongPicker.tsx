@@ -108,6 +108,19 @@ export function SongPicker({
     }
   }, [justSaved])
 
+  // Prevent background scroll when mobile modal is open
+  useEffect(() => {
+    if (mobileModalOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [mobileModalOpen])
+
   // Filter songs based on search
   const filteredSongs = useMemo(() => {
     if (!searchQuery) return songs
