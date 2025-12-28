@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 
 export async function GET() {
   try {
+    // Order by recent play count (last 5 years) to prioritize currently popular songs
     const songs = await prisma.song.findMany({
       orderBy: [{ recentTimesPlayed: "desc" }, { name: "asc" }],
       select: {
