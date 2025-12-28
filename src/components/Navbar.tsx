@@ -42,10 +42,13 @@ export function Navbar() {
 
   useEffect(() => {
     // Check if admin features are available by trying to fetch users
+    // In non-prod, the endpoint will return 200 (if admin) or 403 (if not admin, but endpoint exists)
+    // In prod, the endpoint returns 403 with a specific "non-production" error message
     if (isAdmin) {
       fetch("/api/admin/users")
         .then((res) => {
-          setIsNonProd(res.ok || res.status === 401)
+          // Only consider it non-prod if we get a successful response
+          setIsNonProd(res.ok)
         })
         .catch(() => setIsNonProd(false))
     }
