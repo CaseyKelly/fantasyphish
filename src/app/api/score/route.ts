@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma"
 import { getSetlist, isShowComplete, parseSetlist } from "@/lib/phishnet"
 import { scoreSubmissionProgressive } from "@/lib/scoring"
 
+// Grace period after encore detection (1 hour in milliseconds)
+const GRACE_PERIOD_MS = 60 * 60 * 1000
+
 // This endpoint is called by the cron job to score shows progressively
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
@@ -22,13 +25,20 @@ export async function POST(request: NextRequest) {
 
     // Find shows that need scoring:
     // 1. Shows with locked picks (lockTime has passed)
-    // 2. Shows that aren't complete yet OR have unscored submissions
+    // 2. Shows that aren't complete yet OR within 1 hour of encore starting
+    const oneHourAgo = new Date(Date.now() - GRACE_PERIOD_MS)
+
     const showsToScore = await prisma.show.findMany({
       where: {
         lockTime: { lte: new Date() }, // Only score shows that are locked
         OR: [
           { isComplete: false }, // Progressive scoring for in-progress shows
-          { submissions: { some: { isScored: false } } }, // Final scoring for complete shows
+          {
+            AND: [
+              { isComplete: true }, // Show has encore
+              { encoreStartedAt: { gte: oneHourAgo } }, // Encore started within last hour
+            ],
+          },
         ],
       },
       include: {
@@ -82,17 +92,46 @@ export async function POST(request: NextRequest) {
       )
 
       const showComplete = isShowComplete(setlist)
-      console.log(`[Score]   Show complete: ${showComplete}`)
+      console.log(`[Score]   Show complete (encore detected): ${showComplete}`)
+
+      // Track when encore was first detected
+      const encoreJustStarted = showComplete && !show.isComplete
+      const updateData: {
+        setlistJson: object
+        isComplete: boolean
+        fetchedAt: Date
+        lastScoredAt: Date
+        encoreStartedAt?: Date
+      } = {
+        setlistJson: setlist as object,
+        isComplete: showComplete,
+        fetchedAt: new Date(),
+        lastScoredAt: new Date(),
+      }
+
+      // Set encoreStartedAt when encore is first detected
+      if (encoreJustStarted) {
+        updateData.encoreStartedAt = new Date()
+        console.log(
+          `[Score]   ✓ Encore just started - will continue scoring for 1 hour`
+        )
+      }
+
+      // Check if we're past the 1-hour grace period
+      const gracePeriodExpired =
+        show.encoreStartedAt &&
+        Date.now() - show.encoreStartedAt.getTime() > GRACE_PERIOD_MS
+
+      if (gracePeriodExpired) {
+        console.log(
+          `[Score]   ✓ Grace period expired (encore started at ${show.encoreStartedAt!.toISOString()})`
+        )
+      }
 
       // Update show with latest setlist data
       await prisma.show.update({
         where: { id: show.id },
-        data: {
-          setlistJson: setlist as object,
-          isComplete: showComplete,
-          fetchedAt: new Date(),
-          lastScoredAt: new Date(),
-        },
+        data: updateData,
       })
 
       // Score each submission progressively
@@ -123,10 +162,13 @@ export async function POST(request: NextRequest) {
           }
 
           // Update submission
+          // Only mark as fully scored if grace period has expired (1 hour after encore)
+          const shouldMarkScored = Boolean(gracePeriodExpired)
+
           await prisma.submission.update({
             where: { id: submission.id },
             data: {
-              isScored: showComplete, // Only mark as fully scored when show is complete
+              isScored: shouldMarkScored,
               totalPoints,
               lastSongCount: currentSongCount,
             },
