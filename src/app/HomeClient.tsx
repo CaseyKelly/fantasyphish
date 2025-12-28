@@ -44,6 +44,7 @@ export function HomeClient() {
   const [nextShow, setNextShow] = useState<Show | null>(null)
   const [songs, setSongs] = useState<Song[]>([])
   const [loading, setLoading] = useState(true)
+  const [isLocked, setIsLocked] = useState(false)
   const [guestPicks, setGuestPicks] = useState<Array<{
     songId: string
     songName: string
@@ -61,7 +62,18 @@ export function HomeClient() {
         const showData = await showRes.json()
         const songsData = await songsRes.json()
 
-        setNextShow(showData.nextShow || null)
+        if (showData.nextShow) {
+          setNextShow(showData.nextShow)
+
+          // Check if show is locked
+          if (showData.nextShow.lockTime) {
+            const lockTime = new Date(showData.nextShow.lockTime)
+            setIsLocked(new Date() >= lockTime)
+          }
+        } else {
+          setNextShow(null)
+        }
+
         setSongs(songsData.songs || [])
       } catch (error) {
         console.error("Error fetching data:", error)
@@ -262,7 +274,7 @@ export function HomeClient() {
                       {nextShow.state && `, ${nextShow.state}`} •{" "}
                       {parseUTCDate(nextShow.showDate, "MMMM d, yyyy")}
                     </p>
-                    {nextShow.lockTime && (
+                    {!isLocked && nextShow.lockTime && (
                       <p className="text-sm text-gray-500">
                         Picks lock at{" "}
                         {formatLockTime(
@@ -284,7 +296,7 @@ export function HomeClient() {
                       showDate: nextShow.showDate,
                     }}
                     songs={songs}
-                    isLocked={false}
+                    isLocked={isLocked}
                     guestMode={true}
                     onGuestSubmit={(picks) => setGuestPicks(picks)}
                   />
