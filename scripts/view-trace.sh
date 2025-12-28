@@ -15,6 +15,9 @@ fi
 
 echo "🔍 Found run ID: $RUN_ID"
 
+# Clean up any existing results
+rm -rf /tmp/playwright-results
+
 # Download the artifact
 echo "⬇️  Downloading artifacts..."
 gh run download "$RUN_ID" --name playwright-results --dir /tmp/playwright-results
