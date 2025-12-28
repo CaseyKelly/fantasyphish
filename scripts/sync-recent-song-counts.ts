@@ -119,7 +119,9 @@ async function main() {
       console.log(`Fetching shows for ${year}...`)
 
       try {
-        const shows = await fetchPhishNet<PhishNetShow[]>(`/shows/year/${year}`)
+        const shows = await fetchPhishNet<PhishNetShow[]>(
+          `/shows/showyear/${year}`
+        )
 
         if (!shows || shows.length === 0) {
           console.log(`  No shows found for ${year}`)
@@ -176,21 +178,25 @@ async function main() {
     console.log(`\nCounted ${songCounts.size} unique songs`)
     console.log("Updating database...\n")
 
-    // Perform all updates in a transaction for better performance
+    // Reset all recentTimesPlayed counts to 0 first
+    await prisma.song.updateMany({
+      data: { recentTimesPlayed: 0 },
+    })
+
+    // Update each song's recent count in batches to avoid overwhelming the database
     let updated = 0
     let notFound = 0
 
-    await prisma.$transaction(async (tx) => {
-      // Reset all recentTimesPlayed counts to 0 first
-      await tx.song.updateMany({
-        data: { recentTimesPlayed: 0 },
-      })
+    const entries = Array.from(songCounts.entries())
+    const batchSize = 50
 
-      // Update each song's recent count
-      const updatePromises = Array.from(songCounts.entries()).map(
-        async ([slug, count]) => {
+    for (let i = 0; i < entries.length; i += batchSize) {
+      const batch = entries.slice(i, i + batchSize)
+
+      await Promise.all(
+        batch.map(async ([slug, count]) => {
           try {
-            const result = await tx.song.updateMany({
+            const result = await prisma.song.updateMany({
               where: { slug },
               data: { recentTimesPlayed: count },
             })
@@ -207,11 +213,14 @@ async function main() {
               error instanceof Error ? error.message : error
             )
           }
-        }
+        })
       )
 
-      await Promise.all(updatePromises)
-    })
+      // Log progress
+      console.log(
+        `  Updated ${Math.min(i + batchSize, entries.length)}/${entries.length} songs`
+      )
+    }
 
     console.log(`\nSync complete!`)
     console.log(`- Updated: ${updated} songs`)
