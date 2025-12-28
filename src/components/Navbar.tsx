@@ -14,6 +14,7 @@ import {
   User,
   Users,
 } from "lucide-react"
+import { toast } from "sonner"
 import { DonutLogo } from "./DonutLogo"
 
 type UserForImpersonation = {
@@ -106,12 +107,16 @@ export function Navbar() {
         },
       })
 
-      // Close modal and reload page to show impersonated user
+      // Close modal
       setShowImpersonateModal(false)
+
+      // Force a full page reload to refresh the session with the new JWT token
+      // This is necessary because NextAuth stores the session in an HTTP-only cookie
+      // and we need to trigger a complete session refresh
       window.location.reload()
     } catch (error) {
       console.error("Failed to impersonate:", error)
-      alert("Failed to impersonate user. Please try again.")
+      toast.error("Failed to impersonate user. Please try again.")
       setImpersonating(false)
     }
   }

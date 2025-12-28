@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react"
 import { AlertCircle, X } from "lucide-react"
 import { useState } from "react"
+import { toast } from "sonner"
 
 export function ImpersonationBanner() {
   const { data: session, update } = useSession()
@@ -28,11 +29,13 @@ export function ImpersonationBanner() {
         stopImpersonating: true,
       })
 
-      // Force a page reload to clear any cached data
+      // Force a full page reload to refresh the session with the restored JWT token
+      // This is necessary because NextAuth stores the session in an HTTP-only cookie
+      // and we need to trigger a complete session refresh to restore the admin user
       window.location.reload()
     } catch (error) {
       console.error("Failed to stop impersonation:", error)
-      alert("Failed to stop impersonation. Please try again.")
+      toast.error("Failed to stop impersonation. Please try again.")
       setIsLoading(false)
     }
   }
