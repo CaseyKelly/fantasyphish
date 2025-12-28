@@ -299,12 +299,7 @@ export function SongPicker({
               }`}
             >
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">{song.name}</p>
-                  {song.artist !== "Phish" && (
-                    <p className="text-sm text-gray-400">{song.artist}</p>
-                  )}
-                </div>
+                <p className="font-medium">{song.name}</p>
                 {isSelected && <Check className="h-4 w-4 text-green-500" />}
               </div>
             </button>
