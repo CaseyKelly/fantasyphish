@@ -3,25 +3,37 @@ import { prisma } from "@/lib/prisma"
 import { getSetlist, isShowComplete, parseSetlist } from "@/lib/phishnet"
 import { scoreSubmissionProgressive } from "@/lib/scoring"
 
+// Force dynamic rendering and disable caching
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+
 // Grace period after encore detection (1 hour in milliseconds)
 const GRACE_PERIOD_MS = 60 * 60 * 1000
 
 // This endpoint is called by the cron job to score shows progressively
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
-  console.log(`[Score] Cron job started at ${new Date().toISOString()}`)
+  console.log(`[Score:POST] ========================================`)
+  console.log(`[Score:POST] Cron job started at ${new Date().toISOString()}`)
+  console.log(
+    `[Score:POST] Request headers: ${JSON.stringify(Object.fromEntries(request.headers.entries()))}`
+  )
 
   try {
     // Verify cron secret (optional, for security)
     const authHeader = request.headers.get("authorization")
     const cronSecret = process.env.CRON_SECRET
 
+    console.log(
+      `[Score:POST] Auth check: cronSecret=${cronSecret ? "SET" : "NOT_SET"}, authHeader=${authHeader ? "PROVIDED" : "MISSING"}`
+    )
+
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      console.log("[Score] ✗ Unauthorized - invalid CRON_SECRET")
+      console.log("[Score:POST] ✗ Unauthorized - invalid CRON_SECRET")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    console.log("[Score] ✓ Authorization successful")
+    console.log("[Score:POST] ✓ Authorization successful")
 
     // Find shows that need scoring:
     // 1. Shows with locked picks (lockTime has passed)
@@ -52,7 +64,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    console.log(`[Score] Found ${showsToScore.length} show(s) to check`)
+    console.log(`[Score:POST] Found ${showsToScore.length} show(s) to check`)
 
     const results = []
 
@@ -60,14 +72,14 @@ export async function POST(request: NextRequest) {
       // Extract the date in UTC to avoid timezone conversion
       const showDateStr = show.showDate.toISOString().split("T")[0]
       console.log(
-        `[Score] Processing show ${showDateStr} (${show.venue}, ${show.city})`
+        `[Score:POST] Processing show ${showDateStr} (${show.venue}, ${show.city})`
       )
 
       const setlist = await getSetlist(showDateStr)
 
       // Log the API response
       if (!setlist) {
-        console.log(`[Score]   No setlist data returned from API`)
+        console.log(`[Score:POST]   No setlist data returned from API`)
         results.push({
           showId: show.id,
           showDate: showDateStr,
@@ -78,21 +90,25 @@ export async function POST(request: NextRequest) {
       }
 
       // Log the raw API response for debugging
-      console.log(`[Score]   API Response: ${JSON.stringify(setlist, null, 2)}`)
+      console.log(
+        `[Score:POST]   API Response: ${JSON.stringify(setlist, null, 2)}`
+      )
 
       // Log parsed songs from setlist
       const parsedSetlist = parseSetlist(setlist)
       console.log(
-        `[Score]   ✓ Fetched setlist with ${parsedSetlist.allSongs.length} song(s)`
+        `[Score:POST]   ✓ Fetched setlist with ${parsedSetlist.allSongs.length} song(s)`
       )
-      console.log(`[Score]   Songs: ${parsedSetlist.allSongs.join(", ")}`)
-      console.log(`[Score]   Opener: ${parsedSetlist.opener || "N/A"}`)
+      console.log(`[Score:POST]   Songs: ${parsedSetlist.allSongs.join(", ")}`)
+      console.log(`[Score:POST]   Opener: ${parsedSetlist.opener || "N/A"}`)
       console.log(
-        `[Score]   Encore: ${parsedSetlist.encoreSongs.length > 0 ? parsedSetlist.encoreSongs.join(", ") : "N/A"}`
+        `[Score:POST]   Encore: ${parsedSetlist.encoreSongs.length > 0 ? parsedSetlist.encoreSongs.join(", ") : "N/A"}`
       )
 
       const showComplete = isShowComplete(setlist)
-      console.log(`[Score]   Show complete (encore detected): ${showComplete}`)
+      console.log(
+        `[Score:POST]   Show complete (encore detected): ${showComplete}`
+      )
 
       // Track when encore was first detected
       const encoreJustStarted = showComplete && !show.isComplete
@@ -113,7 +129,7 @@ export async function POST(request: NextRequest) {
       if (encoreJustStarted) {
         updateData.encoreStartedAt = new Date()
         console.log(
-          `[Score]   ✓ Encore just started - will continue scoring for 1 hour`
+          `[Score:POST]   ✓ Encore just started - will continue scoring for 1 hour`
         )
       }
 
@@ -124,7 +140,7 @@ export async function POST(request: NextRequest) {
 
       if (gracePeriodExpired) {
         console.log(
-          `[Score]   ✓ Grace period expired (encore started at ${show.encoreStartedAt!.toISOString()})`
+          `[Score:POST]   ✓ Grace period expired (encore started at ${show.encoreStartedAt!.toISOString()})`
         )
       }
 
@@ -176,11 +192,11 @@ export async function POST(request: NextRequest) {
 
           submissionsWithChanges++
           console.log(
-            `[Score]   ✓ Updated submission ${submission.id}: ${previousSongCount} → ${currentSongCount} songs, ${totalPoints} points`
+            `[Score:POST]   ✓ Updated submission ${submission.id}: ${previousSongCount} → ${currentSongCount} songs, ${totalPoints} points`
           )
         } else {
           console.log(
-            `[Score]   - No changes for submission ${submission.id} (${currentSongCount} songs, ${totalPoints} points)`
+            `[Score:POST]   - No changes for submission ${submission.id} (${currentSongCount} songs, ${totalPoints} points)`
           )
         }
 
@@ -188,7 +204,7 @@ export async function POST(request: NextRequest) {
       }
 
       console.log(
-        `[Score]   ✓ Processed ${submissionsProcessed} submission(s) (${submissionsWithChanges} updated)`
+        `[Score:POST]   ✓ Processed ${submissionsProcessed} submission(s) (${submissionsWithChanges} updated)`
       )
 
       results.push({
@@ -203,10 +219,11 @@ export async function POST(request: NextRequest) {
     }
 
     const duration = Date.now() - startTime
-    console.log(`[Score] ✓ Complete in ${duration}ms`)
+    console.log(`[Score:POST] ✓ Complete in ${duration}ms`)
     console.log(
-      `[Score] Summary: ${results.filter((r) => r.status === "in_progress").length} in progress, ${results.filter((r) => r.status === "completed").length} completed`
+      `[Score:POST] Summary: ${results.filter((r) => r.status === "in_progress").length} in progress, ${results.filter((r) => r.status === "completed").length} completed`
     )
+    console.log(`[Score:POST] ========================================`)
 
     return NextResponse.json({
       success: true,
@@ -216,11 +233,12 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     const duration = Date.now() - startTime
-    console.error("[Score] ✗ Error scoring shows:", error)
-    console.error("[Score] ✗ Error details:", {
+    console.error("[Score:POST] ✗ Error scoring shows:", error)
+    console.error("[Score:POST] ✗ Error details:", {
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     })
+    console.log(`[Score:POST] ========================================`)
     return NextResponse.json(
       {
         error: "Failed to score shows",
@@ -234,7 +252,11 @@ export async function POST(request: NextRequest) {
 
 // GET endpoint to manually check scoring status
 export async function GET() {
+  console.log(`[Score:GET] Request started at ${new Date().toISOString()}`)
+
   try {
+    console.log("[Score:GET] Querying for pending shows...")
+
     const pendingShows = await prisma.show.findMany({
       where: {
         OR: [
@@ -250,7 +272,17 @@ export async function GET() {
       orderBy: { showDate: "asc" },
     })
 
-    return NextResponse.json({
+    console.log(`[Score:GET] Found ${pendingShows.length} pending show(s)`)
+
+    for (const show of pendingShows) {
+      console.log(
+        `[Score:GET]   - ${show.showDate.toISOString().split("T")[0]} ${show.venue}: ` +
+          `complete=${show.isComplete}, submissions=${show._count.submissions}, ` +
+          `lastScored=${show.lastScoredAt?.toISOString() || "never"}`
+      )
+    }
+
+    const response = {
       pendingShows: pendingShows.map((show) => ({
         id: show.id,
         showDate: show.showDate.toISOString().split("T")[0],
@@ -260,9 +292,16 @@ export async function GET() {
         lastScoredAt: show.lastScoredAt,
         submissionCount: show._count.submissions,
       })),
-    })
+    }
+
+    console.log(`[Score:GET] ✓ Returning ${pendingShows.length} pending shows`)
+    return NextResponse.json(response)
   } catch (error) {
-    console.error("Error checking score status:", error)
+    console.error("[Score:GET] ✗ Error checking score status:", error)
+    console.error("[Score:GET] ✗ Error details:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    })
     return NextResponse.json(
       { error: "Failed to check score status" },
       { status: 500 }
