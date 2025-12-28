@@ -480,12 +480,12 @@ export function SongPicker({
               ) : (
                 <span className="text-gray-500 text-sm">Not selected</span>
               )}
-              {!isMobile &&
-                (isExpanded ? (
-                  <ChevronUp className="h-5 w-5 text-gray-400" />
-                ) : (
-                  <ChevronDown className="h-5 w-5 text-gray-400" />
-                ))}
+              {!isMobile && isExpanded && (
+                <ChevronUp className="h-5 w-5 text-gray-400" />
+              )}
+              {!isMobile && !isExpanded && (
+                <ChevronDown className="h-5 w-5 text-gray-400" />
+              )}
             </div>
           </div>
         </CardHeader>
