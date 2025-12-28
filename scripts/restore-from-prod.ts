@@ -54,37 +54,35 @@ async function main() {
     process.exit(1)
   }
 
-  // SAFETY CHECK: For Neon branches, recommend using db:reset-branch instead
-  const isNeonBranch =
-    localDbUrl.includes("neon.tech") &&
-    (localDbUrl.includes("branch=") || localDbUrl.includes("branch%3D"))
+  // Check if DATABASE_URL points to a Neon database
+  const isNeonDb = localDbUrl.includes("neon.tech")
 
-  if (isNeonBranch) {
-    console.error("\n⚠️  You're using a Neon branch for development!")
-    console.error("For Neon branches, it's easier to use:")
-    console.error("   npm run db:reset-branch")
-    console.error(
-      "\nThis will delete and recreate your branch from production."
-    )
-    console.error(
-      "\nIf you really want to use pg_dump/restore instead, you can continue,"
-    )
-    console.error("but db:reset-branch is faster and simpler.")
-    console.error("\n❌ Aborting. Use npm run db:reset-branch instead.")
-    process.exit(1)
+  // For Neon databases, recommend using db:reset-branch as it's faster and simpler
+  if (isNeonDb) {
+    console.log("\n💡 Tip: You're using a Neon database")
+    console.log("For Neon, it's faster to use:")
+    console.log("   npm run db:reset-branch")
+    console.log("\nThis command will:")
+    console.log("  • Delete and recreate your dev branch in seconds")
+    console.log("  • Copy all data from production")
+    console.log("  • No need for pg_dump/restore")
+    console.log("\nContinuing with pg_dump/restore method...")
+    console.log("(This will take longer but works the same way)")
+    console.log()
   }
 
-  // SAFETY CHECK: Ensure local database doesn't look like production cloud DB
-  const isCloudDbNotLocalhost =
-    (localDbUrl.includes("neon.tech") ||
-      localDbUrl.includes("amazonaws.com") ||
-      localDbUrl.includes("supabase.co")) &&
+  // SAFETY CHECK: Ensure non-Neon cloud databases are localhost only
+  const isOtherCloudDb =
+    !isNeonDb &&
+    (localDbUrl.includes("amazonaws.com") ||
+      localDbUrl.includes("supabase.co") ||
+      localDbUrl.includes("planetscale.com")) &&
     !localDbUrl.includes("localhost")
 
-  if (isCloudDbNotLocalhost) {
+  if (isOtherCloudDb) {
     console.error("\n❌ SAFETY CHECK FAILED!")
     console.error(
-      "Your DATABASE_URL appears to point to a production/cloud database."
+      "Your DATABASE_URL appears to point to a production cloud database."
     )
     console.error(
       "This script will DROP and RECREATE the database at DATABASE_URL."
@@ -93,10 +91,6 @@ async function main() {
     console.error(
       'DATABASE_URL="postgresql://user:password@localhost:5432/fantasyphish_local"'
     )
-    console.error("\nOr use a Neon branch:")
-    console.error(
-      'DATABASE_URL="postgresql://...@ep-xxx.neon.tech/neondb?options=branch%3Ddev"'
-    )
     console.error(
       "\nCurrent DATABASE_URL:",
       localDbUrl.replace(/:[^:@]+@/, ":****@")
@@ -104,15 +98,19 @@ async function main() {
     process.exit(1)
   }
 
-  // SAFETY CHECK: Ensure we're using localhost for local database
-  if (!localDbUrl.includes("localhost") && !localDbUrl.includes("127.0.0.1")) {
-    console.error("\n⚠️  WARNING: DATABASE_URL is not localhost")
+  // SAFETY CHECK: Ensure we're using localhost or Neon for local database
+  const isLocalhost =
+    localDbUrl.includes("localhost") || localDbUrl.includes("127.0.0.1")
+
+  if (!isLocalhost && !isNeonDb) {
+    console.error("\n⚠️  WARNING: DATABASE_URL is not localhost or Neon")
     console.error(
       "This script will DROP and RECREATE the database at:",
       localDbUrl.replace(/:[^:@]+@/, ":****@")
     )
-    console.error("\nFor Neon branches, use: npm run db:reset-branch")
-    console.error("\n❌ Aborting for safety. Please use a localhost database.")
+    console.error(
+      "\n❌ Aborting for safety. Please use a localhost or Neon database."
+    )
     process.exit(1)
   }
 
