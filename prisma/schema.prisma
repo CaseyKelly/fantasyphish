@@ -35,23 +35,24 @@ model Tour {
 }
 
 model Show {
-  id            String       @id @default(cuid())
-  showDate      DateTime     @unique
-  venue         String
-  city          String?
-  state         String?
-  country       String?
-  tourId        String?
-  tour          Tour?        @relation(fields: [tourId], references: [id])
-  setlistJson   Json?        // Cached setlist from phish.net
-  isComplete    Boolean      @default(false)
-  fetchedAt     DateTime?
-  timezone      String?      // Venue timezone (e.g., "America/New_York")
-  lockTime      DateTime?    // Time when picks locked (7 PM in venue timezone)
-  lastScoredAt  DateTime?    // Last progressive scoring run
-  submissions   Submission[]
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id              String       @id @default(cuid())
+  showDate        DateTime     @unique
+  venue           String
+  city            String?
+  state           String?
+  country         String?
+  tourId          String?
+  tour            Tour?        @relation(fields: [tourId], references: [id])
+  setlistJson     Json?        // Cached setlist from phish.net
+  isComplete      Boolean      @default(false)
+  fetchedAt       DateTime?
+  timezone        String?      // Venue timezone (e.g., "America/New_York")
+  lockTime        DateTime?    // Time when picks locked (7 PM in venue timezone)
+  lastScoredAt    DateTime?    // Last progressive scoring run
+  encoreStartedAt DateTime?    // When encore was first detected (for 1-hour grace period)
+  submissions     Submission[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   @@index([showDate])
   @@index([tourId])
