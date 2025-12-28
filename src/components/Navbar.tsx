@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { signOut, useSession } from "next-auth/react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import {
   Menu,
   X,
@@ -37,23 +37,6 @@ export function Navbar() {
   const isAdmin = session?.impersonating
     ? session.impersonating.originalIsAdmin
     : session?.user.isAdmin
-
-  // Check if in non-prod environment (client-side check via API availability)
-  const [isNonProd, setIsNonProd] = useState(false)
-
-  useEffect(() => {
-    // Check if admin features are available by trying to fetch users
-    // In non-prod, the endpoint will return 200 (if admin) or 403 (if not admin, but endpoint exists)
-    // In prod, the endpoint returns 403 with a specific "non-production" error message
-    if (isAdmin) {
-      fetch("/api/admin/users")
-        .then((res) => {
-          // Only consider it non-prod if we get a successful response
-          setIsNonProd(res.ok)
-        })
-        .catch(() => setIsNonProd(false))
-    }
-  }, [isAdmin])
 
   const navItems = [
     { href: "/picks", label: "My Picks", icon: Music },
@@ -161,7 +144,7 @@ export function Navbar() {
             {/* User Menu (Desktop) */}
             {session && (
               <div className="hidden md:flex items-center space-x-4">
-                {isAdmin && isNonProd && (
+                {isAdmin && (
                   <button
                     onClick={handleOpenImpersonateModal}
                     className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-amber-400 hover:text-amber-300 hover:bg-[#3d5a6c]/50 transition-colors whitespace-nowrap"
@@ -246,7 +229,7 @@ export function Navbar() {
                 )
               })}
               <div className="pt-3 mt-3 border-t border-[#3d5a6c]/50">
-                {isAdmin && isNonProd && (
+                {isAdmin && (
                   <button
                     onClick={() => {
                       setIsMenuOpen(false)

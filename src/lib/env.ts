@@ -20,8 +20,8 @@ export function isProduction(): boolean {
 
 /**
  * Check if admin features should be enabled
- * Admin features are only available in development and preview environments
+ * Admin features are available in all environments for authorized admins
  */
 export function isAdminFeaturesEnabled(): boolean {
-  return !isProduction()
+  return true
 }
