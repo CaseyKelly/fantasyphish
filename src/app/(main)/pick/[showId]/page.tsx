@@ -19,12 +19,6 @@ async function getShowData(showId: string, userId: string) {
             include: { song: true },
           },
         },
-        select: {
-          totalPoints: true,
-          picks: {
-            include: { song: true },
-          },
-        },
       },
     },
   })
