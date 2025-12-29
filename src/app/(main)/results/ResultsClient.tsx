@@ -365,12 +365,15 @@ export default function ResultsClient({
                     </div>
                   </div>
                   <div className="text-left sm:text-right">
-                    {submission.isScored ? (
+                    {submission.totalPoints !== null &&
+                    submission.totalPoints > 0 ? (
                       <div>
                         <p className="text-3xl font-bold text-orange-500">
                           {submission.totalPoints}
                         </p>
-                        <p className="text-sm text-slate-400">points</p>
+                        <p className="text-sm text-slate-400">
+                          {submission.isScored ? "points" : "in progress"}
+                        </p>
                       </div>
                     ) : (
                       <span className="flex items-center text-slate-400">
@@ -420,7 +423,7 @@ export default function ResultsClient({
                         <div
                           key={pick.id}
                           className={`flex items-center justify-between p-3 rounded-lg ${
-                            submission.isScored
+                            pick.wasPlayed !== null
                               ? pick.wasPlayed
                                 ? "bg-green-500/10 border border-green-500/30"
                                 : "bg-red-500/10 border border-red-500/30"
@@ -435,7 +438,7 @@ export default function ResultsClient({
                               {pick.song.name}
                             </p>
                           </div>
-                          {submission.isScored && (
+                          {pick.wasPlayed !== null && (
                             <div className="flex items-center space-x-2">
                               <span
                                 className={`font-bold ${
@@ -462,7 +465,7 @@ export default function ResultsClient({
                           <span
                             key={pick.id}
                             className={`px-3 py-1.5 rounded-full text-sm flex items-center space-x-1 ${
-                              submission.isScored
+                              pick.wasPlayed !== null
                                 ? pick.wasPlayed
                                   ? "bg-green-500/20 text-green-400"
                                   : "bg-slate-700 text-slate-400"
@@ -470,9 +473,7 @@ export default function ResultsClient({
                             }`}
                           >
                             <span>{pick.song.name}</span>
-                            {submission.isScored && pick.wasPlayed && (
-                              <Check className="h-3 w-3" />
-                            )}
+                            {pick.wasPlayed && <Check className="h-3 w-3" />}
                           </span>
                         ))}
                     </div>

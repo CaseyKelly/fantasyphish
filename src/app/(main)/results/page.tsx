@@ -21,7 +21,11 @@ async function getResults(userId: string) {
     },
   })
 
-  const scoredSubmissions = submissions.filter((s) => s.isScored)
+  // Include submissions that are either scored OR locked (show has started)
+  const now = new Date()
+  const scoredSubmissions = submissions.filter(
+    (s) => s.isScored || (s.show.lockTime && s.show.lockTime <= now)
+  )
   const totalPoints = scoredSubmissions.reduce(
     (sum, s) => sum + (s.totalPoints || 0),
     0
