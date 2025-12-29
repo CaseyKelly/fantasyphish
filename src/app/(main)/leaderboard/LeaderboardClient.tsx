@@ -1,10 +1,25 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Trophy, Medal, User, TrendingUp, Calendar, MapPin } from "lucide-react"
+import {
+  Trophy,
+  Medal,
+  User,
+  TrendingUp,
+  Calendar,
+  MapPin,
+  Check,
+  ChevronDown,
+} from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { parseUTCDate } from "@/lib/date-utils"
+
+interface Pick {
+  songName: string
+  wasPlayed: boolean | null
+  pointsEarned: number
+}
 
 interface LeaderboardEntry {
   userId: string
@@ -14,6 +29,7 @@ interface LeaderboardEntry {
   avgPoints: number
   accuracy: number
   rank: number
+  picks: Pick[]
 }
 
 interface Show {
@@ -44,6 +60,7 @@ export default function LeaderboardClient({
   hasInProgressShows,
 }: LeaderboardClientProps) {
   const router = useRouter()
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null)
 
   // Poll for updates if there are in-progress shows
   useEffect(() => {
@@ -55,6 +72,11 @@ export default function LeaderboardClient({
 
     return () => clearInterval(interval)
   }, [hasInProgressShows, router])
+
+  const toggleExpanded = (userId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setExpandedUserId(expandedUserId === userId ? null : userId)
+  }
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -78,11 +100,6 @@ export default function LeaderboardClient({
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-white">Leaderboard</h1>
-        {hasInProgressShows && (
-          <p className="text-sm text-slate-400 mt-2">
-            Updates automatically every 60 seconds during live shows
-          </p>
-        )}
       </div>
 
       {/* Current Tour Info */}
@@ -165,56 +182,107 @@ export default function LeaderboardClient({
       ) : (
         <Card>
           <CardHeader className="border-b border-slate-700">
-            <div className="grid grid-cols-12 text-sm font-medium text-slate-400">
+            <div className="grid grid-cols-12 text-sm font-medium text-slate-400 gap-2 items-center">
               <div className="col-span-1">Rank</div>
-              <div className="col-span-5 sm:col-span-4">Player</div>
+              <div className="col-span-5 sm:col-span-3">Player</div>
               <div className="col-span-3 sm:col-span-2 text-center">Shows</div>
-              <div className="col-span-3 sm:col-span-2 text-center hidden sm:block">
-                Avg
+              <div className="col-span-2 text-center hidden sm:block">Avg</div>
+              <div className="col-span-2 text-right">Points</div>
+              <div className="col-span-1 sm:col-span-2 flex justify-center">
+                View Picks
               </div>
-              <div className="col-span-3 text-right">Points</div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-slate-700/50">
               {leaderboard.map((user) => {
                 const isCurrentUser = currentUserId === user.userId
+                const isExpanded = expandedUserId === user.userId
+
+                // Show scoring picks first, then non-scoring
+                const scoringPicks = user.picks.filter(
+                  (p) => p.pointsEarned > 0
+                )
+                const nonScoringPicks = user.picks.filter(
+                  (p) => p.pointsEarned === 0
+                )
+                const allPicksSorted = [...scoringPicks, ...nonScoringPicks]
+
                 return (
                   <div
                     key={user.userId}
-                    className={`grid grid-cols-12 items-center px-4 sm:px-6 py-4 ${
+                    className={`px-4 sm:px-6 py-4 ${
                       isCurrentUser ? "bg-orange-500/5" : ""
                     }`}
                   >
-                    <div className="col-span-1">{getRankIcon(user.rank)}</div>
-                    <div className="col-span-5 sm:col-span-4">
-                      <p
-                        className={`font-medium ${
-                          isCurrentUser ? "text-orange-400" : "text-white"
-                        }`}
-                      >
-                        {user.username}
-                        {isCurrentUser && (
-                          <span className="ml-2 text-xs text-orange-400">
-                            (You)
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-xs text-slate-500 sm:hidden">
-                        {user.avgPoints} avg
-                      </p>
+                    {/* Main row with rank, username, stats */}
+                    <div className="grid grid-cols-12 items-center gap-2">
+                      <div className="col-span-1">{getRankIcon(user.rank)}</div>
+                      <div className="col-span-5 sm:col-span-3">
+                        <p
+                          className={`font-medium ${
+                            isCurrentUser ? "text-orange-400" : "text-white"
+                          }`}
+                        >
+                          {user.username}
+                          {isCurrentUser && (
+                            <span className="ml-2 text-xs text-orange-400">
+                              (You)
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-slate-500 sm:hidden">
+                          {user.avgPoints} avg
+                        </p>
+                      </div>
+                      <div className="col-span-3 sm:col-span-2 text-center text-slate-400">
+                        {user.showsPlayed}
+                      </div>
+                      <div className="col-span-2 text-center text-slate-400 hidden sm:block">
+                        {user.avgPoints}
+                      </div>
+                      <div className="col-span-2 text-right">
+                        <span className="text-xl font-bold text-white">
+                          {user.totalPoints}
+                        </span>
+                      </div>
+                      <div className="col-span-1 sm:col-span-2 flex justify-center">
+                        <button
+                          onClick={(e) => toggleExpanded(user.userId, e)}
+                          className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
+                          aria-label="View picks"
+                        >
+                          <ChevronDown
+                            className={`h-4 w-4 transition-transform ${
+                              isExpanded ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
+                      </div>
                     </div>
-                    <div className="col-span-3 sm:col-span-2 text-center text-slate-400">
-                      {user.showsPlayed}
-                    </div>
-                    <div className="col-span-2 text-center text-slate-400 hidden sm:block">
-                      {user.avgPoints}
-                    </div>
-                    <div className="col-span-3 text-right">
-                      <span className="text-xl font-bold text-white">
-                        {user.totalPoints}
-                      </span>
-                    </div>
+
+                    {/* Expanded song picks */}
+                    {isExpanded && allPicksSorted.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-slate-700/50">
+                        <div className="flex flex-wrap gap-1.5">
+                          {allPicksSorted.map((pick, idx) => (
+                            <div
+                              key={idx}
+                              className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+                                pick.pointsEarned > 0
+                                  ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                                  : "bg-slate-700/50 text-slate-400 border border-slate-600/30"
+                              }`}
+                            >
+                              {pick.pointsEarned > 0 && (
+                                <Check className="h-3 w-3" />
+                              )}
+                              <span>{pick.songName}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )
               })}
