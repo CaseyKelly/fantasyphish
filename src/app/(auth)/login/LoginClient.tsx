@@ -91,10 +91,9 @@ function LoginForm() {
       }
 
       if (!checkData.verified) {
-        setError(
-          "Please verify your email before logging in. Check your inbox for the verification link."
-        )
-        setIsLoading(false)
+        // Store email in sessionStorage and redirect to verification required page
+        sessionStorage.setItem("unverified-email", email)
+        router.push("/verify-required")
         return
       }
 

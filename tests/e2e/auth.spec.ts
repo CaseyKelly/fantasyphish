@@ -138,11 +138,17 @@ test.describe("User Authentication", () => {
     await page.getByPlaceholder("Password").fill(testPassword)
     await page.click('button[type="submit"]')
 
-    // Should remain on login page with error
-    await expect(page).toHaveURL(/\/login/)
-    await expect(page.getByText(/verify your email/i)).toBeVisible({
-      timeout: 5000,
-    })
+    // Should redirect to verification required page
+    await expect(page).toHaveURL(/\/verify-required/, { timeout: 5000 })
+    await expect(
+      page.getByRole("heading", { name: /please verify your email/i })
+    ).toBeVisible()
+    await expect(
+      page.getByText(/a verification email has been sent to/i)
+    ).toBeVisible()
+    await expect(
+      page.getByRole("button", { name: /resend verification email/i })
+    ).toBeVisible()
   })
 
   test("should reject invalid verification token", async ({ page }) => {
