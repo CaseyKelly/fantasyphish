@@ -598,14 +598,12 @@ export function SongPicker({
                     </p>
                     <Sparkles className="h-5 w-5 text-[#c23a3a] animate-pulse" />
                   </div>
-                  {currentScore !== null && currentScore !== undefined && (
-                    <div className="mb-4">
-                      <p className="text-sm text-gray-400">Current score</p>
-                      <p className="text-2xl font-bold text-orange-400">
-                        {currentScore}
-                      </p>
-                    </div>
-                  )}
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-400">Current score</p>
+                    <p className="text-2xl font-bold text-orange-400">
+                      {currentScore ?? 0}
+                    </p>
+                  </div>
                 </>
               )}
               <p className="text-gray-400 mb-8">
@@ -696,14 +694,12 @@ export function SongPicker({
                         </p>
                         <Sparkles className="h-5 w-5 text-[#c23a3a] animate-pulse" />
                       </div>
-                      {currentScore !== null && currentScore !== undefined && (
-                        <div className="mb-4">
-                          <p className="text-sm text-gray-400">Current score</p>
-                          <p className="text-2xl font-bold text-orange-400">
-                            {currentScore}
-                          </p>
-                        </div>
-                      )}
+                      <div className="mb-4">
+                        <p className="text-sm text-gray-400">Current score</p>
+                        <p className="text-2xl font-bold text-orange-400">
+                          {currentScore ?? 0}
+                        </p>
+                      </div>
                     </>
                   )}
                   <p className="text-gray-400 mb-8">
