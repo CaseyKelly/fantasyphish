@@ -12,25 +12,12 @@ export async function GET(request: NextRequest) {
     if (nextOnly === "true") {
       const session = await auth()
 
-      // Use current time to compare with lockTime (timezone-aware)
-      const now = new Date()
-
+      // Get the next incomplete show (regardless of lock status)
+      // The lock status is used on the client to prevent editing, not to hide the show
+      // We don't filter by date at all - just get the earliest incomplete show
       const nextShow = await prisma.show.findFirst({
         where: {
           isComplete: false,
-          OR: [
-            {
-              lockTime: {
-                gte: now,
-              },
-            },
-            {
-              lockTime: null,
-              showDate: {
-                gte: now,
-              },
-            },
-          ],
         },
         orderBy: { showDate: "asc" },
         include: {
