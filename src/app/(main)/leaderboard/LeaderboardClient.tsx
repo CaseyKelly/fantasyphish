@@ -190,12 +190,16 @@ export default function LeaderboardClient({
         <Card>
           <CardHeader className="border-b border-slate-700 px-3 sm:px-6">
             <div className="grid grid-cols-12 text-sm font-medium text-slate-400 gap-2 items-center">
-              <div className="col-span-1"></div>
+              <div className="col-span-1">
+                <span className="sr-only">Rank</span>
+              </div>
               <div className="col-span-5 sm:col-span-3">Player</div>
               <div className="col-span-3 sm:col-span-2 text-center">Shows</div>
               <div className="col-span-2 text-center hidden sm:block">Avg</div>
               <div className="col-span-2 text-right">Points</div>
-              <div className="col-span-1 sm:col-span-2"></div>
+              <div className="col-span-1 sm:col-span-2">
+                <span className="sr-only">View picks</span>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-0 overflow-hidden">
@@ -268,15 +272,15 @@ export default function LeaderboardClient({
                     </div>
 
                     {/* Expanded song picks */}
-                    <div
-                      className={`grid transition-all duration-300 ease-in-out ${
-                        isExpanded
-                          ? "grid-rows-[1fr] opacity-100 mt-3"
-                          : "grid-rows-[0fr] opacity-0"
-                      }`}
-                    >
-                      <div className="overflow-hidden">
-                        {allPicksSorted.length > 0 && (
+                    {allPicksSorted.length > 0 && (
+                      <div
+                        className={`grid transition-all duration-300 ease-in-out ${
+                          isExpanded
+                            ? "grid-rows-[1fr] opacity-100 mt-3"
+                            : "grid-rows-[0fr] opacity-0"
+                        }`}
+                      >
+                        <div className="overflow-hidden">
                           <div className="flex flex-wrap gap-1.5">
                             {allPicksSorted.map((pick, idx) => (
                               <div
@@ -294,9 +298,9 @@ export default function LeaderboardClient({
                               </div>
                             ))}
                           </div>
-                        )}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 )
               })}
