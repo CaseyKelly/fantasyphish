@@ -187,13 +187,13 @@ export default function LeaderboardClient({
       ) : (
         <Card>
           <CardHeader className="border-b border-slate-700">
-            <div className="grid grid-cols-12 text-sm font-medium text-slate-400 gap-2">
+            <div className="grid grid-cols-12 text-sm font-medium text-slate-400 gap-2 items-center">
               <div className="col-span-1">Rank</div>
               <div className="col-span-5 sm:col-span-3">Player</div>
               <div className="col-span-3 sm:col-span-2 text-center">Shows</div>
               <div className="col-span-2 text-center hidden sm:block">Avg</div>
               <div className="col-span-2 text-right">Points</div>
-              <div className="col-span-1 sm:col-span-2 text-center">
+              <div className="col-span-1 sm:col-span-2 flex justify-center">
                 View Picks
               </div>
             </div>
