@@ -295,7 +295,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
             )}
             <p className="text-sm text-slate-400 mt-1">
               {isInProgress &&
-                `Updates every 60 seconds • Last updated: ${format(lastUpdated, "h:mm:ss a")}`}
+                `Last updated: ${format(lastUpdated, "h:mm:ss a")}`}
               {!isInProgress &&
                 !show.isComplete &&
                 "Scores will appear here once the show starts"}
