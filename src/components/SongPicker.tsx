@@ -51,6 +51,7 @@ interface SongPickerProps {
   songs: Song[]
   existingPicks?: Pick[]
   isLocked: boolean
+  currentScore?: number | null
   isTestMode?: boolean
   guestMode?: boolean
   hideHeader?: boolean
@@ -63,6 +64,7 @@ export function SongPicker({
   songs,
   existingPicks,
   isLocked,
+  currentScore,
   isTestMode = false,
   guestMode = false,
   hideHeader = false,
@@ -588,13 +590,23 @@ export function SongPicker({
                 Show In Progress!
               </h2>
               {existingPicks && existingPicks.length > 0 && (
-                <div className="flex items-center justify-center gap-2 mb-4">
-                  <Music2 className="h-5 w-5 text-[#c23a3a] animate-pulse" />
-                  <p className="text-lg text-gray-300">
-                    Your picks are locked in
-                  </p>
-                  <Sparkles className="h-5 w-5 text-[#c23a3a] animate-pulse" />
-                </div>
+                <>
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <Music2 className="h-5 w-5 text-[#c23a3a] animate-pulse" />
+                    <p className="text-lg text-gray-300">
+                      Your picks are locked in
+                    </p>
+                    <Sparkles className="h-5 w-5 text-[#c23a3a] animate-pulse" />
+                  </div>
+                  {currentScore !== null && currentScore !== undefined && (
+                    <div className="mb-4">
+                      <p className="text-sm text-gray-400">Current score</p>
+                      <p className="text-2xl font-bold text-orange-400">
+                        {currentScore}
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
               <p className="text-gray-400 mb-8">
                 The show has started and picks can no longer be changed. Check
@@ -676,13 +688,23 @@ export function SongPicker({
                     Show In Progress!
                   </h2>
                   {existingPicks && existingPicks.length > 0 && (
-                    <div className="flex items-center justify-center gap-2 mb-4">
-                      <Music2 className="h-5 w-5 text-[#c23a3a] animate-pulse" />
-                      <p className="text-lg text-gray-300">
-                        Your picks are locked in
-                      </p>
-                      <Sparkles className="h-5 w-5 text-[#c23a3a] animate-pulse" />
-                    </div>
+                    <>
+                      <div className="flex items-center justify-center gap-2 mb-4">
+                        <Music2 className="h-5 w-5 text-[#c23a3a] animate-pulse" />
+                        <p className="text-lg text-gray-300">
+                          Your picks are locked in
+                        </p>
+                        <Sparkles className="h-5 w-5 text-[#c23a3a] animate-pulse" />
+                      </div>
+                      {currentScore !== null && currentScore !== undefined && (
+                        <div className="mb-4">
+                          <p className="text-sm text-gray-400">Current score</p>
+                          <p className="text-2xl font-bold text-orange-400">
+                            {currentScore}
+                          </p>
+                        </div>
+                      )}
+                    </>
                   )}
                   <p className="text-gray-400 mb-8">
                     The show has started and picks can no longer be changed.

@@ -19,6 +19,12 @@ async function getShowData(showId: string, userId: string) {
             include: { song: true },
           },
         },
+        select: {
+          totalPoints: true,
+          picks: {
+            include: { song: true },
+          },
+        },
       },
     },
   })
@@ -85,6 +91,7 @@ export default async function PickPage({ params }: PickPageProps) {
         songs={songs}
         existingPicks={existingPicks}
         isLocked={isLocked}
+        currentScore={existingSubmission?.totalPoints}
       />
     </div>
   )
