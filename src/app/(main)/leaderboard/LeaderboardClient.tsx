@@ -193,7 +193,7 @@ export default function LeaderboardClient({
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="p-0 overflow-hidden">
             <div className="divide-y divide-slate-700/50">
               {leaderboard.map((user) => {
                 const isCurrentUser = currentUserId === user.userId
