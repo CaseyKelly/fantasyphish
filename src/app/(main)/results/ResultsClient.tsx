@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { format } from "date-fns"
@@ -116,6 +116,22 @@ export default function ResultsClient({
   const [deletingSubmission, setDeletingSubmission] = useState<string | null>(
     null
   )
+
+  // Check if any shows are in progress (not complete and have picks)
+  const hasInProgressShows = submissions.some(
+    (sub) => !sub.show.isComplete && sub.picks.length > 0
+  )
+
+  // Poll for updates if there are in-progress shows
+  useEffect(() => {
+    if (!hasInProgressShows) return
+
+    const interval = setInterval(() => {
+      router.refresh()
+    }, 60000) // 60 seconds
+
+    return () => clearInterval(interval)
+  }, [hasInProgressShows, router])
 
   const handleDeleteSubmission = async (
     submissionId: string,
