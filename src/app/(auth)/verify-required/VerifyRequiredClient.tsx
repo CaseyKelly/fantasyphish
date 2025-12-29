@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { DonutLogo } from "@/components/DonutLogo"
 
+const COOLDOWN_SECONDS = 60
+
 export default function VerifyRequiredClient() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -15,19 +17,37 @@ export default function VerifyRequiredClient() {
   const [isResending, setIsResending] = useState(false)
   const [resendSuccess, setResendSuccess] = useState(false)
   const [resendError, setResendError] = useState("")
+  const [cooldownRemaining, setCooldownRemaining] = useState(0)
 
   useEffect(() => {
-    const emailParam = searchParams.get("email")
-    if (emailParam) {
-      setEmail(emailParam)
+    // Get email from sessionStorage instead of URL parameter
+    const storedEmail = sessionStorage.getItem("unverified-email")
+    if (storedEmail) {
+      setEmail(storedEmail)
     } else {
-      // If no email provided, redirect to login
+      // If no email in session, redirect to login
       router.push("/login")
     }
-  }, [searchParams, router])
+  }, [router])
+
+  // Cooldown timer
+  useEffect(() => {
+    if (cooldownRemaining <= 0) return
+
+    const timer = setInterval(() => {
+      setCooldownRemaining((prev) => {
+        if (prev <= 1) {
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [cooldownRemaining])
 
   const handleResendEmail = async () => {
-    if (!email) return
+    if (!email || cooldownRemaining > 0) return
 
     setIsResending(true)
     setResendError("")
@@ -46,6 +66,7 @@ export default function VerifyRequiredClient() {
         setResendError(data.error || "Failed to resend verification email")
       } else {
         setResendSuccess(true)
+        setCooldownRemaining(COOLDOWN_SECONDS)
       }
     } catch {
       setResendError("An unexpected error occurred. Please try again.")
@@ -110,15 +131,15 @@ export default function VerifyRequiredClient() {
                 className="w-full"
                 size="lg"
                 isLoading={isResending}
-                disabled={isResending || resendSuccess}
+                disabled={isResending || cooldownRemaining > 0}
               >
                 {isResending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Sending...
                   </>
-                ) : resendSuccess ? (
-                  "Email Sent!"
+                ) : cooldownRemaining > 0 ? (
+                  `Wait ${cooldownRemaining}s to resend`
                 ) : (
                   "Resend Verification Email"
                 )}

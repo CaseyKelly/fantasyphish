@@ -91,8 +91,9 @@ function LoginForm() {
       }
 
       if (!checkData.verified) {
-        // Redirect to verification required page
-        router.push(`/verify-required?email=${encodeURIComponent(email)}`)
+        // Store email in sessionStorage and redirect to verification required page
+        sessionStorage.setItem("unverified-email", email)
+        router.push("/verify-required")
         return
       }
 
