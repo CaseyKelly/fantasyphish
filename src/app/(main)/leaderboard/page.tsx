@@ -56,10 +56,16 @@ async function getLeaderboard(tourId?: string) {
   const now = new Date()
   const whereClause = tourId
     ? {
-        OR: [{ isScored: true }, { show: { lockTime: { lte: now }, tourId } }],
+        OR: [
+          { isScored: true, show: { tourId } },
+          { isScored: false, show: { lockTime: { lte: now }, tourId } },
+        ],
       }
     : {
-        OR: [{ isScored: true }, { show: { lockTime: { lte: now } } }],
+        OR: [
+          { isScored: true },
+          { isScored: false, show: { lockTime: { lte: now } } },
+        ],
       }
 
   const users = await prisma.user.findMany({

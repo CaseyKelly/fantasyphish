@@ -365,8 +365,7 @@ export default function ResultsClient({
                     </div>
                   </div>
                   <div className="text-left sm:text-right">
-                    {submission.totalPoints !== null &&
-                    submission.totalPoints > 0 ? (
+                    {submission.totalPoints !== null ? (
                       <div>
                         <p className="text-3xl font-bold text-orange-500">
                           {submission.totalPoints}
