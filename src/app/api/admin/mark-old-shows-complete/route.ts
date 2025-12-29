@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { isAdminFeaturesEnabled } from "@/lib/env"
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
     const session = await auth()
 
@@ -16,7 +16,22 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const cutoffDate = new Date("2025-12-27T00:00:00.000Z")
+    // Get cutoff date from request body, or default to 2025-12-27
+    const body = await request.json().catch(() => ({}))
+    const cutoffDateStr =
+      body.cutoffDate ||
+      process.env.MARK_OLD_SHOWS_CUTOFF_DATE ||
+      "2025-12-27T00:00:00.000Z"
+
+    const cutoffDate = new Date(cutoffDateStr)
+
+    // Validate the date
+    if (isNaN(cutoffDate.getTime())) {
+      return NextResponse.json(
+        { error: "Invalid cutoff date provided" },
+        { status: 400 }
+      )
+    }
 
     const result = await prisma.show.updateMany({
       where: {
