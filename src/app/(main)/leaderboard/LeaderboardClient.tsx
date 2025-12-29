@@ -187,14 +187,15 @@ export default function LeaderboardClient({
       ) : (
         <Card>
           <CardHeader className="border-b border-slate-700">
-            <div className="grid grid-cols-12 text-sm font-medium text-slate-400">
+            <div className="grid grid-cols-12 text-sm font-medium text-slate-400 gap-2">
               <div className="col-span-1">Rank</div>
-              <div className="col-span-5 sm:col-span-4">Player</div>
+              <div className="col-span-5 sm:col-span-3">Player</div>
               <div className="col-span-3 sm:col-span-2 text-center">Shows</div>
-              <div className="col-span-3 sm:col-span-2 text-center hidden sm:block">
-                Avg
+              <div className="col-span-2 text-center hidden sm:block">Avg</div>
+              <div className="col-span-2 text-right">Points</div>
+              <div className="col-span-1 sm:col-span-2 text-center">
+                View Picks
               </div>
-              <div className="col-span-3 text-right">Points</div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -245,17 +246,19 @@ export default function LeaderboardClient({
                       <div className="col-span-2 text-center text-slate-400 hidden sm:block">
                         {user.avgPoints}
                       </div>
-                      <div className="col-span-3 sm:col-span-4 text-right flex items-center justify-end gap-3">
+                      <div className="col-span-2 text-right">
                         <span className="text-xl font-bold text-white">
                           {user.totalPoints}
                         </span>
+                      </div>
+                      <div className="col-span-1 sm:col-span-2 flex justify-center">
                         <button
                           onClick={(e) => toggleExpanded(user.userId, e)}
-                          className="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-lg transition-colors flex items-center gap-1.5"
+                          className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
+                          aria-label="View picks"
                         >
-                          View Picks
                           <ChevronDown
-                            className={`h-3.5 w-3.5 transition-transform ${
+                            className={`h-4 w-4 transition-transform ${
                               isExpanded ? "rotate-180" : ""
                             }`}
                           />
