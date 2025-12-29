@@ -52,12 +52,15 @@ async function getNextShow() {
 }
 
 async function getLeaderboard(tourId?: string) {
+  // Include submissions that are either scored OR locked (show has started)
+  const now = new Date()
   const whereClause = tourId
     ? {
-        isScored: true,
-        show: { tourId },
+        OR: [{ isScored: true }, { show: { lockTime: { lte: now }, tourId } }],
       }
-    : { isScored: true }
+    : {
+        OR: [{ isScored: true }, { show: { lockTime: { lte: now } } }],
+      }
 
   const users = await prisma.user.findMany({
     where: {
