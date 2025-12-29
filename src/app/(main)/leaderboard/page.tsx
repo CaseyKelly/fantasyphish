@@ -85,6 +85,12 @@ async function getLeaderboard(tourId?: string) {
           picks: {
             select: {
               wasPlayed: true,
+              pointsEarned: true,
+              song: {
+                select: {
+                  name: true,
+                },
+              },
             },
           },
         },
@@ -104,6 +110,15 @@ async function getLeaderboard(tourId?: string) {
         0
       )
 
+      // Aggregate all picks from all submissions for this user
+      const allPicks = user.submissions.flatMap((sub) =>
+        sub.picks.map((pick) => ({
+          songName: pick.song.name,
+          wasPlayed: pick.wasPlayed,
+          pointsEarned: pick.pointsEarned || 0,
+        }))
+      )
+
       return {
         userId: user.id,
         username: user.username,
@@ -115,6 +130,7 @@ async function getLeaderboard(tourId?: string) {
             : 0,
         accuracy:
           totalPicks > 0 ? Math.round((correctPicks / totalPicks) * 100) : 0,
+        picks: allPicks,
       }
     })
     .sort((a, b) => b.totalPoints - a.totalPoints)
