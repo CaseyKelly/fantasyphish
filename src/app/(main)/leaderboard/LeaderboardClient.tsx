@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   Trophy,
@@ -10,6 +10,7 @@ import {
   Calendar,
   MapPin,
   Check,
+  ChevronDown,
 } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { parseUTCDate } from "@/lib/date-utils"
@@ -59,6 +60,7 @@ export default function LeaderboardClient({
   hasInProgressShows,
 }: LeaderboardClientProps) {
   const router = useRouter()
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null)
 
   // Poll for updates if there are in-progress shows
   useEffect(() => {
@@ -70,6 +72,11 @@ export default function LeaderboardClient({
 
     return () => clearInterval(interval)
   }, [hasInProgressShows, router])
+
+  const toggleExpanded = (userId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setExpandedUserId(expandedUserId === userId ? null : userId)
+  }
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -194,6 +201,8 @@ export default function LeaderboardClient({
             <div className="divide-y divide-slate-700/50">
               {leaderboard.map((user) => {
                 const isCurrentUser = currentUserId === user.userId
+                const isExpanded = expandedUserId === user.userId
+
                 // Show scoring picks first, then non-scoring
                 const scoringPicks = user.picks.filter(
                   (p) => p.pointsEarned > 0
@@ -211,7 +220,7 @@ export default function LeaderboardClient({
                     }`}
                   >
                     {/* Main row with rank, username, stats */}
-                    <div className="grid grid-cols-12 items-center gap-4 mb-3">
+                    <div className="grid grid-cols-12 items-center gap-2">
                       <div className="col-span-1">{getRankIcon(user.rank)}</div>
                       <div className="col-span-5 sm:col-span-3">
                         <p
@@ -236,33 +245,44 @@ export default function LeaderboardClient({
                       <div className="col-span-2 text-center text-slate-400 hidden sm:block">
                         {user.avgPoints}
                       </div>
-                      <div className="col-span-3 sm:col-span-4 text-right">
+                      <div className="col-span-3 sm:col-span-4 text-right flex items-center justify-end gap-3">
                         <span className="text-xl font-bold text-white">
                           {user.totalPoints}
                         </span>
+                        <button
+                          onClick={(e) => toggleExpanded(user.userId, e)}
+                          className="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-lg transition-colors flex items-center gap-1.5"
+                        >
+                          View Picks
+                          <ChevronDown
+                            className={`h-3.5 w-3.5 transition-transform ${
+                              isExpanded ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
                       </div>
                     </div>
 
-                    {/* Song picks badges */}
-                    {allPicksSorted.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 ml-0 sm:ml-12">
-                        {allPicksSorted.map((pick, idx) => (
-                          <div
-                            key={idx}
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
-                              pick.pointsEarned > 0
-                                ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                                : "bg-slate-700/50 text-slate-400 border border-slate-600/30"
-                            }`}
-                          >
-                            {pick.pointsEarned > 0 && (
-                              <Check className="h-3 w-3" />
-                            )}
-                            <span className="truncate max-w-[120px]">
-                              {pick.songName}
-                            </span>
-                          </div>
-                        ))}
+                    {/* Expanded song picks */}
+                    {isExpanded && allPicksSorted.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-slate-700/50">
+                        <div className="flex flex-wrap gap-1.5">
+                          {allPicksSorted.map((pick, idx) => (
+                            <div
+                              key={idx}
+                              className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+                                pick.pointsEarned > 0
+                                  ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                                  : "bg-slate-700/50 text-slate-400 border border-slate-600/30"
+                              }`}
+                            >
+                              {pick.pointsEarned > 0 && (
+                                <Check className="h-3 w-3" />
+                              )}
+                              <span>{pick.songName}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
