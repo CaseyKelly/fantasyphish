@@ -98,7 +98,7 @@ async function getLeaderboard(tourId?: string) {
     },
   })
 
-  const rankedUsers = users
+  const sortedUsers = users
     .map((user) => {
       const totalPoints = user.submissions.reduce(
         (sum, sub) => sum + (sub.totalPoints || 0),
@@ -134,10 +134,19 @@ async function getLeaderboard(tourId?: string) {
       }
     })
     .sort((a, b) => b.totalPoints - a.totalPoints)
-    .map((user, index) => ({
+
+  // Assign ranks with tie handling
+  let currentRank = 1
+  const rankedUsers = sortedUsers.map((user, index) => {
+    // If not the first user and points are different from previous, update rank
+    if (index > 0 && user.totalPoints !== sortedUsers[index - 1].totalPoints) {
+      currentRank = index + 1
+    }
+    return {
       ...user,
-      rank: index + 1,
-    }))
+      rank: currentRank,
+    }
+  })
 
   return rankedUsers
 }
