@@ -99,15 +99,15 @@ export async function POST(request: NextRequest) {
       console.log(`[Score:POST]   Encore detected: ${encoreDetected}`)
 
       // Track when encore was first detected
-      const encoreJustStarted = encoreDetected && !show.encoreStartedAt
+      const encoreJustStarted = encoreDetected && show.encoreStartedAt === null
 
       // Check if we're past the 1-hour grace period
       const gracePeriodExpired =
         show.encoreStartedAt &&
-        Date.now() - show.encoreStartedAt.getTime() > GRACE_PERIOD_MS
+        Date.now() - show.encoreStartedAt.getTime() >= GRACE_PERIOD_MS
 
       // Only mark as complete after grace period expires
-      const showComplete = Boolean(gracePeriodExpired)
+      const showComplete = gracePeriodExpired || false
 
       const updateData: {
         setlistJson: object
