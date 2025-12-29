@@ -153,12 +153,26 @@ export async function POST(request: Request) {
   console.log(`[Sync Tours] Cron job started at ${new Date().toISOString()}`)
 
   try {
-    // Verify cron secret
+    // Verify cron secret (optional, for security)
+    // Vercel cron jobs send "Vercel-Cron" as user-agent
+    // Manual triggers require the CRON_SECRET
     const authHeader = request.headers.get("authorization")
+    const userAgent = request.headers.get("user-agent")
     const token = authHeader?.replace("Bearer ", "")
+    const cronSecret = process.env.CRON_SECRET
+    const isVercelCron = userAgent === "Vercel-Cron"
 
-    if (token !== process.env.CRON_SECRET) {
-      console.error("[Sync Tours] Unauthorized: Invalid or missing CRON_SECRET")
+    console.log(
+      `[Sync Tours] Auth check: cronSecret=${cronSecret ? "SET" : "NOT_SET"}, authHeader=${authHeader ? "PROVIDED" : "MISSING"}, isVercelCron=${isVercelCron}`
+    )
+
+    // Allow requests from:
+    // 1. Vercel cron (user-agent: "Vercel-Cron")
+    // 2. Manual triggers with correct CRON_SECRET
+    if (!isVercelCron && cronSecret && token !== cronSecret) {
+      console.error(
+        "[Sync Tours] Unauthorized: not Vercel cron and invalid/missing CRON_SECRET"
+      )
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
