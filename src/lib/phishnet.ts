@@ -66,7 +66,10 @@ interface PhishNetSong {
   gap: number
 }
 
-async function fetchPhishNet<T>(endpoint: string): Promise<T> {
+async function fetchPhishNet<T>(
+  endpoint: string,
+  options?: { cache?: RequestCache }
+): Promise<T> {
   const apiKey = process.env.PHISHNET_API_KEY
   if (!apiKey) {
     throw new Error("PHISHNET_API_KEY is not configured")
@@ -74,7 +77,10 @@ async function fetchPhishNet<T>(endpoint: string): Promise<T> {
 
   const url = `${PHISHNET_API_BASE}${endpoint}?apikey=${apiKey}`
   const response = await fetch(url, {
-    next: { revalidate: 300 }, // Cache for 5 minutes
+    // Allow cache override for progressive scoring (need fresh data during shows)
+    // Default to 5 minute cache for other endpoints
+    cache: options?.cache,
+    next: options?.cache === undefined ? { revalidate: 300 } : undefined,
   })
 
   if (!response.ok) {
@@ -115,12 +121,15 @@ export async function getRecentShows(
 }
 
 export async function getSetlist(
-  showDate: string
+  showDate: string,
+  options?: { noCache?: boolean }
 ): Promise<PhishNetSetlist | null> {
   try {
     // Format: YYYY-MM-DD
     const songData = await fetchPhishNet<PhishNetSetlistSong[]>(
-      `/setlists/showdate/${showDate}`
+      `/setlists/showdate/${showDate}`,
+      // Use no-cache for progressive scoring to get fresh setlist data
+      options?.noCache ? { cache: "no-store" } : undefined
     )
 
     if (songData && songData.length > 0) {
