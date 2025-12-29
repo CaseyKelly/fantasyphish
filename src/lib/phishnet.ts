@@ -80,7 +80,7 @@ async function fetchPhishNet<T>(
     // Allow cache override for progressive scoring (need fresh data during shows)
     // Default to 5 minute cache for other endpoints
     cache: options?.cache,
-    next: options?.cache ? undefined : { revalidate: 300 },
+    next: options?.cache === undefined ? { revalidate: 300 } : undefined,
   })
 
   if (!response.ok) {
