@@ -27,7 +27,8 @@
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
     "test:clean": "rm -rf test-results playwright-report",
-    "test:trace": "./scripts/view-trace.sh"
+    "test:trace": "./scripts/view-trace.sh",
+    "watch:scoring": "npx tsx scripts/watch-scoring.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.1",
