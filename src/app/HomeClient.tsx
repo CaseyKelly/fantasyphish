@@ -209,10 +209,10 @@ export function HomeClient() {
       </header>
 
       {/* Next Show Picker Section */}
-      <section className="py-6 relative z-10">
+      <section className="py-6 relative z-20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Solid background container */}
-          <div className="bg-[#1e3340] rounded-2xl shadow-2xl border border-[#3d5a6c]/50 p-6 sm:p-8">
+          <div className="bg-[#1e3340] rounded-2xl shadow-2xl border border-[#3d5a6c]/50 p-6 sm:p-8 relative">
             {loading ? (
               // Loading Skeleton
               <>
