@@ -5,12 +5,20 @@ import { User, Mail, Calendar, Trophy, Target, TrendingUp } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
 async function getUserProfile(userId: string) {
+  const now = new Date()
+
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {
       submissions: {
         include: {
           picks: true,
+          show: {
+            select: {
+              lockTime: true,
+              isComplete: true,
+            },
+          },
         },
       },
     },
@@ -18,13 +26,18 @@ async function getUserProfile(userId: string) {
 
   if (!user) return null
 
+  // Include submissions that are either scored OR locked (show has started)
+  const scoredOrLockedSubmissions = user.submissions.filter(
+    (s) => s.isScored || (s.show.lockTime && s.show.lockTime <= now)
+  )
+
   const scoredSubmissions = user.submissions.filter((s) => s.isScored)
-  const totalPoints = scoredSubmissions.reduce(
+  const totalPoints = scoredOrLockedSubmissions.reduce(
     (sum, s) => sum + (s.totalPoints || 0),
     0
   )
-  const totalPicks = user.submissions.length * 13
-  const correctPicks = user.submissions.reduce(
+  const totalPicks = scoredOrLockedSubmissions.length * 13
+  const correctPicks = scoredOrLockedSubmissions.reduce(
     (sum, sub) => sum + sub.picks.filter((p) => p.wasPlayed).length,
     0
   )
@@ -35,12 +48,13 @@ async function getUserProfile(userId: string) {
     emailVerified: user.emailVerified,
     createdAt: user.createdAt,
     stats: {
-      totalShows: user.submissions.length,
+      totalShows: scoredOrLockedSubmissions.length,
       scoredShows: scoredSubmissions.length,
       totalPoints,
       avgPoints:
-        scoredSubmissions.length > 0
-          ? Math.round((totalPoints / scoredSubmissions.length) * 10) / 10
+        scoredOrLockedSubmissions.length > 0
+          ? Math.round((totalPoints / scoredOrLockedSubmissions.length) * 10) /
+            10
           : 0,
       accuracy:
         totalPicks > 0 ? Math.round((correctPicks / totalPicks) * 100) : 0,

@@ -207,55 +207,63 @@ export function Navbar() {
         </div>
 
         {/* Mobile menu */}
-        {session && isMenuOpen && (
-          <div className="md:hidden border-t border-[#3d5a6c]/50">
-            <div className="px-4 py-3 space-y-1">
-              {navItems.map((item) => {
-                const Icon = item.icon
-                return (
+        {session && (
+          <div
+            className={`md:hidden border-t border-[#3d5a6c]/50 grid transition-all duration-300 ease-in-out ${
+              isMenuOpen
+                ? "grid-rows-[1fr] opacity-100"
+                : "grid-rows-[0fr] opacity-0"
+            }`}
+          >
+            <div className="overflow-hidden">
+              <div className="px-4 py-3 space-y-1">
+                {navItems.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setIsMenuOpen(false)}
+                      className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                        isActive(item.href)
+                          ? "bg-[#c23a3a]/20 text-[#d64545]"
+                          : "text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50"
+                      }`}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span>{item.label}</span>
+                    </Link>
+                  )
+                })}
+                <div className="pt-3 mt-3 border-t border-[#3d5a6c]/50">
+                  {isAdmin && (
+                    <button
+                      onClick={() => {
+                        setIsMenuOpen(false)
+                        handleOpenImpersonateModal()
+                      }}
+                      className="flex items-center space-x-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-amber-400 hover:text-amber-300 hover:bg-[#3d5a6c]/50 transition-colors"
+                    >
+                      <Users className="h-5 w-5" />
+                      <span>Impersonate User</span>
+                    </button>
+                  )}
                   <Link
-                    key={item.href}
-                    href={item.href}
+                    href="/profile"
                     onClick={() => setIsMenuOpen(false)}
-                    className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                      isActive(item.href)
-                        ? "bg-[#c23a3a]/20 text-[#d64545]"
-                        : "text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50"
-                    }`}
+                    className="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50 transition-colors"
                   >
-                    <Icon className="h-5 w-5" />
-                    <span>{item.label}</span>
+                    <User className="h-5 w-5" />
+                    <span>{session.user.username}</span>
                   </Link>
-                )
-              })}
-              <div className="pt-3 mt-3 border-t border-[#3d5a6c]/50">
-                {isAdmin && (
                   <button
-                    onClick={() => {
-                      setIsMenuOpen(false)
-                      handleOpenImpersonateModal()
-                    }}
-                    className="flex items-center space-x-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-amber-400 hover:text-amber-300 hover:bg-[#3d5a6c]/50 transition-colors"
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                    className="flex items-center space-x-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50 transition-colors"
                   >
-                    <Users className="h-5 w-5" />
-                    <span>Impersonate User</span>
+                    <LogOut className="h-5 w-5" />
+                    <span>Sign Out</span>
                   </button>
-                )}
-                <Link
-                  href="/profile"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50 transition-colors"
-                >
-                  <User className="h-5 w-5" />
-                  <span>{session.user.username}</span>
-                </Link>
-                <button
-                  onClick={() => signOut({ callbackUrl: "/" })}
-                  className="flex items-center space-x-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50 transition-colors"
-                >
-                  <LogOut className="h-5 w-5" />
-                  <span>Sign Out</span>
-                </button>
+                </div>
               </div>
             </div>
           </div>
