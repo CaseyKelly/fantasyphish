@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { format } from "date-fns"
@@ -116,6 +116,22 @@ export default function ResultsClient({
   const [deletingSubmission, setDeletingSubmission] = useState<string | null>(
     null
   )
+
+  // Check if any shows are in progress (not complete and have picks)
+  const hasInProgressShows = submissions.some(
+    (sub) => !sub.show.isComplete && sub.picks.length > 0
+  )
+
+  // Poll for updates if there are in-progress shows
+  useEffect(() => {
+    if (!hasInProgressShows) return
+
+    const interval = setInterval(() => {
+      router.refresh()
+    }, 60000) // 60 seconds
+
+    return () => clearInterval(interval)
+  }, [hasInProgressShows, router])
 
   const handleDeleteSubmission = async (
     submissionId: string,
@@ -349,12 +365,14 @@ export default function ResultsClient({
                     </div>
                   </div>
                   <div className="text-left sm:text-right">
-                    {submission.isScored ? (
+                    {submission.totalPoints !== null ? (
                       <div>
                         <p className="text-3xl font-bold text-orange-500">
                           {submission.totalPoints}
                         </p>
-                        <p className="text-sm text-slate-400">points</p>
+                        <p className="text-sm text-slate-400">
+                          {submission.isScored ? "points" : "in progress"}
+                        </p>
                       </div>
                     ) : (
                       <span className="flex items-center text-slate-400">
@@ -404,7 +422,7 @@ export default function ResultsClient({
                         <div
                           key={pick.id}
                           className={`flex items-center justify-between p-3 rounded-lg ${
-                            submission.isScored
+                            pick.wasPlayed !== null
                               ? pick.wasPlayed
                                 ? "bg-green-500/10 border border-green-500/30"
                                 : "bg-red-500/10 border border-red-500/30"
@@ -419,7 +437,7 @@ export default function ResultsClient({
                               {pick.song.name}
                             </p>
                           </div>
-                          {submission.isScored && (
+                          {pick.wasPlayed !== null && (
                             <div className="flex items-center space-x-2">
                               <span
                                 className={`font-bold ${
@@ -446,7 +464,7 @@ export default function ResultsClient({
                           <span
                             key={pick.id}
                             className={`px-3 py-1.5 rounded-full text-sm flex items-center space-x-1 ${
-                              submission.isScored
+                              pick.wasPlayed !== null
                                 ? pick.wasPlayed
                                   ? "bg-green-500/20 text-green-400"
                                   : "bg-slate-700 text-slate-400"
@@ -454,9 +472,7 @@ export default function ResultsClient({
                             }`}
                           >
                             <span>{pick.song.name}</span>
-                            {submission.isScored && pick.wasPlayed && (
-                              <Check className="h-3 w-3" />
-                            )}
+                            {pick.wasPlayed && <Check className="h-3 w-3" />}
                           </span>
                         ))}
                     </div>

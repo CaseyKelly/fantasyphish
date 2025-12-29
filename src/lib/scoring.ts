@@ -16,7 +16,7 @@ interface PickToScore {
 
 interface ScoredPick {
   id: string
-  wasPlayed: boolean
+  wasPlayed: boolean | null
   pointsEarned: number
 }
 
@@ -38,21 +38,25 @@ export function scoreSubmission(
 
   for (const pick of picks) {
     const normalizedPickName = normalizeSongName(pick.song.name)
-    let wasPlayed = false
+    let wasPlayed: boolean | null = null
     let pointsEarned = 0
 
     if (pick.pickType === "OPENER") {
       // Opener must match first song of set 1
       if (parsed.opener) {
         wasPlayed = normalizeSongName(parsed.opener) === normalizedPickName
+        pointsEarned = wasPlayed ? POINTS.OPENER : 0
       }
-      pointsEarned = wasPlayed ? POINTS.OPENER : 0
+      // If no opener yet, wasPlayed stays null
     } else if (pick.pickType === "ENCORE") {
       // Encore must be in the encore set
-      wasPlayed = parsed.encoreSongs.some(
-        (song) => normalizeSongName(song) === normalizedPickName
-      )
-      pointsEarned = wasPlayed ? POINTS.ENCORE : 0
+      if (parsed.encoreSongs.length > 0) {
+        wasPlayed = parsed.encoreSongs.some(
+          (song) => normalizeSongName(song) === normalizedPickName
+        )
+        pointsEarned = wasPlayed ? POINTS.ENCORE : 0
+      }
+      // If no encore yet, wasPlayed stays null
     } else {
       // Regular pick - just needs to be played anywhere
       wasPlayed = parsed.allSongs.some(
