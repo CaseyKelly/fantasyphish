@@ -21,15 +21,24 @@ export async function POST(request: NextRequest) {
 
   try {
     // Verify cron secret (optional, for security)
+    // Vercel cron jobs send "Vercel-Cron" as user-agent
+    // Manual triggers require the CRON_SECRET
     const authHeader = request.headers.get("authorization")
+    const userAgent = request.headers.get("user-agent")
     const cronSecret = process.env.CRON_SECRET
+    const isVercelCron = userAgent === "Vercel-Cron"
 
     console.log(
-      `[Score:POST] Auth check: cronSecret=${cronSecret ? "SET" : "NOT_SET"}, authHeader=${authHeader ? "PROVIDED" : "MISSING"}`
+      `[Score:POST] Auth check: cronSecret=${cronSecret ? "SET" : "NOT_SET"}, authHeader=${authHeader ? "PROVIDED" : "MISSING"}, isVercelCron=${isVercelCron}`
     )
 
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      console.log("[Score:POST] ✗ Unauthorized - invalid CRON_SECRET")
+    // Allow requests from:
+    // 1. Vercel cron (user-agent: "Vercel-Cron")
+    // 2. Manual triggers with correct CRON_SECRET
+    if (!isVercelCron && cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+      console.log(
+        "[Score:POST] ✗ Unauthorized - not Vercel cron and invalid/missing CRON_SECRET"
+      )
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
