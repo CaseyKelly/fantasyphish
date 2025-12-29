@@ -37,21 +37,11 @@ export async function POST(request: NextRequest) {
 
     // Find shows that need scoring:
     // 1. Shows with locked picks (lockTime has passed)
-    // 2. Shows that aren't complete yet OR within 1 hour of encore starting
-    const oneHourAgo = new Date(Date.now() - GRACE_PERIOD_MS)
-
+    // 2. Shows that aren't complete yet (isComplete is only set after grace period)
     const showsToScore = await prisma.show.findMany({
       where: {
         lockTime: { lte: new Date() }, // Only score shows that are locked
-        OR: [
-          { isComplete: false }, // Progressive scoring for in-progress shows
-          {
-            AND: [
-              { isComplete: true }, // Show has encore
-              { encoreStartedAt: { gte: oneHourAgo } }, // Encore started within last hour
-            ],
-          },
-        ],
+        isComplete: false, // Only check incomplete shows (includes grace period)
       },
       include: {
         submissions: {
@@ -105,13 +95,20 @@ export async function POST(request: NextRequest) {
         `[Score:POST]   Encore: ${parsedSetlist.encoreSongs.length > 0 ? parsedSetlist.encoreSongs.join(", ") : "N/A"}`
       )
 
-      const showComplete = isShowComplete(setlist)
-      console.log(
-        `[Score:POST]   Show complete (encore detected): ${showComplete}`
-      )
+      const encoreDetected = isShowComplete(setlist)
+      console.log(`[Score:POST]   Encore detected: ${encoreDetected}`)
 
       // Track when encore was first detected
-      const encoreJustStarted = showComplete && !show.isComplete
+      const encoreJustStarted = encoreDetected && !show.encoreStartedAt
+
+      // Check if we're past the 1-hour grace period
+      const gracePeriodExpired =
+        show.encoreStartedAt &&
+        Date.now() - show.encoreStartedAt.getTime() > GRACE_PERIOD_MS
+
+      // Only mark as complete after grace period expires
+      const showComplete = Boolean(gracePeriodExpired)
+
       const updateData: {
         setlistJson: object
         isComplete: boolean
@@ -133,14 +130,9 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // Check if we're past the 1-hour grace period
-      const gracePeriodExpired =
-        show.encoreStartedAt &&
-        Date.now() - show.encoreStartedAt.getTime() > GRACE_PERIOD_MS
-
       if (gracePeriodExpired) {
         console.log(
-          `[Score:POST]   ✓ Grace period expired (encore started at ${show.encoreStartedAt!.toISOString()})`
+          `[Score:POST]   ✓ Grace period expired (encore started at ${show.encoreStartedAt!.toISOString()}) - marking show complete`
         )
       }
 
@@ -164,8 +156,8 @@ export async function POST(request: NextRequest) {
             previousSongCount
           )
 
-        // Only update if there are new songs or show is newly complete
-        if (hasNewSongs || (showComplete && !submission.isScored)) {
+        // Only update if there are new songs or grace period just expired
+        if (hasNewSongs || (gracePeriodExpired && !submission.isScored)) {
           // Update picks with scores
           for (const scoredPick of scoredPicks) {
             await prisma.pick.update({
