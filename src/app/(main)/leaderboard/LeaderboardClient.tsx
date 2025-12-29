@@ -102,7 +102,16 @@ export default function LeaderboardClient({
         <h1 className="text-3xl font-bold text-white">Leaderboard</h1>
         {hasInProgressShows && (
           <p className="text-sm text-slate-400 mt-2">
-            Updates automatically every 60 seconds during live shows
+            Show in progress
+            {currentUserRank && (
+              <span className="ml-1">
+                • Current score:{" "}
+                <span className="text-orange-400 font-semibold">
+                  {currentUserRank.totalPoints}
+                </span>
+              </span>
+            )}
+            {" • "}Updates automatically every 60 seconds
           </p>
         )}
       </div>
