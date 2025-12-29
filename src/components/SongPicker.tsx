@@ -635,23 +635,27 @@ export function SongPicker({
               <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
                 Show In Progress!
               </h2>
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <Music2 className="h-5 w-5 text-[#c23a3a] animate-pulse" />
-                <p className="text-lg text-gray-300">
-                  Your picks are locked in
-                </p>
-                <Sparkles className="h-5 w-5 text-[#c23a3a] animate-pulse" />
-              </div>
+              {existingPicks && existingPicks.length > 0 && (
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <Music2 className="h-5 w-5 text-[#c23a3a] animate-pulse" />
+                  <p className="text-lg text-gray-300">
+                    Your picks are locked in
+                  </p>
+                  <Sparkles className="h-5 w-5 text-[#c23a3a] animate-pulse" />
+                </div>
+              )}
               <p className="text-gray-400 mb-8">
                 The show has started and picks can no longer be changed. Check
                 back after the show for results and scoring!
               </p>
-              <div className="inline-flex items-center space-x-3 px-6 py-3 bg-[#3d5a6c]/50 rounded-xl border border-[#3d5a6c]/70">
-                <CheckCircle className="h-5 w-5 text-green-400" />
-                <span className="text-gray-300 font-medium">
-                  Your picks are saved
-                </span>
-              </div>
+              {existingPicks && existingPicks.length > 0 && (
+                <div className="inline-flex items-center space-x-3 px-6 py-3 bg-[#3d5a6c]/50 rounded-xl border border-[#3d5a6c]/70">
+                  <CheckCircle className="h-5 w-5 text-green-400" />
+                  <span className="text-gray-300 font-medium">
+                    Your picks are saved
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         )}
