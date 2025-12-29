@@ -17,6 +17,8 @@ import {
   Calendar,
   AlertCircle,
   CheckCircle,
+  Music2,
+  Sparkles,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -531,7 +533,7 @@ export function SongPicker({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
       {/* Mobile Modal */}
       {isMobile && renderMobileModal()}
 
@@ -568,61 +570,90 @@ export function SongPicker({
         </div>
       )}
 
-      {/* Locked Banner */}
-      {isLocked && (
-        <div className="bg-[#c23a3a]/20 border border-[#c23a3a]/30 rounded-lg p-4 flex items-center justify-center space-x-2">
-          <Lock className="h-5 w-5 text-[#d64545]" />
-          <p className="text-[#d64545]">
-            This show has started. Picks are locked.
-          </p>
-        </div>
-      )}
+      {/* Picker Content Wrapper with Overlay */}
+      <div className="relative">
+        {/* Search - only show on desktop */}
+        {!isMobile && (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search songs..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+        )}
 
-      {/* Search - only show on desktop */}
-      {!isMobile && (
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-          <Input
-            type="text"
-            placeholder="Search songs..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-            >
-              <X className="h-5 w-5" />
-            </button>
+        {/* Pick Sections */}
+        <div className={`space-y-4 ${isLocked ? "opacity-30" : ""}`}>
+          {renderPickCard(
+            "OPENER",
+            "Opener Pick",
+            "3 points if correct",
+            <Star className="h-5 w-5 text-[#c23a3a]" />,
+            openerPick
+          )}
+          {renderPickCard(
+            "ENCORE",
+            "Encore Pick",
+            "3 points if correct",
+            <Star className="h-5 w-5 text-[#c23a3a]" />,
+            encorePick
+          )}
+          {renderPickCard(
+            "REGULAR",
+            "Regular Picks",
+            `1 point each (${regularPicks.length}/11 selected)`,
+            <Music className="h-5 w-5 text-white" />,
+            null,
+            regularPicks.length
           )}
         </div>
-      )}
 
-      {/* Pick Sections */}
-      <div className="space-y-4">
-        {renderPickCard(
-          "OPENER",
-          "Opener Pick",
-          "3 points if correct",
-          <Star className="h-5 w-5 text-[#c23a3a]" />,
-          openerPick
-        )}
-        {renderPickCard(
-          "ENCORE",
-          "Encore Pick",
-          "3 points if correct",
-          <Star className="h-5 w-5 text-[#c23a3a]" />,
-          encorePick
-        )}
-        {renderPickCard(
-          "REGULAR",
-          "Regular Picks",
-          `1 point each (${regularPicks.length}/11 selected)`,
-          <Music className="h-5 w-5 text-white" />,
-          null,
-          regularPicks.length
+        {/* Locked Overlay - positioned over picker content */}
+        {isLocked && (
+          <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
+            <div className="max-w-md mx-4 text-center bg-[#1e3340]/95 backdrop-blur-sm p-8 rounded-2xl border border-[#3d5a6c]/70 shadow-2xl pointer-events-auto">
+              <div className="mb-6 flex justify-center">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-[#c23a3a]/30 blur-3xl rounded-full animate-pulse" />
+                  <div className="relative bg-gradient-to-br from-[#c23a3a] to-[#d64545] p-6 rounded-full">
+                    <Lock className="h-16 w-16 text-white" />
+                  </div>
+                </div>
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+                Show In Progress!
+              </h2>
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <Music2 className="h-5 w-5 text-[#c23a3a] animate-pulse" />
+                <p className="text-lg text-gray-300">
+                  Your picks are locked in
+                </p>
+                <Sparkles className="h-5 w-5 text-[#c23a3a] animate-pulse" />
+              </div>
+              <p className="text-gray-400 mb-8">
+                The show has started and picks can no longer be changed. Check
+                back after the show for results and scoring!
+              </p>
+              <div className="inline-flex items-center space-x-3 px-6 py-3 bg-[#3d5a6c]/50 rounded-xl border border-[#3d5a6c]/70">
+                <CheckCircle className="h-5 w-5 text-green-400" />
+                <span className="text-gray-300 font-medium">
+                  Your picks are saved
+                </span>
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
@@ -683,6 +714,40 @@ export function SongPicker({
                 {existingPicks ? "Update" : "Submit"}
               </span>
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Locked Overlay - positioned relative to the picker content */}
+      {isLocked && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur-md rounded-lg">
+          <div className="max-w-md mx-4 text-center">
+            <div className="mb-6 flex justify-center">
+              <div className="relative">
+                <div className="absolute inset-0 bg-[#c23a3a]/30 blur-3xl rounded-full animate-pulse" />
+                <div className="relative bg-gradient-to-br from-[#c23a3a] to-[#d64545] p-6 rounded-full">
+                  <Lock className="h-16 w-16 text-white" />
+                </div>
+              </div>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Show In Progress!
+            </h2>
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <Music2 className="h-5 w-5 text-[#c23a3a] animate-pulse" />
+              <p className="text-lg text-gray-300">Your picks are locked in</p>
+              <Sparkles className="h-5 w-5 text-[#c23a3a] animate-pulse" />
+            </div>
+            <p className="text-gray-400 mb-8">
+              The show has started and picks can no longer be changed. Check
+              back after the show for results and scoring!
+            </p>
+            <div className="inline-flex items-center space-x-3 px-6 py-3 bg-[#3d5a6c]/50 rounded-xl border border-[#3d5a6c]/70">
+              <CheckCircle className="h-5 w-5 text-green-400" />
+              <span className="text-gray-300 font-medium">
+                Your picks are saved
+              </span>
+            </div>
           </div>
         </div>
       )}
