@@ -622,8 +622,8 @@ export function SongPicker({
 
         {/* Locked Overlay - positioned over picker content */}
         {isLocked && (
-          <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
-            <div className="max-w-md mx-4 text-center bg-[#1e3340]/95 backdrop-blur-sm p-8 rounded-2xl border border-[#3d5a6c]/70 shadow-2xl pointer-events-auto">
+          <div className="absolute inset-0 z-40 flex items-center justify-center">
+            <div className="max-w-md mx-4 text-center bg-[#1e3340]/95 backdrop-blur-sm p-8 rounded-2xl border border-[#3d5a6c]/70 shadow-2xl">
               <div className="mb-6 flex justify-center">
                 <div className="relative">
                   <div className="absolute inset-0 bg-[#c23a3a]/30 blur-3xl rounded-full animate-pulse" />
