@@ -252,61 +252,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET endpoint to manually check scoring status
-export async function GET() {
-  console.log(`[Score:GET] Request started at ${new Date().toISOString()}`)
-
-  try {
-    console.log("[Score:GET] Querying for pending shows...")
-
-    const pendingShows = await prisma.show.findMany({
-      where: {
-        OR: [
-          { isComplete: false },
-          { submissions: { some: { isScored: false } } },
-        ],
-      },
-      include: {
-        _count: {
-          select: { submissions: true },
-        },
-      },
-      orderBy: { showDate: "asc" },
-    })
-
-    console.log(`[Score:GET] Found ${pendingShows.length} pending show(s)`)
-
-    for (const show of pendingShows) {
-      console.log(
-        `[Score:GET]   - ${show.showDate.toISOString().split("T")[0]} ${show.venue}: ` +
-          `complete=${show.isComplete}, submissions=${show._count.submissions}, ` +
-          `lastScored=${show.lastScoredAt?.toISOString() || "never"}`
-      )
-    }
-
-    const response = {
-      pendingShows: pendingShows.map((show) => ({
-        id: show.id,
-        showDate: show.showDate.toISOString().split("T")[0],
-        venue: show.venue,
-        isComplete: show.isComplete,
-        lockTime: show.lockTime,
-        lastScoredAt: show.lastScoredAt,
-        submissionCount: show._count.submissions,
-      })),
-    }
-
-    console.log(`[Score:GET] ✓ Returning ${pendingShows.length} pending shows`)
-    return NextResponse.json(response)
-  } catch (error) {
-    console.error("[Score:GET] ✗ Error checking score status:", error)
-    console.error("[Score:GET] ✗ Error details:", {
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-    })
-    return NextResponse.json(
-      { error: "Failed to check score status" },
-      { status: 500 }
-    )
-  }
+// GET endpoint - Vercel cron jobs use GET requests
+// This is the main entry point for the cron job
+export async function GET(request: NextRequest) {
+  // Vercel cron makes GET requests, so we handle scoring here
+  // Just delegate to POST handler
+  return POST(request)
 }
