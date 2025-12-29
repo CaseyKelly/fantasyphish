@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import {
   Trophy,
@@ -9,7 +9,6 @@ import {
   TrendingUp,
   Calendar,
   MapPin,
-  ChevronDown,
   Check,
 } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -60,7 +59,6 @@ export default function LeaderboardClient({
   hasInProgressShows,
 }: LeaderboardClientProps) {
   const router = useRouter()
-  const [expandedUserId, setExpandedUserId] = useState<string | null>(null)
 
   // Poll for updates if there are in-progress shows
   useEffect(() => {
@@ -72,10 +70,6 @@ export default function LeaderboardClient({
 
     return () => clearInterval(interval)
   }, [hasInProgressShows, router])
-
-  const toggleExpanded = (userId: string) => {
-    setExpandedUserId(expandedUserId === userId ? null : userId)
-  }
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -200,36 +194,38 @@ export default function LeaderboardClient({
             <div className="divide-y divide-slate-700/50">
               {leaderboard.map((user) => {
                 const isCurrentUser = currentUserId === user.userId
-                const isExpanded = expandedUserId === user.userId
+                // Show scoring picks first, then non-scoring
+                const scoringPicks = user.picks.filter(
+                  (p) => p.pointsEarned > 0
+                )
+                const nonScoringPicks = user.picks.filter(
+                  (p) => p.pointsEarned === 0
+                )
+                const allPicksSorted = [...scoringPicks, ...nonScoringPicks]
+
                 return (
-                  <div key={user.userId}>
-                    <div
-                      className={`grid grid-cols-12 items-center px-4 sm:px-6 py-4 cursor-pointer hover:bg-slate-800/30 transition-colors ${
-                        isCurrentUser ? "bg-orange-500/5" : ""
-                      }`}
-                      onClick={() => toggleExpanded(user.userId)}
-                    >
+                  <div
+                    key={user.userId}
+                    className={`px-4 sm:px-6 py-4 ${
+                      isCurrentUser ? "bg-orange-500/5" : ""
+                    }`}
+                  >
+                    {/* Main row with rank, username, stats */}
+                    <div className="grid grid-cols-12 items-center gap-4 mb-3">
                       <div className="col-span-1">{getRankIcon(user.rank)}</div>
-                      <div className="col-span-5 sm:col-span-4">
-                        <div className="flex items-center gap-2">
-                          <p
-                            className={`font-medium ${
-                              isCurrentUser ? "text-orange-400" : "text-white"
-                            }`}
-                          >
-                            {user.username}
-                            {isCurrentUser && (
-                              <span className="ml-2 text-xs text-orange-400">
-                                (You)
-                              </span>
-                            )}
-                          </p>
-                          <ChevronDown
-                            className={`h-4 w-4 text-slate-400 transition-transform ${
-                              isExpanded ? "rotate-180" : ""
-                            }`}
-                          />
-                        </div>
+                      <div className="col-span-5 sm:col-span-3">
+                        <p
+                          className={`font-medium ${
+                            isCurrentUser ? "text-orange-400" : "text-white"
+                          }`}
+                        >
+                          {user.username}
+                          {isCurrentUser && (
+                            <span className="ml-2 text-xs text-orange-400">
+                              (You)
+                            </span>
+                          )}
+                        </p>
                         <p className="text-xs text-slate-500 sm:hidden">
                           {user.avgPoints} avg
                         </p>
@@ -240,31 +236,33 @@ export default function LeaderboardClient({
                       <div className="col-span-2 text-center text-slate-400 hidden sm:block">
                         {user.avgPoints}
                       </div>
-                      <div className="col-span-3 text-right">
+                      <div className="col-span-3 sm:col-span-4 text-right">
                         <span className="text-xl font-bold text-white">
                           {user.totalPoints}
                         </span>
                       </div>
                     </div>
-                    {isExpanded && (
-                      <div className="px-4 sm:px-6 py-4 bg-slate-800/20">
-                        <div className="flex flex-wrap gap-2">
-                          {user.picks.map((pick, idx) => (
-                            <div
-                              key={idx}
-                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm ${
-                                pick.pointsEarned > 0
-                                  ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                                  : "bg-slate-700/50 text-slate-400 border border-slate-600/30"
-                              }`}
-                            >
-                              {pick.pointsEarned > 0 && (
-                                <Check className="h-3.5 w-3.5" />
-                              )}
-                              <span>{pick.songName}</span>
-                            </div>
-                          ))}
-                        </div>
+
+                    {/* Song picks badges */}
+                    {allPicksSorted.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 ml-0 sm:ml-12">
+                        {allPicksSorted.map((pick, idx) => (
+                          <div
+                            key={idx}
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
+                              pick.pointsEarned > 0
+                                ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                                : "bg-slate-700/50 text-slate-400 border border-slate-600/30"
+                            }`}
+                          >
+                            {pick.pointsEarned > 0 && (
+                              <Check className="h-3 w-3" />
+                            )}
+                            <span className="truncate max-w-[120px]">
+                              {pick.songName}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
