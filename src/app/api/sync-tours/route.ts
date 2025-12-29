@@ -154,20 +154,20 @@ export async function POST(request: Request) {
 
   try {
     // Verify cron secret (optional, for security)
-    // Vercel cron jobs send "Vercel-Cron" as user-agent
+    // Vercel cron jobs send "vercel-cron/1.0" as user-agent
     // Manual triggers require the CRON_SECRET
     const authHeader = request.headers.get("authorization")
-    const userAgent = request.headers.get("user-agent")
+    const userAgent = request.headers.get("user-agent") || ""
     const token = authHeader?.replace("Bearer ", "")
     const cronSecret = process.env.CRON_SECRET
-    const isVercelCron = userAgent === "Vercel-Cron"
+    const isVercelCron = userAgent.toLowerCase().startsWith("vercel-cron")
 
     console.log(
       `[Sync Tours] Auth check: cronSecret=${cronSecret ? "SET" : "NOT_SET"}, authHeader=${authHeader ? "PROVIDED" : "MISSING"}, isVercelCron=${isVercelCron}`
     )
 
     // Allow requests from:
-    // 1. Vercel cron (user-agent: "Vercel-Cron")
+    // 1. Vercel cron (user-agent starts with "vercel-cron")
     // 2. Manual triggers with correct CRON_SECRET
     if (!isVercelCron && cronSecret && token !== cronSecret) {
       console.error(
