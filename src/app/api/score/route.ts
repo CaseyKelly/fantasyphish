@@ -65,7 +65,8 @@ export async function POST(request: NextRequest) {
         `[Score:POST] Processing show ${showDateStr} (${show.venue}, ${show.city})`
       )
 
-      const setlist = await getSetlist(showDateStr)
+      // Use noCache to bypass Next.js cache and get fresh setlist data during shows
+      const setlist = await getSetlist(showDateStr, { noCache: true })
 
       // Log the API response
       if (!setlist) {
