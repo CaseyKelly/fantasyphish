@@ -46,6 +46,30 @@ async function getAllSongs() {
   })
 }
 
+async function getUserTourScore(userId: string, tourId: string | null) {
+  if (!tourId) return null
+
+  const now = new Date()
+  const whereClause = {
+    OR: [
+      { isScored: true, show: { tourId } },
+      { isScored: false, show: { lockTime: { lte: now }, tourId } },
+    ],
+  }
+
+  const submissions = await prisma.submission.findMany({
+    where: {
+      userId,
+      ...whereClause,
+    },
+    select: {
+      totalPoints: true,
+    },
+  })
+
+  return submissions.reduce((sum, sub) => sum + (sub.totalPoints || 0), 0)
+}
+
 export default async function PickPage({ params }: PickPageProps) {
   const session = await auth()
   if (!session?.user?.id) {
@@ -64,6 +88,9 @@ export default async function PickPage({ params }: PickPageProps) {
 
   const { show, isLocked } = showData
   const existingSubmission = show.submissions[0]
+
+  // Get user's total tour score
+  const tourScore = await getUserTourScore(session.user.id, show.tourId)
 
   // Transform existing picks for the picker
   const existingPicks = existingSubmission?.picks.map((pick) => ({
@@ -85,7 +112,7 @@ export default async function PickPage({ params }: PickPageProps) {
         songs={songs}
         existingPicks={existingPicks}
         isLocked={isLocked}
-        currentScore={existingSubmission?.totalPoints}
+        currentScore={tourScore}
       />
     </div>
   )
