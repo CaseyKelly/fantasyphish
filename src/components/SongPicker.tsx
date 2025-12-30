@@ -323,7 +323,8 @@ export function SongPicker({
                 <div className="flex items-center gap-2 flex-shrink-0">
                   {song.gap !== null && song.gap !== undefined && (
                     <span className="text-xs text-gray-400 whitespace-nowrap">
-                      played {song.gap} {song.gap === 1 ? "show" : "shows"} ago
+                      played {song.gap + 1}{" "}
+                      {song.gap + 1 === 1 ? "show" : "shows"} ago
                     </span>
                   )}
                   {isSelected && <Check className="h-4 w-4 text-green-500" />}
