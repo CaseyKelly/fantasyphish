@@ -74,10 +74,12 @@ export default function PicksPage() {
         setNextShow(showData.nextShow)
 
         // Check if show is locked
-        if (showData.nextShow.lockTime) {
-          const lockTime = new Date(showData.nextShow.lockTime)
-          setIsLocked(new Date() >= lockTime)
-        }
+        // TEMPORARY: Always allow editing for testing
+        setIsLocked(false)
+        // if (showData.nextShow.lockTime) {
+        //   const lockTime = new Date(showData.nextShow.lockTime)
+        //   setIsLocked(new Date() >= lockTime)
+        // }
       }
 
       setSongs(songsData.songs || [])
