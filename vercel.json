@@ -7,6 +7,10 @@
     {
       "path": "/api/sync-tours",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/sync-song-stats",
+      "schedule": "0 7 * * *"
     }
   ]
 }
