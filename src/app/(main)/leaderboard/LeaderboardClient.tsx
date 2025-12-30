@@ -19,6 +19,18 @@ interface Pick {
   songName: string
   wasPlayed: boolean | null
   pointsEarned: number
+  pickType: string
+}
+
+interface ShowPicks {
+  show: {
+    showDate: Date
+    venue: string
+    city: string | null
+    state: string | null
+  }
+  totalPoints: number
+  picks: Pick[]
 }
 
 interface LeaderboardEntry {
@@ -29,7 +41,7 @@ interface LeaderboardEntry {
   avgPoints: number
   accuracy: number
   rank: number
-  picks: Pick[]
+  picksByShow: ShowPicks[]
 }
 
 interface Show {
@@ -208,15 +220,6 @@ export default function LeaderboardClient({
                 const isCurrentUser = currentUserId === user.userId
                 const isExpanded = expandedUserIds.has(user.userId)
 
-                // Show scoring picks first, then non-scoring
-                const scoringPicks = user.picks.filter(
-                  (p) => p.pointsEarned > 0
-                )
-                const nonScoringPicks = user.picks.filter(
-                  (p) => p.pointsEarned === 0
-                )
-                const allPicksSorted = [...scoringPicks, ...nonScoringPicks]
-
                 return (
                   <div
                     key={user.userId}
@@ -271,8 +274,8 @@ export default function LeaderboardClient({
                       </div>
                     </div>
 
-                    {/* Expanded song picks */}
-                    {allPicksSorted.length > 0 && (
+                    {/* Expanded song picks by show */}
+                    {user.picksByShow.length > 0 && (
                       <div
                         className={`grid transition-all duration-300 ease-in-out ${
                           isExpanded
@@ -281,22 +284,121 @@ export default function LeaderboardClient({
                         }`}
                       >
                         <div className="overflow-hidden">
-                          <div className="flex flex-wrap gap-1.5">
-                            {allPicksSorted.map((pick, idx) => (
-                              <div
-                                key={idx}
-                                className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
-                                  pick.pointsEarned > 0
-                                    ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                                    : "bg-slate-700/50 text-slate-400 border border-slate-600/30"
-                                }`}
-                              >
-                                {pick.pointsEarned > 0 && (
-                                  <Check className="h-3 w-3" />
-                                )}
-                                <span>{pick.songName}</span>
-                              </div>
-                            ))}
+                          <div className="space-y-4">
+                            {user.picksByShow.map((showPicks, showIdx) => {
+                              // Separate picks by type
+                              const openerPick = showPicks.picks.find(
+                                (p) => p.pickType === "OPENER"
+                              )
+                              const encorePicks = showPicks.picks.filter(
+                                (p) => p.pickType === "ENCORE"
+                              )
+                              const regularPicks = showPicks.picks.filter(
+                                (p) => p.pickType === "REGULAR"
+                              )
+
+                              return (
+                                <div
+                                  key={showIdx}
+                                  className="border border-slate-700/50 rounded-lg p-3 bg-slate-800/30"
+                                >
+                                  {/* Show header */}
+                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 pb-2 border-b border-slate-700/50">
+                                    <div className="text-xs text-slate-400">
+                                      {new Date(
+                                        showPicks.show.showDate
+                                      ).toLocaleDateString("en-US", {
+                                        month: "short",
+                                        day: "numeric",
+                                        year: "numeric",
+                                        timeZone: "UTC",
+                                      })}{" "}
+                                      • {showPicks.show.venue}
+                                      {showPicks.show.city &&
+                                        `, ${showPicks.show.city}`}
+                                      {showPicks.show.state &&
+                                        `, ${showPicks.show.state}`}
+                                    </div>
+                                    <div className="text-xs font-semibold text-orange-400">
+                                      {showPicks.totalPoints} pts
+                                    </div>
+                                  </div>
+
+                                  {/* Opener */}
+                                  {openerPick && (
+                                    <div className="mb-2">
+                                      <div className="text-xs font-medium text-slate-500 mb-1">
+                                        Opener
+                                      </div>
+                                      <div
+                                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+                                          openerPick.pointsEarned > 0
+                                            ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                                            : "bg-slate-700/50 text-slate-400 border border-slate-600/30"
+                                        }`}
+                                      >
+                                        {openerPick.pointsEarned > 0 && (
+                                          <Check className="h-3 w-3" />
+                                        )}
+                                        <span>{openerPick.songName}</span>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Regular picks */}
+                                  {regularPicks.length > 0 && (
+                                    <div className="mb-2">
+                                      <div className="text-xs font-medium text-slate-500 mb-1">
+                                        Regular Picks
+                                      </div>
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {regularPicks.map((pick, idx) => (
+                                          <div
+                                            key={idx}
+                                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+                                              pick.pointsEarned > 0
+                                                ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                                                : "bg-slate-700/50 text-slate-400 border border-slate-600/30"
+                                            }`}
+                                          >
+                                            {pick.pointsEarned > 0 && (
+                                              <Check className="h-3 w-3" />
+                                            )}
+                                            <span>{pick.songName}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Encore */}
+                                  {encorePicks.length > 0 && (
+                                    <div>
+                                      <div className="text-xs font-medium text-slate-500 mb-1">
+                                        Encore
+                                      </div>
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {encorePicks.map((pick, idx) => (
+                                          <div
+                                            key={idx}
+                                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+                                              pick.pointsEarned > 0
+                                                ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                                                : "bg-slate-700/50 text-slate-400 border border-slate-600/30"
+                                            }`}
+                                          >
+                                            {pick.pointsEarned > 0 && (
+                                              <Check className="h-3 w-3" />
+                                            )}
+                                            <span>{pick.songName}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
                           </div>
                         </div>
                       </div>
