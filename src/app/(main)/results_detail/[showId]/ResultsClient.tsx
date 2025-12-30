@@ -205,6 +205,9 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
     return pick.wasPlayed ? "✓" : "✗"
   }
 
+  // Track which songs have already been displayed with points/badges
+  const songsProcessed = new Set<string>()
+
   // Helper function to check if a song was picked by the user
   const getSongPickInfo = (songName: string, songPosition: number) => {
     // Check if this song was picked by the user
@@ -216,7 +219,19 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
       return null // Song was not picked
     }
 
-    // Determine pick type and points
+    const songKey = songName.toLowerCase().trim()
+
+    // Check if this song has already been processed (appears earlier in setlist)
+    const isFirstOccurrence = !songsProcessed.has(songKey)
+    songsProcessed.add(songKey)
+
+    // If this is not the first occurrence, don't show any pick info
+    // (no badge, no points, nothing)
+    if (!isFirstOccurrence) {
+      return null
+    }
+
+    // Determine pick type and points for first occurrence only
     let pickType = ""
     let points = 0
     let isCorrectPosition = false
