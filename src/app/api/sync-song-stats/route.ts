@@ -84,10 +84,21 @@ export async function POST(request: Request) {
 
     for (const song of songs) {
       try {
-        // Parse last_played date if available
+        // Parse last_played date if available (expected format: YYYY-MM-DD)
         let lastPlayedDate: Date | null = null
         if (song.last_played) {
-          lastPlayedDate = new Date(song.last_played + "T00:00:00.000Z")
+          const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(song.last_played)
+          if (match) {
+            const [, yearStr, monthStr, dayStr] = match
+            const year = Number(yearStr)
+            const month = Number(monthStr) - 1 // JS months are 0-based
+            const day = Number(dayStr)
+            lastPlayedDate = new Date(Date.UTC(year, month, day))
+          } else {
+            console.warn(
+              `[Sync Song Stats] Unexpected last_played format for song "${song.slug}": ${song.last_played}`
+            )
+          }
         }
 
         await prisma.song.update({
