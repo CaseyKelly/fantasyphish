@@ -11,6 +11,8 @@ export async function GET() {
         slug: true,
         artist: true,
         timesPlayed: true,
+        gap: true,
+        lastPlayed: true,
       },
     })
 

@@ -62,6 +62,8 @@ interface Pick {
     slug: string
     artist: string
     timesPlayed: number
+    gap: number | null
+    lastPlayed: Date | null
     createdAt: Date
     updatedAt: Date
   }
