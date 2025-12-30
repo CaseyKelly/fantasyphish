@@ -18,6 +18,8 @@ interface Song {
   slug: string
   artist: string
   timesPlayed: number
+  gap: number | null
+  lastPlayed: Date | null
 }
 
 interface Tour {

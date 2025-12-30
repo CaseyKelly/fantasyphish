@@ -101,6 +101,12 @@ async function main() {
     let updated = 0
 
     for (const song of songs) {
+      // Parse last_played date if available
+      let lastPlayedDate: Date | null = null
+      if (song.last_played) {
+        lastPlayedDate = new Date(song.last_played + "T00:00:00.000Z")
+      }
+
       const result = await prisma.song.upsert({
         where: { slug: song.slug },
         create: {
@@ -108,11 +114,15 @@ async function main() {
           slug: song.slug,
           artist: song.artist || "Phish",
           timesPlayed: song.times_played || 0,
+          gap: song.gap,
+          lastPlayed: lastPlayedDate,
         },
         update: {
           name: song.song,
           artist: song.artist || "Phish",
           timesPlayed: song.times_played || 0,
+          gap: song.gap,
+          lastPlayed: lastPlayedDate,
         },
       })
 

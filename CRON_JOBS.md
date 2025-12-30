@@ -4,10 +4,11 @@ This document describes the automated cron jobs that keep FantasyPhish's data up
 
 ## Overview
 
-FantasyPhish uses two Vercel cron jobs to automate scoring and tour synchronization:
+FantasyPhish uses three Vercel cron jobs to automate scoring, tour synchronization, and song statistics:
 
-1. **Scoring Cron** - Runs every 5 minutes to score shows progressively
-2. **Tour Sync Cron** - Runs daily to sync tour and show data
+1. **Scoring Cron** - Runs every minute to score shows progressively
+2. **Tour Sync Cron** - Runs daily at 6 AM UTC to sync tour and show data
+3. **Song Stats Sync Cron** - Runs daily at 7 AM UTC (midnight MT) to sync song gap data
 
 ## Configuration
 
@@ -18,11 +19,15 @@ Both cron jobs are configured in `vercel.json`:
   "crons": [
     {
       "path": "/api/score",
-      "schedule": "*/5 * * * *"
+      "schedule": "* * * * *"
     },
     {
       "path": "/api/sync-tours",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/sync-song-stats",
+      "schedule": "0 7 * * *"
     }
   ]
 }
@@ -201,6 +206,58 @@ npx tsx scripts/sync-tours.ts
 npx tsx scripts/sync-tours.ts 2024
 ```
 
+## 3. Song Stats Sync Cron (`/api/sync-song-stats`)
+
+### Schedule
+
+- **Frequency:** Daily at 7 AM UTC
+- **Pattern:** `0 7 * * *`
+- **Runs:** Once per day (midnight MT / 2 AM EST / 11 PM PST)
+
+### What It Does
+
+1. Fetches all songs from Phish.net API `/v5/songs`
+
+2. For each song:
+   - Updates `timesPlayed` (total performances)
+   - Updates `gap` (shows since last played)
+   - Updates `lastPlayed` (date of last performance)
+
+3. Enables "played X shows ago" display in song picker
+
+### Response Example
+
+```json
+{
+  "success": true,
+  "updated": 857,
+  "errors": 0,
+  "total": 857,
+  "duration": "3245ms"
+}
+```
+
+### Logging
+
+```
+[Sync Song Stats] Cron job started at 2025-12-29T07:00:00.000Z
+[Sync Song Stats] Authorization successful
+[Sync Song Stats] Fetching songs from phish.net API...
+[Sync Song Stats] Fetched 857 songs from phish.net
+[Sync Song Stats] ✓ Sync complete in 3245ms: 857 updated, 0 errors
+```
+
+### Manual Testing
+
+```bash
+# Test API endpoint
+curl -X POST http://localhost:3000/api/sync-song-stats \
+  -H "Authorization: Bearer YOUR_CRON_SECRET"
+
+# Test standalone script
+npx tsx scripts/sync-song-stats.ts
+```
+
 ## Monitoring
 
 ### Success Indicators
@@ -218,6 +275,13 @@ npx tsx scripts/sync-tours.ts 2024
 - Both years synced successfully
 - Show counts match expected tours
 - Timezones set correctly for US/Canada shows
+
+**Song Stats Sync Cron:**
+
+- `success: true` in response
+- Majority of songs updated successfully
+- Gap data available in song picker
+- Error count is low (songs not in DB yet)
 
 ### Error Scenarios
 
@@ -274,6 +338,20 @@ Shows lock at **7 PM in the venue's timezone**. Examples:
 2. Check Phish.net API status
 3. Review logs for specific error messages
 4. Try manual sync: `npx tsx scripts/sync-tours.ts`
+
+### Song Stats Not Updating
+
+1. Verify PHISHNET_API_KEY is set
+2. Check if songs exist in database (run seed script first)
+3. Review logs for API errors
+4. Try manual sync: `npx tsx scripts/sync-song-stats.ts`
+
+### Gap Info Not Showing in UI
+
+1. Ensure song stats sync has run at least once
+2. Check that gap field is not null in database
+3. Verify /api/songs includes gap and lastPlayed fields
+4. Clear browser cache and reload
 
 ### Shows Not Locking at 7 PM
 

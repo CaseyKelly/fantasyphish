@@ -30,6 +30,8 @@ interface Song {
   slug: string
   artist: string
   timesPlayed: number
+  gap: number | null
+  lastPlayed: Date | null
 }
 
 interface Pick {
@@ -314,9 +316,18 @@ export function SongPicker({
                   : "hover:bg-[#3d5a6c] text-white"
               }`}
             >
-              <div className="flex items-center justify-between">
-                <p className="font-medium">{song.name}</p>
-                {isSelected && <Check className="h-4 w-4 text-green-500" />}
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-medium flex-1 min-w-0 truncate">
+                  {song.name}
+                </p>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {song.gap !== null && song.gap !== undefined && (
+                    <span className="text-xs text-gray-400 whitespace-nowrap">
+                      played {song.gap} {song.gap === 1 ? "show" : "shows"} ago
+                    </span>
+                  )}
+                  {isSelected && <Check className="h-4 w-4 text-green-500" />}
+                </div>
               </div>
             </button>
           )
