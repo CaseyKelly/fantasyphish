@@ -120,16 +120,22 @@ async function getLeaderboard(tourId?: string) {
       )
 
       // Aggregate all picks from all submissions for this user, organized by show
-      const picksByShow = user.submissions.map((sub) => ({
-        show: sub.show,
-        totalPoints: sub.totalPoints || 0,
-        picks: sub.picks.map((pick) => ({
-          songName: pick.song.name,
-          wasPlayed: pick.wasPlayed,
-          pointsEarned: pick.pointsEarned || 0,
-          pickType: pick.pickType,
-        })),
-      }))
+      const picksByShow = user.submissions
+        .map((sub) => ({
+          show: sub.show,
+          totalPoints: sub.totalPoints || 0,
+          picks: sub.picks.map((pick) => ({
+            songName: pick.song.name,
+            wasPlayed: pick.wasPlayed,
+            pointsEarned: pick.pointsEarned || 0,
+            pickType: pick.pickType,
+          })),
+        }))
+        .sort(
+          (a, b) =>
+            new Date(b.show.showDate).getTime() -
+            new Date(a.show.showDate).getTime()
+        )
 
       return {
         userId: user.id,
