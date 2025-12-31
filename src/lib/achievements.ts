@@ -23,14 +23,14 @@ export const ACHIEVEMENT_DEFINITIONS = {
   PERFECT_OPENER: {
     slug: "perfect-opener",
     name: "Takeoff",
-    description: "Correctly guessed an opener",
+    description: "Correctly picked a show opener",
     icon: "PlaneTakeoff",
     category: "MILESTONE" as AchievementCategory,
   },
   PERFECT_CLOSER: {
     slug: "perfect-closer",
     name: "Landing",
-    description: "Correctly guessed an encore song",
+    description: "Correctly picked an encore song",
     icon: "PlaneLanding",
     category: "MILESTONE" as AchievementCategory,
   },
