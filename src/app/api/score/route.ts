@@ -176,6 +176,15 @@ export async function POST(request: Request) {
         console.log(
           `[Score:POST]   ✓ Grace period expired (encore started at ${show.encoreStartedAt!.toISOString()}) - marking show complete`
         )
+      } else if (show.encoreStartedAt && encoreDetected) {
+        // Log time remaining when encore is detected but grace period hasn't expired
+        const elapsedMs = Date.now() - show.encoreStartedAt.getTime()
+        const remainingMs = GRACE_PERIOD_MS - elapsedMs
+        const remainingMinutes = Math.floor(remainingMs / 60000)
+        const remainingSeconds = Math.floor((remainingMs % 60000) / 1000)
+        console.log(
+          `[Score:POST]   ⏱️  Grace period active - ${remainingMinutes}m ${remainingSeconds}s remaining until show marked complete`
+        )
       }
 
       // Update show with latest setlist data
