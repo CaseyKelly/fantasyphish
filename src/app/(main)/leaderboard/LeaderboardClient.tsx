@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import {
   Trophy,
   Medal,
@@ -236,10 +237,12 @@ export default function LeaderboardClient({
                         {getRankIcon(user.rank)}
                       </div>
                       <div className="col-span-5 sm:col-span-3">
-                        <p
-                          className={`font-medium text-sm sm:text-base ${
+                        <Link
+                          href={`/user/${user.username}`}
+                          className={`font-medium text-sm sm:text-base hover:underline ${
                             isCurrentUser ? "text-orange-400" : "text-white"
                           }`}
+                          onClick={(e) => e.stopPropagation()}
                         >
                           {user.username}
                           {isCurrentUser && (
@@ -247,7 +250,7 @@ export default function LeaderboardClient({
                               (You)
                             </span>
                           )}
-                        </p>
+                        </Link>
                         <p className="text-xs text-slate-500 sm:hidden">
                           {user.avgPoints} avg
                         </p>

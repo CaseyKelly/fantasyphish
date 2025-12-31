@@ -11,6 +11,10 @@
     {
       "path": "/api/sync-song-stats",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/award-achievements",
+      "schedule": "0 8 * * *"
     }
   ]
 }
