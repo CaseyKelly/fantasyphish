@@ -20,6 +20,7 @@ import {
   Trash2,
 } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { LiveBadge } from "@/components/LiveBadge"
 
 // Helper to format show dates consistently without timezone issues
 function formatShowDate(showDate: Date | string, formatStr: string): string {
@@ -372,9 +373,14 @@ export default function ResultsClient({
                         <p className="text-3xl font-bold text-orange-500">
                           {submission.totalPoints}
                         </p>
-                        <p className="text-sm text-slate-400">
-                          {submission.isScored ? "points" : "in progress"}
-                        </p>
+                        <div className="flex items-center gap-2 justify-start sm:justify-end">
+                          {!submission.show.isComplete &&
+                          !submission.isScored ? (
+                            <LiveBadge />
+                          ) : (
+                            <p className="text-sm text-slate-400">points</p>
+                          )}
+                        </div>
                       </div>
                     ) : (
                       <span className="flex items-center text-slate-400">

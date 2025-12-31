@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getSetlist, isShowComplete, parseSetlist } from "@/lib/phishnet"
 import { scoreSubmissionProgressive } from "@/lib/scoring"
+import { processPickAchievements } from "@/lib/achievement-awards"
 
 // Force dynamic rendering and disable caching
 export const dynamic = "force-dynamic"
@@ -11,7 +12,7 @@ export const runtime = "nodejs"
 const GRACE_PERIOD_MS = 60 * 60 * 1000
 
 // This endpoint is called by the cron job to score shows progressively
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   const startTime = Date.now()
   console.log(`[Score:POST] ========================================`)
   console.log(`[Score:POST] Cron job started at ${new Date().toISOString()}`)
@@ -20,11 +21,12 @@ export async function POST(request: NextRequest) {
   )
 
   try {
-    // Verify cron secret (optional, for security)
-    // Vercel cron jobs send "Vercel-Cron" as user-agent
-    // Manual triggers require the CRON_SECRET
+    // Verify cron secret (optional to configure, but enforced when CRON_SECRET is set)
+    // Vercel cron jobs send "Vercel-Cron" as user-agent and are allowed without CRON_SECRET
+    // Manual triggers require the correct CRON_SECRET when it is configured
     const authHeader = request.headers.get("authorization")
     const userAgent = request.headers.get("user-agent")
+    const token = authHeader?.replace("Bearer ", "")
     const cronSecret = process.env.CRON_SECRET
     const isVercelCron = userAgent === "Vercel-Cron"
 
@@ -35,14 +37,14 @@ export async function POST(request: NextRequest) {
     // Allow requests from:
     // 1. Vercel cron (user-agent: "Vercel-Cron")
     // 2. Manual triggers with correct CRON_SECRET
-    if (!isVercelCron && cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      console.log(
-        "[Score:POST] ✗ Unauthorized - not Vercel cron and invalid/missing CRON_SECRET"
+    if (!isVercelCron && cronSecret && token !== cronSecret) {
+      console.error(
+        "[Score:POST] Unauthorized: not Vercel cron and invalid/missing CRON_SECRET"
       )
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    console.log("[Score:POST] ✓ Authorization successful")
+    console.log("[Score:POST] Authorization successful")
 
     // Find shows that need scoring:
     // 1. Shows with locked picks (lockTime has passed)
@@ -168,6 +170,17 @@ export async function POST(request: NextRequest) {
 
         // Only update if there are new songs or grace period just expired
         if (hasNewSongs || (gracePeriodExpired && !submission.isScored)) {
+          // Capture previous wasPlayed values before updating
+          const picksWithPrevious = scoredPicks.map((scoredPick) => {
+            const existingPick = submission.picks.find(
+              (p) => p.id === scoredPick.id
+            )
+            return {
+              ...scoredPick,
+              previousWasPlayed: existingPick?.wasPlayed ?? null,
+            }
+          })
+
           // Update picks with scores
           for (const scoredPick of scoredPicks) {
             await prisma.pick.update({
@@ -191,6 +204,38 @@ export async function POST(request: NextRequest) {
               lastSongCount: currentSongCount,
             },
           })
+
+          // Award achievements for newly correct opener/closer picks
+          try {
+            const achievementResult = await processPickAchievements(
+              picksWithPrevious,
+              {
+                userId: submission.userId,
+                show: {
+                  showDate: show.showDate,
+                  venue: show.venue,
+                },
+                picks: submission.picks,
+              }
+            )
+
+            if (achievementResult.awarded > 0) {
+              console.log(
+                `[Score:POST]   🏆 Awarded ${achievementResult.awarded} achievement(s)`
+              )
+            }
+            if (achievementResult.errors > 0) {
+              console.log(
+                `[Score:POST]   ⚠️  ${achievementResult.errors} achievement error(s)`
+              )
+            }
+          } catch (error) {
+            // Log achievement errors but don't fail scoring
+            console.error(
+              `[Score:POST]   ⚠️  Achievement processing error:`,
+              error instanceof Error ? error.message : String(error)
+            )
+          }
 
           submissionsWithChanges++
           console.log(
@@ -249,12 +294,14 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     )
+  } finally {
+    await prisma.$disconnect()
   }
 }
 
 // GET endpoint - Vercel cron jobs use GET requests
 // This is the main entry point for the cron job
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   // Vercel cron makes GET requests, so we handle scoring here
   // Just delegate to POST handler
   return POST(request)
