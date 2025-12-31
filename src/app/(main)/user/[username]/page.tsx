@@ -101,7 +101,11 @@ async function getUserProfile(username: string) {
       id: ua.id,
       icon: ua.achievement.icon,
       name: ua.achievement.name,
-      description: ua.achievement.description,
+      // Exclude description for founding-member achievement
+      description:
+        ua.achievement.slug === "founding-member"
+          ? undefined
+          : ua.achievement.description,
     })),
   }
 }
