@@ -4,11 +4,12 @@ This document describes the automated cron jobs that keep FantasyPhish's data up
 
 ## Overview
 
-FantasyPhish uses three Vercel cron jobs to automate scoring, tour synchronization, and song statistics:
+FantasyPhish uses four Vercel cron jobs to automate scoring, tour synchronization, song statistics, and achievements:
 
 1. **Scoring Cron** - Runs every minute to score shows progressively
 2. **Tour Sync Cron** - Runs daily at 6 AM UTC to sync tour and show data
 3. **Song Stats Sync Cron** - Runs daily at 7 AM UTC (midnight MT) to sync song gap data
+4. **Award Achievements Cron** - Runs daily at 8 AM UTC as a backup to catch missed achievements
 
 ## Configuration
 
@@ -28,6 +29,10 @@ Both cron jobs are configured in `vercel.json`:
     {
       "path": "/api/sync-song-stats",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/award-achievements",
+      "schedule": "0 8 * * *"
     }
   ]
 }
@@ -153,12 +158,22 @@ curl -X POST http://localhost:3000/api/score \
    - Next year
 
 2. For each show:
-   - Creates or updates tour information
+   - Creates or updates tour information (only if data changed)
    - Sets venue timezone based on state/province
    - Calculates 7 PM lock time in venue timezone
    - Updates show details (venue, city, etc.)
+   - **Skips updating shows that have already been scored (isComplete = true)** to preserve setlist data
 
 3. Ensures New Year's Eve shows are ready before the year rolls over
+
+### Idempotency
+
+The sync-tours cron is fully idempotent:
+
+- Tours are only updated if name or dates have changed
+- Shows are only updated if venue, location, or timezone data has changed
+- Shows that have already been scored (isComplete = true) are never updated
+- Detailed logging shows which records were created, updated, or skipped
 
 ### Response Example
 
@@ -170,23 +185,41 @@ curl -X POST http://localhost:3000/api/score \
     {
       "year": 2025,
       "tours": 6,
-      "shows": 48
+      "shows": 48,
+      "toursCreated": 0,
+      "toursUpdated": 1,
+      "showsCreated": 2,
+      "showsUpdated": 3,
+      "showsSkipped": 38,
+      "showsSkippedComplete": 5
     },
     {
       "year": 2026,
       "tours": 2,
-      "shows": 13
+      "shows": 13,
+      "toursCreated": 0,
+      "toursUpdated": 0,
+      "showsCreated": 0,
+      "showsUpdated": 0,
+      "showsSkipped": 13,
+      "showsSkippedComplete": 0
     }
   ],
   "totalTours": 8,
-  "totalShows": 61
+  "totalShows": 61,
+  "totalToursCreated": 0,
+  "totalToursUpdated": 1,
+  "totalShowsCreated": 2,
+  "totalShowsUpdated": 3,
+  "totalShowsSkipped": 51,
+  "totalShowsSkippedComplete": 5
 }
 ```
 
 ### Logging
 
 ```
-[Sync Tours] Cron job started at 2025-12-19T06:00:00.000Z
+[Sync Tours] Cron job started at 2025-12-31T06:00:00.000Z
 [Sync Tours] Authorization successful
 [Sync Tours] Syncing years: 2025, 2026
 [Sync Tours] Starting sync for year 2025
@@ -194,17 +227,20 @@ curl -X POST http://localhost:3000/api/score \
 [Sync Tours] Fetched 111 total shows
 [Sync Tours] Filtered to 48 Phish shows
 [Sync Tours] Found 6 tours
-[Sync Tours] Tour: 2025 Spring Tour (8 shows)
-[Sync Tours] Tour: 2025 Summer Tour (23 shows)
+[Sync Tours]   → Skipped tour (unchanged): 2025 Spring Tour
+[Sync Tours]   ✓ Updated tour: 2025 Summer Tour
+[Sync Tours]   → Skipped tour (unchanged): 2025 Fall Tour
+[Sync Tours] Year 2025 summary: 0 tours created, 1 tours updated, 2 shows created, 3 shows updated, 38 shows skipped (unchanged), 5 shows skipped (already scored)
 [Sync Tours] Starting sync for year 2026
 [Sync Tours] Fetching shows for year 2026...
 [Sync Tours] Fetched 13 total shows
 [Sync Tours] Filtered to 13 Phish shows
 [Sync Tours] Found 2 tours
-[Sync Tours] Tour: 2026 Mexico (4 shows)
-[Sync Tours] Tour: 2026 Sphere (9 shows)
+[Sync Tours]   → Skipped tour (unchanged): 2026 Mexico
+[Sync Tours]   → Skipped tour (unchanged): 2026 Sphere
+[Sync Tours] Year 2026 summary: 0 tours created, 0 tours updated, 0 shows created, 0 shows updated, 13 shows skipped (unchanged), 0 shows skipped (already scored)
 [Sync Tours] ✓ Sync complete in 5030ms
-[Sync Tours] Summary: 61 shows across 8 tours
+[Sync Tours] Summary: 61 shows across 8 tours (2 created, 3 updated, 51 skipped unchanged, 5 skipped already scored)
 ```
 
 ### Manual Testing
@@ -272,6 +308,92 @@ curl -X POST http://localhost:3000/api/sync-song-stats \
 # Test standalone script
 npx tsx scripts/sync-song-stats.ts
 ```
+
+## 4. Award Achievements Cron (`/api/award-achievements`)
+
+### Schedule
+
+- **Frequency:** Daily at 8 AM UTC
+- **Pattern:** `0 8 * * *`
+- **Runs:** Once per day (3 AM EST / 12 AM PST)
+
+### What It Does
+
+This cron serves as a **backup/safety net** for achievement awarding. The primary achievement awarding happens inline during the scoring cron (every minute). This daily cron catches any achievements that may have been missed.
+
+1. Awards **PERFECT_OPENER** achievement to users who correctly guessed an opener
+2. Awards **PERFECT_CLOSER** achievement to users who correctly guessed an encore
+
+3. For each achievement type:
+   - Finds all picks where the user correctly guessed the opener/encore (pickType matches and wasPlayed = true)
+   - Awards the achievement to qualifying users
+   - Skips users who already have the achievement (idempotent)
+   - Stores metadata with the first correct show date, venue, and song name
+
+### Response Example
+
+```json
+{
+  "success": true,
+  "duration": "1234ms",
+  "results": [
+    {
+      "achievement": "Perfect Opener",
+      "awarded": 5,
+      "skipped": 142,
+      "total": 147
+    },
+    {
+      "achievement": "Perfect Closer",
+      "awarded": 3,
+      "skipped": 98,
+      "total": 101
+    }
+  ]
+}
+```
+
+### Logging
+
+```
+[AwardAchievements:POST] ========================================
+[AwardAchievements:POST] Daily backup cron started at 2025-12-31T08:00:00.000Z
+[AwardAchievements:POST] Auth check: cronSecret=SET, authHeader=MISSING, isVercelCron=true
+[AwardAchievements:POST] Authorization successful
+[AwardAchievements:POST] 🎯 Awarding Perfect Opener achievements...
+[AwardAchievements:POST] ✓ Achievement record ready: Perfect Opener
+[AwardAchievements:POST] Found 147 correct opener picks
+[AwardAchievements:POST] Found 147 unique users with correct opener picks
+[AwardAchievements:POST]   ✓ Awarded to johndoe
+[AwardAchievements:POST]   ✓ Awarded to janedoe
+[AwardAchievements:POST] 🎵 Awarding Perfect Closer achievements...
+[AwardAchievements:POST] ✓ Achievement record ready: Perfect Closer
+[AwardAchievements:POST] Found 101 correct encore picks
+[AwardAchievements:POST] Found 101 unique users with correct encore picks
+[AwardAchievements:POST]   ✓ Awarded to johndoe
+[AwardAchievements:POST] ✓ Complete in 1234ms
+[AwardAchievements:POST] Summary: 8 total awarded, 240 total skipped
+[AwardAchievements:POST] ========================================
+```
+
+### Manual Testing
+
+```bash
+# Test API endpoint
+curl -X POST http://localhost:3000/api/award-achievements \
+  -H "Authorization: Bearer YOUR_CRON_SECRET"
+
+# Or just trigger via GET (Vercel cron style)
+curl http://localhost:3000/api/award-achievements \
+  -H "Authorization: Bearer YOUR_CRON_SECRET"
+```
+
+### Notes
+
+- This is a **backup** cron - primary achievement awarding happens during scoring
+- Fully idempotent - safe to run multiple times
+- Skips users who already have achievements (P2002 unique constraint)
+- Metadata includes firstCorrectShow (ISO date string), venue, and songName
 
 ## Monitoring
 

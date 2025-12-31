@@ -53,6 +53,12 @@ async function fetchShowsByYear(year: number): Promise<PhishNetShow[]> {
 async function syncYear(year: number): Promise<{
   tours: number
   shows: number
+  toursCreated: number
+  toursUpdated: number
+  showsCreated: number
+  showsUpdated: number
+  showsSkipped: number
+  showsSkippedComplete: number
 }> {
   console.log(`[Sync Tours] Starting sync for year ${year}`)
 
@@ -78,6 +84,32 @@ async function syncYear(year: number): Promise<{
 
   console.log(`[Sync Tours] Found ${tourMap.size} tours`)
 
+  let toursCreated = 0
+  let toursUpdated = 0
+  let showsCreated = 0
+  let showsUpdated = 0
+  let showsSkipped = 0
+  let showsSkippedComplete = 0
+
+  // Batch fetch all existing tours and shows for this year
+  const tourIds = Array.from(tourMap.keys()).map((id) => `phishnet-${id}`)
+  const existingTours = await prisma.tour.findMany({
+    where: { id: { in: tourIds } },
+  })
+  const existingToursMap = new Map(existingTours.map((t) => [t.id, t]))
+
+  const allShowDates = shows.map((show) => {
+    const date = new Date(show.showdate)
+    date.setUTCHours(0, 0, 0, 0)
+    return date
+  })
+  const existingShows = await prisma.show.findMany({
+    where: { showDate: { in: allShowDates } },
+  })
+  const existingShowsMap = new Map(
+    existingShows.map((s) => [s.showDate.getTime(), s])
+  )
+
   // Create/update tours and shows
   for (const [tourId, tourData] of tourMap) {
     // Sort shows by date
@@ -88,25 +120,44 @@ async function syncYear(year: number): Promise<{
     const firstShow = tourData.shows[0]
     const lastShow = tourData.shows[tourData.shows.length - 1]
 
-    // Create or update tour
-    const tour = await prisma.tour.upsert({
-      where: { id: `phishnet-${tourId}` },
-      create: {
-        id: `phishnet-${tourId}`,
-        name: tourData.name,
-        startDate: new Date(firstShow.showdate),
-        endDate: new Date(lastShow.showdate),
-      },
-      update: {
-        name: tourData.name,
-        startDate: new Date(firstShow.showdate),
-        endDate: new Date(lastShow.showdate),
-      },
-    })
+    const tourIdStr = `phishnet-${tourId}`
+    const existingTour = existingToursMap.get(tourIdStr)
 
-    console.log(
-      `[Sync Tours] Tour: ${tour.name} (${tourData.shows.length} shows)`
-    )
+    const tourStartDate = new Date(firstShow.showdate)
+    const tourEndDate = new Date(lastShow.showdate)
+
+    const tourNeedsUpdate =
+      !existingTour ||
+      existingTour.name !== tourData.name ||
+      existingTour.startDate.getTime() !== tourStartDate.getTime() ||
+      existingTour.endDate?.getTime() !== tourEndDate.getTime()
+
+    // Create or update tour only if needed
+    if (!existingTour) {
+      await prisma.tour.create({
+        data: {
+          id: tourIdStr,
+          name: tourData.name,
+          startDate: tourStartDate,
+          endDate: tourEndDate,
+        },
+      })
+      toursCreated++
+      console.log(`[Sync Tours]   ✓ Created tour: ${tourData.name}`)
+    } else if (tourNeedsUpdate) {
+      await prisma.tour.update({
+        where: { id: tourIdStr },
+        data: {
+          name: tourData.name,
+          startDate: tourStartDate,
+          endDate: tourEndDate,
+        },
+      })
+      toursUpdated++
+      console.log(`[Sync Tours]   ✓ Updated tour: ${tourData.name}`)
+    } else {
+      console.log(`[Sync Tours]   → Skipped tour (unchanged): ${tourData.name}`)
+    }
 
     // Create/update shows
     for (const show of tourData.shows) {
@@ -117,34 +168,71 @@ async function syncYear(year: number): Promise<{
       const timezone = getTimezoneForLocation(show.state)
       const lockTime = getShowLockTime(showDate, timezone)
 
-      await prisma.show.upsert({
-        where: { showDate: showDate },
-        create: {
-          showDate: showDate,
-          venue: show.venue,
-          city: show.city,
-          state: show.state,
-          country: show.country,
-          tourId: tour.id,
-          timezone: timezone,
-          lockTime: lockTime,
-        },
-        update: {
-          venue: show.venue,
-          city: show.city,
-          state: show.state,
-          country: show.country,
-          tourId: tour.id,
-          timezone: timezone,
-          lockTime: lockTime,
-        },
-      })
+      const existingShow = existingShowsMap.get(showDate.getTime())
+
+      // Don't update shows that have already been scored (setlist already fetched)
+      if (existingShow?.isComplete) {
+        showsSkippedComplete++
+        continue
+      }
+
+      const showNeedsUpdate =
+        !existingShow ||
+        existingShow.venue !== show.venue ||
+        existingShow.city !== show.city ||
+        existingShow.state !== show.state ||
+        existingShow.country !== show.country ||
+        existingShow.tourId !== tourIdStr ||
+        existingShow.timezone !== timezone ||
+        existingShow.lockTime?.getTime() !== lockTime.getTime()
+
+      if (!existingShow) {
+        await prisma.show.create({
+          data: {
+            showDate: showDate,
+            venue: show.venue,
+            city: show.city,
+            state: show.state,
+            country: show.country,
+            tourId: tourIdStr,
+            timezone: timezone,
+            lockTime: lockTime,
+          },
+        })
+        showsCreated++
+      } else if (showNeedsUpdate) {
+        await prisma.show.update({
+          where: { showDate: showDate },
+          data: {
+            venue: show.venue,
+            city: show.city,
+            state: show.state,
+            country: show.country,
+            tourId: tourIdStr,
+            timezone: timezone,
+            lockTime: lockTime,
+          },
+        })
+        showsUpdated++
+      } else {
+        showsSkipped++
+      }
     }
   }
+
+  console.log(
+    `[Sync Tours] Year ${year} summary: ${toursCreated} tours created, ${toursUpdated} tours updated, ${showsCreated} shows created, ${showsUpdated} shows updated, ${showsSkipped} shows skipped (unchanged), ${showsSkippedComplete} shows skipped (already scored)`
+  )
 
   return {
     tours: tourMap.size,
     shows: shows.length,
+    toursCreated,
+    toursUpdated,
+    showsCreated,
+    showsUpdated,
+    showsSkipped,
+    showsSkippedComplete,
   }
 }
 
@@ -197,20 +285,45 @@ export async function POST(request: Request) {
           year: currentYear,
           tours: currentYearResult.tours,
           shows: currentYearResult.shows,
+          toursCreated: currentYearResult.toursCreated,
+          toursUpdated: currentYearResult.toursUpdated,
+          showsCreated: currentYearResult.showsCreated,
+          showsUpdated: currentYearResult.showsUpdated,
+          showsSkipped: currentYearResult.showsSkipped,
+          showsSkippedComplete: currentYearResult.showsSkippedComplete,
         },
         {
           year: nextYear,
           tours: nextYearResult.tours,
           shows: nextYearResult.shows,
+          toursCreated: nextYearResult.toursCreated,
+          toursUpdated: nextYearResult.toursUpdated,
+          showsCreated: nextYearResult.showsCreated,
+          showsUpdated: nextYearResult.showsUpdated,
+          showsSkipped: nextYearResult.showsSkipped,
+          showsSkippedComplete: nextYearResult.showsSkippedComplete,
         },
       ],
       totalTours: currentYearResult.tours + nextYearResult.tours,
       totalShows: currentYearResult.shows + nextYearResult.shows,
+      totalToursCreated:
+        currentYearResult.toursCreated + nextYearResult.toursCreated,
+      totalToursUpdated:
+        currentYearResult.toursUpdated + nextYearResult.toursUpdated,
+      totalShowsCreated:
+        currentYearResult.showsCreated + nextYearResult.showsCreated,
+      totalShowsUpdated:
+        currentYearResult.showsUpdated + nextYearResult.showsUpdated,
+      totalShowsSkipped:
+        currentYearResult.showsSkipped + nextYearResult.showsSkipped,
+      totalShowsSkippedComplete:
+        currentYearResult.showsSkippedComplete +
+        nextYearResult.showsSkippedComplete,
     }
 
     console.log(`[Sync Tours] ✓ Sync complete in ${duration}ms`)
     console.log(
-      `[Sync Tours] Summary: ${summary.totalShows} shows across ${summary.totalTours} tours`
+      `[Sync Tours] Summary: ${summary.totalShows} shows across ${summary.totalTours} tours (${summary.totalShowsCreated} created, ${summary.totalShowsUpdated} updated, ${summary.totalShowsSkipped} skipped unchanged, ${summary.totalShowsSkippedComplete} skipped already scored)`
     )
 
     return NextResponse.json(summary)
