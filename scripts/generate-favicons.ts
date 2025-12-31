@@ -37,8 +37,9 @@ async function generateFavicons() {
     console.log(`✅ Created ${config.name}`)
   }
 
-  // Generate favicon.ico (multi-resolution: 16x16, 32x32, 48x48)
-  // ICO format requires special handling - we'll create a 32x32 as the main favicon
+  // Generate favicon.ico
+  // Note: This creates a PNG with .ico extension, which works in modern browsers
+  // For true multi-resolution ICO support, use a dedicated ICO library
   const svg32 = createDonutSVG(32, 24)
   const buffer32 = Buffer.from(svg32)
 
@@ -47,7 +48,9 @@ async function generateFavicons() {
     .png()
     .toFile(join(publicDir, "favicon.ico"))
 
-  console.log("✅ Created favicon.ico")
+  console.log(
+    "✅ Created favicon.ico (PNG format - works in all modern browsers)"
+  )
 
   console.log("\n🎉 All favicons generated successfully!")
 }

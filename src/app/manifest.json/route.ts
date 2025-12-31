@@ -40,7 +40,7 @@ export async function GET() {
 
   return NextResponse.json(manifest, {
     headers: {
-      "Content-Type": "application/manifest+json",
+      "Content-Type": "application/json",
       "Cache-Control": "public, max-age=3600, s-maxage=3600",
     },
   })
