@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { DonutLogo } from "@/components/DonutLogo"
 import { SongPicker } from "@/components/SongPicker"
 import { LoadingDonut } from "@/components/LoadingDonut"
+import { LiveBadge } from "@/components/LiveBadge"
 import { formatInTimeZone } from "date-fns-tz"
 import { getTimezoneAbbr, parseUTCDate } from "@/lib/date-utils"
 
@@ -162,7 +163,10 @@ export default function PicksPage() {
     <div className="space-y-6 pb-8">
       {/* Header */}
       <div className="text-center mb-4">
-        <h1 className="text-3xl font-bold text-white mb-2">Make Your Picks</h1>
+        <h1 className="text-3xl font-bold text-white mb-2">
+          {isLocked ? "Show In Progress" : "Make Your Picks"}
+        </h1>
+        {isLocked && <LiveBadge />}
         {nextShow.tour && (
           <p className="text-slate-400 mb-2">{nextShow.tour.name}</p>
         )}

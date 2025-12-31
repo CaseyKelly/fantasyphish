@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { LiveBadge } from "@/components/LiveBadge"
 
 interface Song {
   id: string
@@ -558,7 +559,11 @@ export function SongPicker({
       {!guestMode && !hideHeader && (
         <div className="text-center">
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-            {isTestMode ? "Create Test Submission" : "Make Your Picks"}
+            {isTestMode
+              ? "Create Test Submission"
+              : isLocked
+                ? "Show In Progress"
+                : "Make Your Picks"}
           </h1>
           {isTestMode && (
             <div className="mb-2">
@@ -567,6 +572,7 @@ export function SongPicker({
               </span>
             </div>
           )}
+          {isLocked && <LiveBadge />}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-gray-400">
             <span className="flex items-center">
               <Music className="h-4 w-4 mr-1" />

@@ -10,6 +10,7 @@ import { DonutLogo } from "@/components/DonutLogo"
 import { SongPicker } from "@/components/SongPicker"
 import { LoadingDonut } from "@/components/LoadingDonut"
 import { GuestRegistrationModal } from "@/components/GuestRegistrationModal"
+import { LiveBadge } from "@/components/LiveBadge"
 import { getTimezoneAbbr, parseUTCDate } from "@/lib/date-utils"
 
 interface Song {
@@ -264,8 +265,9 @@ export function HomeClient() {
                   {/* Header inside container */}
                   <div className="text-center mb-6">
                     <h2 className="text-3xl sm:text-4xl font-bold text-white mb-2">
-                      Make Your Picks
+                      {isLocked ? "Show In Progress" : "Make Your Picks"}
                     </h2>
+                    {isLocked && <LiveBadge />}
                     {nextShow.tour && (
                       <p className="text-gray-400 text-lg mb-2">
                         {nextShow.tour.name}
