@@ -4,11 +4,17 @@ import { useState, useEffect, Suspense } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { Mail, Lock, AlertCircle, Loader2 } from "lucide-react"
+import { Mail, Lock, AlertCircle, Loader2, Fingerprint } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { DonutLogo } from "@/components/DonutLogo"
+import {
+  isNativePlatform,
+  isBiometricAvailable,
+  authenticateWithBiometrics,
+  getBiometricType,
+} from "@/lib/capacitor"
 
 function LoginForm() {
   const router = useRouter()
@@ -17,10 +23,27 @@ function LoginForm() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [biometricAvailable, setBiometricAvailable] = useState(false)
+  const [biometricType, setBiometricType] = useState<string | null>(null)
 
   const callbackUrl = searchParams.get("callbackUrl") || "/picks"
   const verified = searchParams.get("verified")
   const authError = searchParams.get("error")
+
+  // Check for biometric availability
+  useEffect(() => {
+    async function checkBiometric() {
+      if (isNativePlatform()) {
+        const available = await isBiometricAvailable()
+        setBiometricAvailable(available)
+        if (available) {
+          const type = await getBiometricType()
+          setBiometricType(type ? String(type) : null)
+        }
+      }
+    }
+    checkBiometric()
+  }, [])
 
   // Auto-fill email from sessionStorage if user just verified
   useEffect(() => {
@@ -69,6 +92,57 @@ function LoginForm() {
     }
   }, [authError])
 
+  const handleBiometricLogin = async () => {
+    setError("")
+    setIsLoading(true)
+
+    try {
+      // Get stored credentials
+      const storedEmail = localStorage.getItem("biometric-email")
+      const storedPassword = localStorage.getItem("biometric-password")
+
+      if (!storedEmail || !storedPassword) {
+        setError(
+          "No saved credentials. Please log in with email/password first and enable biometric login."
+        )
+        setIsLoading(false)
+        return
+      }
+
+      // Authenticate with biometrics
+      const authenticated = await authenticateWithBiometrics(
+        "Authenticate to sign in to FantasyPhish"
+      )
+
+      if (!authenticated) {
+        setError("Biometric authentication failed or was cancelled.")
+        setIsLoading(false)
+        return
+      }
+
+      // Sign in with stored credentials
+      const result = await signIn("credentials", {
+        email: storedEmail,
+        password: storedPassword,
+        redirect: false,
+      })
+
+      if (result?.error) {
+        setError("Authentication failed. Please try signing in manually.")
+        // Clear invalid stored credentials
+        localStorage.removeItem("biometric-email")
+        localStorage.removeItem("biometric-password")
+      } else {
+        router.push(callbackUrl)
+        router.refresh()
+      }
+    } catch {
+      setError("An unexpected error occurred")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
@@ -107,6 +181,16 @@ function LoginForm() {
       if (result?.error) {
         setError("Incorrect password. Please try again.")
       } else {
+        // Successful login - offer to save credentials for biometric login
+        if (biometricAvailable && isNativePlatform()) {
+          const shouldSave = confirm(
+            `Enable ${biometricType || "biometric"} login for next time?`
+          )
+          if (shouldSave) {
+            localStorage.setItem("biometric-email", email)
+            localStorage.setItem("biometric-password", password)
+          }
+        }
         router.push(callbackUrl)
         router.refresh()
       }
@@ -176,6 +260,30 @@ function LoginForm() {
             Sign In
           </Button>
         </form>
+
+        {biometricAvailable && (
+          <div className="mt-4">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-700" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-slate-800 px-2 text-gray-400">Or</span>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full mt-4"
+              size="lg"
+              onClick={handleBiometricLogin}
+              disabled={isLoading}
+            >
+              <Fingerprint className="h-5 w-5 mr-2" />
+              Sign in with {biometricType || "Biometrics"}
+            </Button>
+          </div>
+        )}
 
         <p className="mt-6 text-center text-sm text-gray-400">
           Don&apos;t have an account?{" "}
