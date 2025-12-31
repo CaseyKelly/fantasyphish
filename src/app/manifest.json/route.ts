@@ -2,10 +2,10 @@ import { NextResponse } from "next/server"
 
 export async function GET() {
   const manifest = {
-    name: "FantasyPhish - Predict the Setlist",
+    name: "Fantasy Phish - FantasyPhish",
     short_name: "FantasyPhish",
     description:
-      "Pick 13 songs, score points when they're played. The fantasy game for Phish fans.",
+      "Fantasy Phish is the ultimate prediction game for Phish fans. Pick 13 songs before showtime, score points when they're played, and compete on the leaderboard.",
     start_url: "/",
     display: "standalone",
     background_color: "#0f172a",

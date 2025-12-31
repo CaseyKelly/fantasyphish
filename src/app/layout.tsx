@@ -11,15 +11,21 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "FantasyPhish - Predict the Setlist",
+    default: "Fantasy Phish - FantasyPhish | Predict the Setlist",
     template: "%s | FantasyPhish",
   },
   description:
-    "Pick 13 songs, score points when they're played. The fantasy game for Phish fans.",
+    "Fantasy Phish is the ultimate prediction game for Phish fans. Pick 13 songs before showtime, score points when they're played, and compete on the leaderboard.",
   keywords: [
+    "fantasy phish",
+    "FantasyPhish",
     "Phish",
     "fantasy",
+    "phish fantasy game",
+    "phish prediction game",
+    "phish setlist game",
     "setlist",
+    "setlist predictions",
     "music",
     "game",
     "Phish.net",
@@ -59,18 +65,18 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.json",
   openGraph: {
-    title: "FantasyPhish - Predict the Setlist",
+    title: "Fantasy Phish - FantasyPhish | Predict the Setlist",
     description:
-      "Pick 13 songs, score points when they're played. The fantasy game for Phish fans.",
+      "Fantasy Phish is the ultimate prediction game for Phish fans. Pick 13 songs before showtime, score points when they're played, and compete on the leaderboard.",
     type: "website",
     siteName: "FantasyPhish",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "FantasyPhish - Predict the Setlist",
+    title: "Fantasy Phish - FantasyPhish | Predict the Setlist",
     description:
-      "Pick 13 songs, score points when they're played. The fantasy game for Phish fans.",
+      "Fantasy Phish is the ultimate prediction game for Phish fans. Pick 13 songs before showtime, score points when they're played, and compete on the leaderboard.",
   },
   robots: {
     index: true,
@@ -96,12 +102,19 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "WebApplication",
     name: "FantasyPhish",
+    alternateName: "Fantasy Phish",
     description:
-      "Pick 13 songs, score points when they're played. The fantasy game for Phish fans.",
+      "Fantasy Phish is the ultimate prediction game for Phish fans. Pick 13 songs before showtime, score points when they're played, and compete on the leaderboard.",
     url: baseUrl,
     applicationCategory: "Game",
     genre: "Fantasy Sports",
     operatingSystem: "Any",
+    about: {
+      "@type": "Thing",
+      name: "Phish Setlist Prediction",
+      description:
+        "A fantasy game where players predict which songs Phish will play at upcoming concerts",
+    },
     offers: {
       "@type": "Offer",
       price: "0",
