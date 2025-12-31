@@ -81,6 +81,7 @@ export async function POST(request: Request) {
 
     let updated = 0
     let errors = 0
+    const sampleUpdates: string[] = []
 
     for (const song of songs) {
       try {
@@ -110,6 +111,13 @@ export async function POST(request: Request) {
           },
         })
         updated++
+
+        // Log first 3 successful updates as examples
+        if (sampleUpdates.length < 3) {
+          sampleUpdates.push(
+            `${song.song} (gap: ${song.gap}, times: ${song.times_played})`
+          )
+        }
       } catch (error) {
         // Song might not exist in our database yet, skip it
         errors++
@@ -124,6 +132,14 @@ export async function POST(request: Request) {
     }
 
     const duration = Date.now() - startTime
+
+    // Log sample updates for debugging
+    if (sampleUpdates.length > 0) {
+      console.log(
+        `[Sync Song Stats] Sample updates: ${sampleUpdates.join(", ")}`
+      )
+    }
+
     console.log(
       `[Sync Song Stats] ✓ Sync complete in ${duration}ms: ${updated} updated, ${errors} errors`
     )
@@ -150,4 +166,12 @@ export async function POST(request: Request) {
   } finally {
     await prisma.$disconnect()
   }
+}
+
+// GET endpoint - Vercel cron jobs use GET requests
+// This is the main entry point for the cron job
+export async function GET(request: Request) {
+  // Vercel cron makes GET requests, so we handle the sync here
+  // Just delegate to POST handler
+  return POST(request)
 }
