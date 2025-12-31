@@ -19,9 +19,9 @@ export async function POST(request: Request) {
   )
 
   try {
-    // Verify cron secret (optional, for security)
-    // Vercel cron jobs send "Vercel-Cron" as user-agent
-    // Manual triggers require the CRON_SECRET
+    // Verify cron secret (optional to configure, but enforced when CRON_SECRET is set)
+    // Vercel cron jobs send "Vercel-Cron" as user-agent and are allowed without CRON_SECRET
+    // Manual triggers require the correct CRON_SECRET when it is configured
     const authHeader = request.headers.get("authorization")
     const userAgent = request.headers.get("user-agent")
     const token = authHeader?.replace("Bearer ", "")
