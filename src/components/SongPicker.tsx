@@ -462,7 +462,7 @@ export function SongPicker({
     return (
       <Card>
         <CardHeader
-          className="cursor-pointer"
+          className="cursor-pointer overflow-hidden"
           onClick={() => {
             if (isMobile && !isLocked) {
               setMobileModalOpen(pickType)
@@ -471,28 +471,32 @@ export function SongPicker({
             }
           }}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
+          <div className="flex items-center justify-between gap-3 overflow-hidden">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 overflow-hidden">
               <div
-                className={`p-2 rounded-lg ${
+                className={`p-2 rounded-lg flex-shrink-0 ${
                   pickType === "REGULAR" ? "bg-[#3d5a6c]" : "bg-[#c23a3a]/20"
                 }`}
               >
                 {icon}
               </div>
-              <div>
-                <h3 className="font-semibold text-white">{title}</h3>
-                <p className="text-sm text-gray-400">{subtitle}</p>
+              <div className="min-w-0 overflow-hidden">
+                <h3 className="font-semibold text-white text-sm sm:text-base truncate">
+                  {title}
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-400 truncate">
+                  {subtitle}
+                </p>
               </div>
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
               {pickType === "REGULAR" ? (
                 pickCount === 11 ? (
-                  <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium">
+                  <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium whitespace-nowrap">
                     Complete
                   </span>
                 ) : (
-                  <span className="text-gray-500 text-sm">
+                  <span className="text-gray-500 text-sm whitespace-nowrap">
                     {11 - (pickCount || 0)} more needed
                   </span>
                 )
@@ -501,7 +505,9 @@ export function SongPicker({
                   {currentPick.songName}
                 </span>
               ) : (
-                <span className="text-gray-500 text-sm">Not selected</span>
+                <span className="text-gray-500 text-sm whitespace-nowrap">
+                  Not selected
+                </span>
               )}
               {!isMobile && isExpanded && (
                 <ChevronUp className="h-5 w-5 text-gray-400" />
