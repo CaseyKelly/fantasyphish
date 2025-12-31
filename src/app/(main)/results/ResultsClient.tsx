@@ -344,18 +344,14 @@ export default function ResultsClient({
               <CardHeader>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <div className="flex items-center gap-3">
-                      <h3 className="font-semibold text-white text-lg">
-                        {submission.show.venue}
-                        {submission.show.venue.includes("Test Venue") && (
-                          <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                            Test
-                          </span>
-                        )}
-                      </h3>
-                      {!submission.show.isComplete &&
-                        submission.totalPoints !== null && <LiveBadge />}
-                    </div>
+                    <h3 className="font-semibold text-white text-lg">
+                      {submission.show.venue}
+                      {submission.show.venue.includes("Test Venue") && (
+                        <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                          Test
+                        </span>
+                      )}
+                    </h3>
                     <div className="flex items-center space-x-4 text-sm text-slate-400 mt-1">
                       <span className="flex items-center">
                         <MapPin className="h-4 w-4 mr-1" />
@@ -377,9 +373,14 @@ export default function ResultsClient({
                         <p className="text-3xl font-bold text-orange-500">
                           {submission.totalPoints}
                         </p>
-                        <p className="text-sm text-slate-400">
-                          {submission.isScored ? "points" : "in progress"}
-                        </p>
+                        <div className="flex items-center gap-2 justify-start sm:justify-end">
+                          {!submission.show.isComplete &&
+                          !submission.isScored ? (
+                            <LiveBadge />
+                          ) : (
+                            <p className="text-sm text-slate-400">points</p>
+                          )}
+                        </div>
                       </div>
                     ) : (
                       <span className="flex items-center text-slate-400">
