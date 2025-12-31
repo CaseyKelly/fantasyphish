@@ -1,19 +1,11 @@
-import { format } from "date-fns"
 import * as LucideIcons from "lucide-react"
 
 interface AchievementBadgeProps {
   icon: string
   name: string
-  description: string
-  earnedAt: Date
 }
 
-export function AchievementBadge({
-  icon,
-  name,
-  description,
-  earnedAt,
-}: AchievementBadgeProps) {
+export function AchievementBadge({ icon, name }: AchievementBadgeProps) {
   // Check if icon is a lucide icon name or emoji
   const isLucideIcon = icon in LucideIcons
   const LucideIcon = isLucideIcon
