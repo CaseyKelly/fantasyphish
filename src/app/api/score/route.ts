@@ -8,8 +8,8 @@ import { processPickAchievements } from "@/lib/achievement-awards"
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-// Grace period after encore detection (1 hour in milliseconds)
-const GRACE_PERIOD_MS = 60 * 60 * 1000
+// Grace period after encore detection (30 minutes in milliseconds)
+const GRACE_PERIOD_MS = 30 * 60 * 1000
 
 // This endpoint is called by the cron job to score shows progressively
 export async function POST(request: Request) {
@@ -110,10 +110,24 @@ export async function POST(request: Request) {
       const encoreDetected = isShowComplete(setlist)
       console.log(`[Score:POST]   Encore detected: ${encoreDetected}`)
 
+      // Count current encore songs
+      const currentEncoreCount = encoreDetected
+        ? parsedSetlist.encoreSongs.length
+        : 0
+      console.log(
+        `[Score:POST]   Current encore count: ${currentEncoreCount}, Previous: ${show.lastEncoreCount || 0}`
+      )
+
       // Track when encore was first detected
       const encoreJustStarted = encoreDetected && show.encoreStartedAt === null
 
-      // Check if we're past the 1-hour grace period
+      // Check if new encore songs were added (reset the timer)
+      const newEncoreSongsAdded =
+        encoreDetected &&
+        show.lastEncoreCount !== null &&
+        currentEncoreCount > show.lastEncoreCount
+
+      // Check if we're past the 30-minute grace period
       const gracePeriodExpired =
         show.encoreStartedAt &&
         Date.now() - show.encoreStartedAt.getTime() >= GRACE_PERIOD_MS
@@ -127,6 +141,7 @@ export async function POST(request: Request) {
         fetchedAt: Date
         lastScoredAt: Date
         encoreStartedAt?: Date
+        lastEncoreCount?: number
       } = {
         setlistJson: setlist as object,
         isComplete: showComplete,
@@ -137,9 +152,24 @@ export async function POST(request: Request) {
       // Set encoreStartedAt when encore is first detected
       if (encoreJustStarted) {
         updateData.encoreStartedAt = new Date()
+        updateData.lastEncoreCount = currentEncoreCount
         console.log(
-          `[Score:POST]   ✓ Encore just started - will continue scoring for 1 hour`
+          `[Score:POST]   ✓ Encore just started - will continue scoring for 30 minutes`
         )
+      }
+
+      // Reset timer if new encore songs are added
+      if (newEncoreSongsAdded) {
+        updateData.encoreStartedAt = new Date()
+        updateData.lastEncoreCount = currentEncoreCount
+        console.log(
+          `[Score:POST]   ✓ New encore song(s) added (${show.lastEncoreCount} → ${currentEncoreCount}) - resetting 30-minute timer`
+        )
+      }
+
+      // Update encore count even if no new songs (for tracking)
+      if (encoreDetected && !encoreJustStarted && !newEncoreSongsAdded) {
+        updateData.lastEncoreCount = currentEncoreCount
       }
 
       if (gracePeriodExpired) {
