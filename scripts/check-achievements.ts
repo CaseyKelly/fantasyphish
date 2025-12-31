@@ -9,6 +9,7 @@ async function main() {
     where: {
       OR: [
         { username: "chalupa" },
+        { username: "mrs_chalupa" },
         { username: "LandofLizards" },
         { username: "Rookiewookie" },
       ],

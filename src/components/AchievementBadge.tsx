@@ -3,9 +3,14 @@ import * as LucideIcons from "lucide-react"
 interface AchievementBadgeProps {
   icon: string
   name: string
+  description?: string
 }
 
-export function AchievementBadge({ icon, name }: AchievementBadgeProps) {
+export function AchievementBadge({
+  icon,
+  name,
+  description,
+}: AchievementBadgeProps) {
   // Check if icon is a lucide icon name or emoji
   const isLucideIcon = icon in LucideIcons
   const LucideIcon = isLucideIcon
@@ -15,7 +20,10 @@ export function AchievementBadge({ icon, name }: AchievementBadgeProps) {
     : null
 
   return (
-    <div className="flex flex-col items-center space-y-2 p-4 bg-[#1e3340]/60 border border-[#3d5a6c]/50 rounded-lg hover:bg-[#1e3340]/80 hover:border-[#3d5a6c] transition-all duration-200">
+    <div
+      className="flex flex-col items-center space-y-2 p-4 bg-[#1e3340]/60 border border-[#3d5a6c]/50 rounded-lg hover:bg-[#1e3340]/80 hover:border-[#3d5a6c] transition-all duration-200"
+      title={description}
+    >
       {/* Icon */}
       <div className="flex items-center justify-center w-16 h-16">
         {isLucideIcon && LucideIcon ? (

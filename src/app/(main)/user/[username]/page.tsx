@@ -101,6 +101,7 @@ async function getUserProfile(username: string) {
       id: ua.id,
       icon: ua.achievement.icon,
       name: ua.achievement.name,
+      description: ua.achievement.description,
     })),
   }
 }
@@ -256,6 +257,7 @@ export default async function UserProfilePage({
                   key={achievement.id}
                   icon={achievement.icon}
                   name={achievement.name}
+                  description={achievement.description}
                 />
               ))}
             </div>
