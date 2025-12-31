@@ -230,3 +230,11 @@ export async function POST(request: Request) {
     await prisma.$disconnect()
   }
 }
+
+// GET endpoint - Vercel cron jobs use GET requests
+// This is the main entry point for the cron job
+export async function GET(request: Request) {
+  // Vercel cron makes GET requests, so we handle the sync here
+  // Just delegate to POST handler
+  return POST(request)
+}
