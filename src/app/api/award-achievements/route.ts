@@ -194,7 +194,7 @@ async function awardAchievement(
           userId: userId,
           achievementId: achievement.id,
           metadata: {
-            firstCorrectShow: pick.submission.show.showDate,
+            firstCorrectShow: pick.submission.show.showDate.toISOString(),
             venue: pick.submission.show.venue,
             songName: pick.song.name,
           },
