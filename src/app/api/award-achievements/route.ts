@@ -6,14 +6,16 @@ import { ACHIEVEMENT_DEFINITIONS } from "@/lib/achievements"
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-// This endpoint is called by the cron job to award achievements
+// This endpoint is called by the daily cron job as a backup/safety net
+// Primary achievement awarding happens inline during scoring (every minute)
+// This cron catches any achievements that may have been missed
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
   console.log(
     `[AwardAchievements:POST] ========================================`
   )
   console.log(
-    `[AwardAchievements:POST] Cron job started at ${new Date().toISOString()}`
+    `[AwardAchievements:POST] Daily backup cron started at ${new Date().toISOString()}`
   )
 
   try {

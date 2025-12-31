@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getSetlist, isShowComplete, parseSetlist } from "@/lib/phishnet"
 import { scoreSubmissionProgressive } from "@/lib/scoring"
+import { processPickAchievements } from "@/lib/achievement-awards"
 
 // Force dynamic rendering and disable caching
 export const dynamic = "force-dynamic"
@@ -168,6 +169,17 @@ export async function POST(request: NextRequest) {
 
         // Only update if there are new songs or grace period just expired
         if (hasNewSongs || (gracePeriodExpired && !submission.isScored)) {
+          // Capture previous wasPlayed values before updating
+          const picksWithPrevious = scoredPicks.map((scoredPick) => {
+            const existingPick = submission.picks.find(
+              (p) => p.id === scoredPick.id
+            )
+            return {
+              ...scoredPick,
+              previousWasPlayed: existingPick?.wasPlayed ?? null,
+            }
+          })
+
           // Update picks with scores
           for (const scoredPick of scoredPicks) {
             await prisma.pick.update({
@@ -191,6 +203,38 @@ export async function POST(request: NextRequest) {
               lastSongCount: currentSongCount,
             },
           })
+
+          // Award achievements for newly correct opener/closer picks
+          try {
+            const achievementResult = await processPickAchievements(
+              picksWithPrevious,
+              {
+                userId: submission.userId,
+                show: {
+                  showDate: show.showDate,
+                  venue: show.venue,
+                },
+                picks: submission.picks,
+              }
+            )
+
+            if (achievementResult.awarded > 0) {
+              console.log(
+                `[Score:POST]   🏆 Awarded ${achievementResult.awarded} achievement(s)`
+              )
+            }
+            if (achievementResult.errors > 0) {
+              console.log(
+                `[Score:POST]   ⚠️  ${achievementResult.errors} achievement error(s)`
+              )
+            }
+          } catch (error) {
+            // Log achievement errors but don't fail scoring
+            console.error(
+              `[Score:POST]   ⚠️  Achievement processing error:`,
+              error instanceof Error ? error.message : String(error)
+            )
+          }
 
           submissionsWithChanges++
           console.log(
