@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getSetlist, isShowComplete, parseSetlist } from "@/lib/phishnet"
 import { scoreSubmissionProgressive } from "@/lib/scoring"
@@ -12,7 +12,7 @@ export const runtime = "nodejs"
 const GRACE_PERIOD_MS = 60 * 60 * 1000
 
 // This endpoint is called by the cron job to score shows progressively
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   const startTime = Date.now()
   console.log(`[Score:POST] ========================================`)
   console.log(`[Score:POST] Cron job started at ${new Date().toISOString()}`)
@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
     // Manual triggers require the CRON_SECRET
     const authHeader = request.headers.get("authorization")
     const userAgent = request.headers.get("user-agent")
+    const token = authHeader?.replace("Bearer ", "")
     const cronSecret = process.env.CRON_SECRET
     const isVercelCron = userAgent === "Vercel-Cron"
 
@@ -36,14 +37,14 @@ export async function POST(request: NextRequest) {
     // Allow requests from:
     // 1. Vercel cron (user-agent: "Vercel-Cron")
     // 2. Manual triggers with correct CRON_SECRET
-    if (!isVercelCron && cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      console.log(
-        "[Score:POST] ✗ Unauthorized - not Vercel cron and invalid/missing CRON_SECRET"
+    if (!isVercelCron && cronSecret && token !== cronSecret) {
+      console.error(
+        "[Score:POST] Unauthorized: not Vercel cron and invalid/missing CRON_SECRET"
       )
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    console.log("[Score:POST] ✓ Authorization successful")
+    console.log("[Score:POST] Authorization successful")
 
     // Find shows that need scoring:
     // 1. Shows with locked picks (lockTime has passed)
@@ -293,12 +294,14 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     )
+  } finally {
+    await prisma.$disconnect()
   }
 }
 
 // GET endpoint - Vercel cron jobs use GET requests
 // This is the main entry point for the cron job
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   // Vercel cron makes GET requests, so we handle scoring here
   // Just delegate to POST handler
   return POST(request)

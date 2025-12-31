@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { ACHIEVEMENT_DEFINITIONS } from "@/lib/achievements"
 
@@ -9,7 +9,7 @@ export const runtime = "nodejs"
 // This endpoint is called by the daily cron job as a backup/safety net
 // Primary achievement awarding happens inline during scoring (every minute)
 // This cron catches any achievements that may have been missed
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   const startTime = Date.now()
   console.log(
     `[AwardAchievements:POST] ========================================`
@@ -20,8 +20,11 @@ export async function POST(request: NextRequest) {
 
   try {
     // Verify cron secret (optional, for security)
+    // Vercel cron jobs send "Vercel-Cron" as user-agent
+    // Manual triggers require the CRON_SECRET
     const authHeader = request.headers.get("authorization")
     const userAgent = request.headers.get("user-agent")
+    const token = authHeader?.replace("Bearer ", "")
     const cronSecret = process.env.CRON_SECRET
     const isVercelCron = userAgent === "Vercel-Cron"
 
@@ -32,14 +35,14 @@ export async function POST(request: NextRequest) {
     // Allow requests from:
     // 1. Vercel cron (user-agent: "Vercel-Cron")
     // 2. Manual triggers with correct CRON_SECRET
-    if (!isVercelCron && cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      console.log(
-        "[AwardAchievements:POST] ✗ Unauthorized - not Vercel cron and invalid/missing CRON_SECRET"
+    if (!isVercelCron && cronSecret && token !== cronSecret) {
+      console.error(
+        "[AwardAchievements:POST] Unauthorized: not Vercel cron and invalid/missing CRON_SECRET"
       )
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    console.log("[AwardAchievements:POST] ✓ Authorization successful")
+    console.log("[AwardAchievements:POST] Authorization successful")
 
     const results = []
 
@@ -86,6 +89,8 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     )
+  } finally {
+    await prisma.$disconnect()
   }
 }
 
@@ -227,7 +232,7 @@ async function awardAchievement(
 
 // GET endpoint - Vercel cron jobs use GET requests
 // This is the main entry point for the cron job
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   // Vercel cron makes GET requests, so we handle awarding here
   // Just delegate to POST handler
   return POST(request)
