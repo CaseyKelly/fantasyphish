@@ -13,7 +13,7 @@ export const ACHIEVEMENT_DEFINITIONS = {
   FOUNDING_MEMBER: {
     slug: "founding-member",
     name: "Founding Member",
-    description: "Signed up for site's first game",
+    description: "",
     icon: "Baby",
     category: "SPECIAL" as AchievementCategory,
     metadata: {

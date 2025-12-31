@@ -26,9 +26,9 @@ export function AchievementBadge({
 
   return (
     <div
-      className="relative flex flex-col items-center space-y-2 p-4 bg-[#1e3340]/60 border border-[#3d5a6c]/50 rounded-lg hover:bg-[#1e3340]/80 hover:border-[#3d5a6c] transition-all duration-200 cursor-help"
-      onMouseEnter={() => setShowTooltip(true)}
-      onMouseLeave={() => setShowTooltip(false)}
+      className={`relative flex flex-col items-center space-y-2 p-4 bg-[#1e3340]/60 border border-[#3d5a6c]/50 rounded-lg hover:bg-[#1e3340]/80 hover:border-[#3d5a6c] transition-all duration-200 ${description ? "cursor-help" : ""}`}
+      onMouseEnter={() => description && setShowTooltip(true)}
+      onMouseLeave={() => description && setShowTooltip(false)}
     >
       {/* Tooltip */}
       {description && showTooltip && (
