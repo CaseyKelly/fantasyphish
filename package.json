@@ -28,9 +28,21 @@
     "test:debug": "playwright test --debug",
     "test:clean": "rm -rf test-results playwright-report",
     "test:trace": "./scripts/view-trace.sh",
-    "watch:scoring": "npx tsx scripts/watch-scoring.ts"
+    "watch:scoring": "npx tsx scripts/watch-scoring.ts",
+    "cap:sync": "npx cap sync",
+    "cap:open:ios": "npx cap open ios",
+    "cap:open:android": "npx cap open android",
+    "cap:run:ios": "npx cap run ios",
+    "cap:run:android": "npx cap run android",
+    "mobile:setup": "npx cap sync && npx cap update"
   },
   "dependencies": {
+    "@aparajita/capacitor-biometric-auth": "^9.1.2",
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/ios": "^8.0.0",
+    "@capacitor/push-notifications": "^8.0.0",
     "@prisma/client": "^6.19.1",
     "@vercel/analytics": "^1.6.1",
     "@vercel/postgres": "^0.10.0",
@@ -48,6 +60,7 @@
     "zod": "^4.2.1"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
