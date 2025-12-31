@@ -66,9 +66,21 @@ Authorization: Bearer <CRON_SECRET>
    - Fetches current setlist from Phish.net API
    - Compares with previous song count
    - Updates scores if new songs detected
-   - Marks show complete if encore appears
+   - Marks show complete 30 minutes after the last encore song appears
+   - Resets the 30-minute timer if additional encore songs are added
 
 3. Logs every step for troubleshooting
+
+### Encore Grace Period
+
+The scoring system implements a 30-minute grace period after encore songs appear:
+
+- **Initial Detection:** When the first encore song is detected, a 30-minute timer starts
+- **Timer Reset:** If additional encore songs are added (2nd encore, 3rd encore, etc.), the timer resets to 30 minutes
+- **Show Complete:** The show is marked complete only after 30 minutes have passed without any new encore songs
+- **Progressive Scoring:** Scores continue to update during the grace period as new songs are added
+
+This ensures that multi-song encores and late additions are properly captured before finalizing scores.
 
 ### Response Example
 
@@ -109,6 +121,9 @@ The cron outputs detailed logs to help troubleshoot issues:
 [Score] Found 3 shows to check
 [Score] Processing show 2025-12-31 (Madison Square Garden)
 [Score]   ✓ Fetched setlist with 12 songs
+[Score]   Encore detected: true
+[Score]   Current encore count: 2, Previous: 1
+[Score]   ✓ New encore song(s) added (1 → 2) - resetting 30-minute timer
 [Score]   Show complete: false
 [Score]   Updating submission abc123: 10 → 12 songs, 8 points
 [Score]   ✓ Show updated (5/8 submissions had changes)
