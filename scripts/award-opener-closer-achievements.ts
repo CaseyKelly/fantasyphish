@@ -1,5 +1,5 @@
 /**
- * Award Takeoff (PERFECT_OPENER) and Landing (PERFECT_CLOSER) achievements
+ * Award Perfect Opener and Perfect Closer achievements
  * to users who correctly guessed openers and encore songs.
  *
  * This script is idempotent - safe to run multiple times.
@@ -146,14 +146,14 @@ async function main() {
   const closerResults = await awardAchievement("PERFECT_CLOSER", "ENCORE")
 
   console.log(`\n✨ Final Results:`)
-  console.log(`\nTakeoff (Perfect Opener):`)
+  console.log(`\nPerfect Opener:`)
   console.log(`  - Awarded to ${openerResults.awarded} new users`)
   console.log(
     `  - Skipped ${openerResults.skipped} users (already have achievement)`
   )
   console.log(`  - Total: ${openerResults.awarded + openerResults.skipped}`)
 
-  console.log(`\nLanding (Perfect Closer):`)
+  console.log(`\nPerfect Closer:`)
   console.log(`  - Awarded to ${closerResults.awarded} new users`)
   console.log(
     `  - Skipped ${closerResults.skipped} users (already have achievement)`
