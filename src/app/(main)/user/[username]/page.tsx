@@ -1,14 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { format } from "date-fns"
-import {
-  User,
-  Calendar,
-  Trophy,
-  Target,
-  TrendingUp,
-  Star,
-  Check,
-} from "lucide-react"
+import { User, Calendar, Trophy, Target, TrendingUp, Star } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { AchievementBadge } from "@/components/AchievementBadge"
 import { notFound } from "next/navigation"
@@ -151,7 +143,7 @@ export default async function UserProfilePage({
             </div>
 
             {profile.bestShow && (
-              <div className="flex items-center space-x-3 group relative">
+              <div className="flex items-center space-x-3">
                 <div className="p-2 bg-[#c23a3a]/20 rounded-lg">
                   <Star className="h-5 w-5 text-[#c23a3a]" />
                 </div>
@@ -164,100 +156,6 @@ export default async function UserProfilePage({
                     {profile.bestShow.venue} •{" "}
                     {format(new Date(profile.bestShow.date), "MMM d, yyyy")}
                   </p>
-                </div>
-
-                {/* Hover Tooltip with Picks */}
-                <div className="absolute left-0 top-full mt-2 w-80 p-4 bg-[#1e3340] border border-[#3d5a6c] rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 shadow-xl">
-                  <p className="text-sm font-semibold text-white mb-3">
-                    Picks from {profile.bestShow.venue}
-                  </p>
-                  <div className="space-y-2">
-                    {/* Opener */}
-                    {profile.bestShow.picks
-                      .filter((p) => p.pickType === "OPENER")
-                      .map((pick, idx) => (
-                        <div
-                          key={idx}
-                          className={`flex items-center justify-between p-2 rounded ${
-                            pick.wasPlayed
-                              ? "bg-green-500/10"
-                              : "bg-slate-700/30"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            {pick.wasPlayed && (
-                              <Check className="h-3 w-3 text-green-400" />
-                            )}
-                            <div>
-                              <p className="text-xs text-slate-400">OPENER</p>
-                              <p className="text-sm text-white">
-                                {pick.songName}
-                              </p>
-                            </div>
-                          </div>
-                          {pick.pointsEarned > 0 && (
-                            <span className="text-green-400 font-semibold text-sm">
-                              +{pick.pointsEarned}
-                            </span>
-                          )}
-                        </div>
-                      ))}
-
-                    {/* Encore */}
-                    {profile.bestShow.picks
-                      .filter((p) => p.pickType === "ENCORE")
-                      .map((pick, idx) => (
-                        <div
-                          key={idx}
-                          className={`flex items-center justify-between p-2 rounded ${
-                            pick.wasPlayed
-                              ? "bg-green-500/10"
-                              : "bg-slate-700/30"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            {pick.wasPlayed && (
-                              <Check className="h-3 w-3 text-green-400" />
-                            )}
-                            <div>
-                              <p className="text-xs text-slate-400">ENCORE</p>
-                              <p className="text-sm text-white">
-                                {pick.songName}
-                              </p>
-                            </div>
-                          </div>
-                          {pick.pointsEarned > 0 && (
-                            <span className="text-green-400 font-semibold text-sm">
-                              +{pick.pointsEarned}
-                            </span>
-                          )}
-                        </div>
-                      ))}
-
-                    {/* Regular Picks */}
-                    <div className="pt-2 border-t border-slate-700">
-                      <p className="text-xs text-slate-400 mb-2">
-                        REGULAR PICKS
-                      </p>
-                      <div className="flex flex-wrap gap-1">
-                        {profile.bestShow.picks
-                          .filter((p) => p.pickType === "REGULAR")
-                          .map((pick, idx) => (
-                            <span
-                              key={idx}
-                              className={`px-2 py-1 rounded text-xs flex items-center gap-1 ${
-                                pick.wasPlayed
-                                  ? "bg-green-500/20 text-green-400"
-                                  : "bg-slate-700 text-slate-400"
-                              }`}
-                            >
-                              {pick.songName}
-                              {pick.wasPlayed && <Check className="h-2 w-2" />}
-                            </span>
-                          ))}
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
