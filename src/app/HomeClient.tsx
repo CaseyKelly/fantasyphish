@@ -11,7 +11,9 @@ import { SongPicker } from "@/components/SongPicker"
 import { LoadingDonut } from "@/components/LoadingDonut"
 import { GuestRegistrationModal } from "@/components/GuestRegistrationModal"
 import { LiveBadge } from "@/components/LiveBadge"
+import { MobileLanding } from "@/components/MobileLanding"
 import { getTimezoneAbbr, parseUTCDate } from "@/lib/date-utils"
+import { isNativePlatform } from "@/lib/capacitor"
 
 interface Song {
   id: string
@@ -53,6 +55,12 @@ export function HomeClient() {
     songName: string
     pickType: "OPENER" | "ENCORE" | "REGULAR"
   }> | null>(null)
+  const [isMobileApp, setIsMobileApp] = useState(false)
+
+  // Check if running in native app
+  useEffect(() => {
+    setIsMobileApp(isNativePlatform())
+  }, [])
 
   useEffect(() => {
     async function fetchData() {
@@ -118,6 +126,11 @@ export function HomeClient() {
     }
 
     return format(lockDate, "h:mm a 'on' MMM d, yyyy")
+  }
+
+  // If running in mobile app, show simplified landing page
+  if (isMobileApp) {
+    return <MobileLanding />
   }
 
   return (
