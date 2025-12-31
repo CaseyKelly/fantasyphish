@@ -20,6 +20,20 @@ export const ACHIEVEMENT_DEFINITIONS = {
       year: 2024,
     },
   },
+  PERFECT_OPENER: {
+    slug: "perfect-opener",
+    name: "Takeoff",
+    description: "Correctly guessed an opener",
+    icon: "PlaneTakeoff",
+    category: "MILESTONE" as AchievementCategory,
+  },
+  PERFECT_CLOSER: {
+    slug: "perfect-closer",
+    name: "Landing",
+    description: "Correctly guessed an encore song",
+    icon: "PlaneLanding",
+    category: "MILESTONE" as AchievementCategory,
+  },
   NYE_RUN_2025_PARTICIPANT: {
     slug: "nye-run-2025-participant",
     name: "NYE Run 2025",
