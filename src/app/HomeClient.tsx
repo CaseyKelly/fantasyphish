@@ -10,6 +10,7 @@ import { DonutLogo } from "@/components/DonutLogo"
 import { SongPicker } from "@/components/SongPicker"
 import { LoadingDonut } from "@/components/LoadingDonut"
 import { GuestRegistrationModal } from "@/components/GuestRegistrationModal"
+import { LiveBadge } from "@/components/LiveBadge"
 import { getTimezoneAbbr, parseUTCDate } from "@/lib/date-utils"
 
 interface Song {
@@ -266,17 +267,7 @@ export function HomeClient() {
                     <h2 className="text-3xl sm:text-4xl font-bold text-white mb-2">
                       {isLocked ? "Show In Progress" : "Make Your Picks"}
                     </h2>
-                    {isLocked && (
-                      <div className="mb-2">
-                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-[#c23a3a]/20 text-[#c23a3a] border border-[#c23a3a]/30">
-                          <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c23a3a] opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#c23a3a]"></span>
-                          </span>
-                          LIVE
-                        </span>
-                      </div>
-                    )}
+                    {isLocked && <LiveBadge />}
                     {nextShow.tour && (
                       <p className="text-gray-400 text-lg mb-2">
                         {nextShow.tour.name}
