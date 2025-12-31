@@ -558,12 +558,27 @@ export function SongPicker({
       {!guestMode && !hideHeader && (
         <div className="text-center">
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-            {isTestMode ? "Create Test Submission" : "Make Your Picks"}
+            {isTestMode
+              ? "Create Test Submission"
+              : isLocked
+                ? "Show In Progress"
+                : "Make Your Picks"}
           </h1>
           {isTestMode && (
             <div className="mb-2">
               <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-500/20 text-purple-300 border border-purple-500/30">
                 Test Mode
+              </span>
+            </div>
+          )}
+          {isLocked && (
+            <div className="mb-2">
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-[#c23a3a]/20 text-[#c23a3a] border border-[#c23a3a]/30">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c23a3a] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#c23a3a]"></span>
+                </span>
+                LIVE
               </span>
             </div>
           )}
