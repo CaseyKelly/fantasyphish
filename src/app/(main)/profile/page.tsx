@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { format } from "date-fns"
 import { User, Mail, Calendar, Trophy, Target, TrendingUp } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { AchievementBadge } from "@/components/AchievementBadge"
 
 async function getUserProfile(userId: string) {
   const now = new Date()
@@ -19,6 +20,14 @@ async function getUserProfile(userId: string) {
               isComplete: true,
             },
           },
+        },
+      },
+      achievements: {
+        include: {
+          achievement: true,
+        },
+        orderBy: {
+          earnedAt: "desc",
         },
       },
     },
@@ -61,6 +70,13 @@ async function getUserProfile(userId: string) {
       correctPicks,
       totalPicks,
     },
+    achievements: user.achievements.map((ua) => ({
+      id: ua.id,
+      icon: ua.achievement.icon,
+      name: ua.achievement.name,
+      description: ua.achievement.description,
+      earnedAt: ua.earnedAt,
+    })),
   }
 }
 
@@ -195,6 +211,28 @@ export default async function ProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Achievements Section */}
+      {profile.achievements.length > 0 && (
+        <Card>
+          <CardHeader>
+            <h2 className="text-xl font-semibold text-white">Achievements</h2>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {profile.achievements.map((achievement) => (
+                <AchievementBadge
+                  key={achievement.id}
+                  icon={achievement.icon}
+                  name={achievement.name}
+                  description={achievement.description}
+                  earnedAt={achievement.earnedAt}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
