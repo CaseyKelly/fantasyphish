@@ -1,4 +1,7 @@
+"use client"
+
 import * as LucideIcons from "lucide-react"
+import { useState } from "react"
 
 interface AchievementBadgeProps {
   icon: string
@@ -11,6 +14,8 @@ export function AchievementBadge({
   name,
   description,
 }: AchievementBadgeProps) {
+  const [showTooltip, setShowTooltip] = useState(false)
+
   // Check if icon is a lucide icon name or emoji
   const isLucideIcon = icon in LucideIcons
   const LucideIcon = isLucideIcon
@@ -21,9 +26,18 @@ export function AchievementBadge({
 
   return (
     <div
-      className="flex flex-col items-center space-y-2 p-4 bg-[#1e3340]/60 border border-[#3d5a6c]/50 rounded-lg hover:bg-[#1e3340]/80 hover:border-[#3d5a6c] transition-all duration-200"
-      title={description}
+      className="relative flex flex-col items-center space-y-2 p-4 bg-[#1e3340]/60 border border-[#3d5a6c]/50 rounded-lg hover:bg-[#1e3340]/80 hover:border-[#3d5a6c] transition-all duration-200 cursor-help"
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
     >
+      {/* Tooltip */}
+      {description && showTooltip && (
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-900 text-white text-xs rounded-lg shadow-lg whitespace-nowrap z-10 border border-slate-700">
+          {description}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-900" />
+        </div>
+      )}
+
       {/* Icon */}
       <div className="flex items-center justify-center w-16 h-16">
         {isLucideIcon && LucideIcon ? (
