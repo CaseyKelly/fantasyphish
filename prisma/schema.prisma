@@ -50,7 +50,8 @@ model Show {
   timezone        String?      // Venue timezone (e.g., "America/New_York")
   lockTime        DateTime?    // Time when picks locked (7 PM in venue timezone)
   lastScoredAt    DateTime?    // Last progressive scoring run
-  encoreStartedAt DateTime?    // When encore was first detected (for 1-hour grace period)
+  encoreStartedAt DateTime?    // When encore was first detected (for grace period)
+  lastEncoreCount Int?         // Track encore song count to detect when new encores are added
   submissions     Submission[]
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
