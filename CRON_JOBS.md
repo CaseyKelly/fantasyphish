@@ -190,7 +190,8 @@ The sync-tours cron is fully idempotent:
       "toursUpdated": 1,
       "showsCreated": 2,
       "showsUpdated": 3,
-      "showsSkipped": 43
+      "showsSkipped": 38,
+      "showsSkippedComplete": 5
     },
     {
       "year": 2026,
@@ -200,7 +201,8 @@ The sync-tours cron is fully idempotent:
       "toursUpdated": 0,
       "showsCreated": 0,
       "showsUpdated": 0,
-      "showsSkipped": 13
+      "showsSkipped": 13,
+      "showsSkippedComplete": 0
     }
   ],
   "totalTours": 8,
@@ -209,7 +211,8 @@ The sync-tours cron is fully idempotent:
   "totalToursUpdated": 1,
   "totalShowsCreated": 2,
   "totalShowsUpdated": 3,
-  "totalShowsSkipped": 56
+  "totalShowsSkipped": 51,
+  "totalShowsSkippedComplete": 5
 }
 ```
 
@@ -227,7 +230,7 @@ The sync-tours cron is fully idempotent:
 [Sync Tours]   → Skipped tour (unchanged): 2025 Spring Tour
 [Sync Tours]   ✓ Updated tour: 2025 Summer Tour
 [Sync Tours]   → Skipped tour (unchanged): 2025 Fall Tour
-[Sync Tours] Year 2025 summary: 0 tours created, 1 tours updated, 2 shows created, 3 shows updated, 43 shows skipped
+[Sync Tours] Year 2025 summary: 0 tours created, 1 tours updated, 2 shows created, 3 shows updated, 38 shows skipped (unchanged), 5 shows skipped (already scored)
 [Sync Tours] Starting sync for year 2026
 [Sync Tours] Fetching shows for year 2026...
 [Sync Tours] Fetched 13 total shows
@@ -235,9 +238,9 @@ The sync-tours cron is fully idempotent:
 [Sync Tours] Found 2 tours
 [Sync Tours]   → Skipped tour (unchanged): 2026 Mexico
 [Sync Tours]   → Skipped tour (unchanged): 2026 Sphere
-[Sync Tours] Year 2026 summary: 0 tours created, 0 tours updated, 0 shows created, 0 shows updated, 13 shows skipped
+[Sync Tours] Year 2026 summary: 0 tours created, 0 tours updated, 0 shows created, 0 shows updated, 13 shows skipped (unchanged), 0 shows skipped (already scored)
 [Sync Tours] ✓ Sync complete in 5030ms
-[Sync Tours] Summary: 61 shows across 8 tours (2 created, 3 updated, 56 skipped)
+[Sync Tours] Summary: 61 shows across 8 tours (2 created, 3 updated, 51 skipped unchanged, 5 skipped already scored)
 ```
 
 ### Manual Testing

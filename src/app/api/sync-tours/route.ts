@@ -58,6 +58,7 @@ async function syncYear(year: number): Promise<{
   showsCreated: number
   showsUpdated: number
   showsSkipped: number
+  showsSkippedComplete: number
 }> {
   console.log(`[Sync Tours] Starting sync for year ${year}`)
 
@@ -88,6 +89,7 @@ async function syncYear(year: number): Promise<{
   let showsCreated = 0
   let showsUpdated = 0
   let showsSkipped = 0
+  let showsSkippedComplete = 0
 
   // Batch fetch all existing tours and shows for this year
   const tourIds = Array.from(tourMap.keys()).map((id) => `phishnet-${id}`)
@@ -170,7 +172,7 @@ async function syncYear(year: number): Promise<{
 
       // Don't update shows that have already been scored (setlist already fetched)
       if (existingShow?.isComplete) {
-        showsSkipped++
+        showsSkippedComplete++
         continue
       }
 
@@ -219,7 +221,7 @@ async function syncYear(year: number): Promise<{
   }
 
   console.log(
-    `[Sync Tours] Year ${year} summary: ${toursCreated} tours created, ${toursUpdated} tours updated, ${showsCreated} shows created, ${showsUpdated} shows updated, ${showsSkipped} shows skipped`
+    `[Sync Tours] Year ${year} summary: ${toursCreated} tours created, ${toursUpdated} tours updated, ${showsCreated} shows created, ${showsUpdated} shows updated, ${showsSkipped} shows skipped (unchanged), ${showsSkippedComplete} shows skipped (already scored)`
   )
 
   return {
@@ -230,6 +232,7 @@ async function syncYear(year: number): Promise<{
     showsCreated,
     showsUpdated,
     showsSkipped,
+    showsSkippedComplete,
   }
 }
 
@@ -287,6 +290,7 @@ export async function POST(request: Request) {
           showsCreated: currentYearResult.showsCreated,
           showsUpdated: currentYearResult.showsUpdated,
           showsSkipped: currentYearResult.showsSkipped,
+          showsSkippedComplete: currentYearResult.showsSkippedComplete,
         },
         {
           year: nextYear,
@@ -297,6 +301,7 @@ export async function POST(request: Request) {
           showsCreated: nextYearResult.showsCreated,
           showsUpdated: nextYearResult.showsUpdated,
           showsSkipped: nextYearResult.showsSkipped,
+          showsSkippedComplete: nextYearResult.showsSkippedComplete,
         },
       ],
       totalTours: currentYearResult.tours + nextYearResult.tours,
@@ -311,11 +316,14 @@ export async function POST(request: Request) {
         currentYearResult.showsUpdated + nextYearResult.showsUpdated,
       totalShowsSkipped:
         currentYearResult.showsSkipped + nextYearResult.showsSkipped,
+      totalShowsSkippedComplete:
+        currentYearResult.showsSkippedComplete +
+        nextYearResult.showsSkippedComplete,
     }
 
     console.log(`[Sync Tours] ✓ Sync complete in ${duration}ms`)
     console.log(
-      `[Sync Tours] Summary: ${summary.totalShows} shows across ${summary.totalTours} tours (${summary.totalShowsCreated} created, ${summary.totalShowsUpdated} updated, ${summary.totalShowsSkipped} skipped)`
+      `[Sync Tours] Summary: ${summary.totalShows} shows across ${summary.totalTours} tours (${summary.totalShowsCreated} created, ${summary.totalShowsUpdated} updated, ${summary.totalShowsSkipped} skipped unchanged, ${summary.totalShowsSkippedComplete} skipped already scored)`
     )
 
     return NextResponse.json(summary)
