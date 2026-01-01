@@ -1,7 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState } from "react"
 import Link from "next/link"
 import {
   Trophy,
@@ -54,6 +53,7 @@ interface Show {
     name: string
     startDate: Date
     endDate: Date | null
+    status: "ACTIVE" | "COMPLETED" | "CLOSED"
   } | null
 }
 
@@ -70,21 +70,8 @@ export default function LeaderboardClient({
   nextShow,
   currentUserRank,
   currentUserId,
-  hasInProgressShows,
 }: LeaderboardClientProps) {
-  const router = useRouter()
   const [expandedUserIds, setExpandedUserIds] = useState<Set<string>>(new Set())
-
-  // Poll for updates if there are in-progress shows
-  useEffect(() => {
-    if (!hasInProgressShows) return
-
-    const interval = setInterval(() => {
-      router.refresh()
-    }, 60000) // 60 seconds
-
-    return () => clearInterval(interval)
-  }, [hasInProgressShows, router])
 
   const toggleExpanded = (userId: string) => {
     setExpandedUserIds((prev) => {
@@ -121,6 +108,21 @@ export default function LeaderboardClient({
       <div>
         <h1 className="text-3xl font-bold text-white">Leaderboard</h1>
       </div>
+
+      {/* Tour Complete Banner */}
+      {nextShow?.tour?.status === "COMPLETED" && (
+        <Card className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500/50">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-center space-x-3">
+              <Trophy className="h-6 w-6 text-yellow-500" />
+              <p className="text-lg font-semibold text-white">
+                Tour Complete - Final Results
+              </p>
+              <Trophy className="h-6 w-6 text-yellow-500" />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Current Tour Info */}
       {nextShow?.tour && (
@@ -414,12 +416,19 @@ export default function LeaderboardClient({
         </Card>
       )}
 
-      {/* Stats Legend */}
-      <div className="flex items-center justify-center space-x-6 text-sm text-slate-500">
+      {/* Stats Legend and History Link */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
         <span className="flex items-center">
           <TrendingUp className="h-4 w-4 mr-1" />
           Points are cumulative per tour
         </span>
+        <Link
+          href="/leaderboard/history"
+          className="flex items-center gap-2 text-orange-400 hover:text-orange-300 transition-colors"
+        >
+          <Trophy className="h-4 w-4" />
+          View Past Tour Winners
+        </Link>
       </div>
     </div>
   )

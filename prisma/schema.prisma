@@ -26,13 +26,14 @@ model User {
 }
 
 model Tour {
-  id        String    @id @default(cuid())
-  name      String    // e.g., "Summer Tour 2024"
+  id        String     @id @default(cuid())
+  name      String     // e.g., "Summer Tour 2024"
   startDate DateTime
   endDate   DateTime?
+  status    TourStatus @default(ACTIVE)
   shows     Show[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model Show {
@@ -148,4 +149,10 @@ enum AchievementCategory {
   RANKING       // Placed in leaderboard (1st, 2nd, 3rd)
   MILESTONE     // Hit a milestone (10 shows, 100 points, etc.)
   SPECIAL       // Special events or rare achievements
+}
+
+enum TourStatus {
+  ACTIVE    // Tour is currently happening or upcoming
+  COMPLETED // All shows complete, showing podium/winners
+  CLOSED    // Tour archived, moved to history
 }
