@@ -103,13 +103,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get the show
+    // Get the show with tour information
     const show = await prisma.show.findUnique({
       where: { id: showId },
+      include: { tour: true },
     })
 
     if (!show) {
       return NextResponse.json({ error: "Show not found" }, { status: 404 })
+    }
+
+    // Check if tour is FUTURE (not yet open for picks)
+    if (show.tour?.status === "FUTURE") {
+      return NextResponse.json(
+        {
+          error:
+            "This tour is not yet open for picks. Check back when the tour is activated.",
+        },
+        { status: 400 }
+      )
     }
 
     // Check if show has started (now timezone-aware)
