@@ -110,32 +110,39 @@ export default function LeaderboardClient({
         <h1 className="text-3xl font-bold text-white">Leaderboard</h1>
       </div>
 
-      {/* Tour Complete Banner */}
-      {nextShow?.tour?.status === "COMPLETED" && (
-        <Card className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500/50">
-          <CardContent className="py-4">
-            <div className="flex items-center justify-center space-x-3">
-              <Trophy className="h-6 w-6 text-yellow-500" />
-              <p className="text-lg font-semibold text-white">
-                Tour Complete - Final Results
-              </p>
-              <Trophy className="h-6 w-6 text-yellow-500" />
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Current Tour Info */}
       {nextShow?.tour && (
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card
+          className={
+            nextShow.tour.status === "COMPLETED"
+              ? "bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500/50"
+              : "bg-slate-800/50 border-slate-700"
+          }
+        >
           <CardContent className="py-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center space-x-4">
-                <div className="p-2 bg-orange-500/20 rounded-lg">
-                  <Calendar className="h-5 w-5 text-orange-500" />
+                <div
+                  className={
+                    nextShow.tour.status === "COMPLETED"
+                      ? "p-2 bg-yellow-500/20 rounded-lg"
+                      : "p-2 bg-orange-500/20 rounded-lg"
+                  }
+                >
+                  {nextShow.tour.status === "COMPLETED" ? (
+                    <Trophy className="h-5 w-5 text-yellow-500" />
+                  ) : (
+                    <Calendar className="h-5 w-5 text-orange-500" />
+                  )}
                 </div>
                 <div>
-                  <p className="font-semibold text-white">
+                  <p
+                    className={
+                      nextShow.tour.status === "COMPLETED"
+                        ? "font-semibold text-yellow-400"
+                        : "font-semibold text-white"
+                    }
+                  >
                     {nextShow.tour.name}
                   </p>
                   <p className="text-sm text-slate-400">
@@ -149,17 +156,135 @@ export default function LeaderboardClient({
                   </p>
                 </div>
               </div>
-              {nextShow.venue && (
-                <div className="flex items-center space-x-2 text-sm text-slate-400">
-                  <MapPin className="h-4 w-4" />
-                  <span>
-                    Next: {nextShow.venue}
-                    {nextShow.city && `, ${nextShow.city}`}
-                    {nextShow.state && `, ${nextShow.state}`} •{" "}
-                    {parseUTCDate(nextShow.showDate, "MMM d")}
+              {nextShow.tour.status === "COMPLETED" ? (
+                <div className="flex items-center space-x-2 text-sm">
+                  <Trophy className="h-4 w-4 text-yellow-500" />
+                  <span className="font-semibold text-yellow-400">
+                    Tour Complete - Final Results
                   </span>
                 </div>
+              ) : (
+                nextShow.venue && (
+                  <div className="flex items-center space-x-2 text-sm text-slate-400">
+                    <MapPin className="h-4 w-4" />
+                    <span>
+                      Next: {nextShow.venue}
+                      {nextShow.city && `, ${nextShow.city}`}
+                      {nextShow.state && `, ${nextShow.state}`} •{" "}
+                      {parseUTCDate(nextShow.showDate, "MMM d")}
+                    </span>
+                  </div>
+                )
               )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Podium Display for Completed Tours */}
+      {nextShow?.tour?.status === "COMPLETED" && leaderboard.length >= 3 && (
+        <Card className="bg-gradient-to-b from-slate-800/80 to-slate-900/80 border-slate-700">
+          <CardContent className="py-8 px-4">
+            <div
+              className="flex items-end justify-center gap-4 sm:gap-8 max-w-3xl mx-auto"
+              role="region"
+              aria-label="Tournament podium"
+            >
+              {/* 2nd Place */}
+              <div className="flex flex-col items-center flex-1">
+                <div className="mb-3 relative">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-gray-300 to-gray-500 flex items-center justify-center shadow-lg">
+                    <Medal className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
+                  </div>
+                  <div className="absolute -top-1 -right-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-700 border-2 border-gray-400 flex items-center justify-center">
+                    <span className="text-xs sm:text-sm font-bold text-gray-300">
+                      2
+                    </span>
+                  </div>
+                </div>
+                <Link
+                  href={`/user/${leaderboard[1].username}`}
+                  className="font-semibold text-sm sm:text-base text-white hover:text-gray-300 transition-colors text-center mb-1 line-clamp-1 max-w-full"
+                  aria-label={`Second place winner: ${leaderboard[1].username}`}
+                >
+                  {leaderboard[1].username}
+                </Link>
+                <div className="text-xl sm:text-2xl font-bold text-gray-300 mb-2">
+                  {leaderboard[1].totalPoints}
+                </div>
+                <div className="w-full bg-gradient-to-t from-gray-400/30 to-gray-300/30 rounded-t-lg border-2 border-gray-400/50 px-3 py-3 sm:py-4 flex flex-col items-center">
+                  <div className="text-xs text-gray-300 font-medium">
+                    Silver
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-bold text-gray-200 mt-1">
+                    2nd
+                  </div>
+                </div>
+              </div>
+
+              {/* 1st Place */}
+              <div className="flex flex-col items-center flex-1">
+                <div className="mb-3 relative">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600 flex items-center justify-center shadow-2xl shadow-yellow-500/50 animate-pulse">
+                    <Trophy className="h-10 w-10 sm:h-12 sm:w-12 text-yellow-900" />
+                  </div>
+                  <div className="absolute -top-1 -right-1 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-700 border-2 border-yellow-400 flex items-center justify-center">
+                    <span className="text-sm sm:text-base font-bold text-yellow-400">
+                      1
+                    </span>
+                  </div>
+                </div>
+                <Link
+                  href={`/user/${leaderboard[0].username}`}
+                  className="font-bold text-base sm:text-lg text-yellow-400 hover:text-yellow-300 transition-colors text-center mb-1 line-clamp-1 max-w-full"
+                  aria-label={`First place winner: ${leaderboard[0].username}`}
+                >
+                  {leaderboard[0].username}
+                </Link>
+                <div className="text-2xl sm:text-3xl font-bold text-yellow-400 mb-2">
+                  {leaderboard[0].totalPoints}
+                </div>
+                <div className="w-full bg-gradient-to-t from-yellow-600/30 to-yellow-400/30 rounded-t-lg border-2 border-yellow-400/50 px-3 py-5 sm:py-6 flex flex-col items-center">
+                  <div className="text-xs text-yellow-300 font-medium">
+                    Gold
+                  </div>
+                  <div className="text-3xl sm:text-4xl font-bold text-yellow-400 mt-1">
+                    1st
+                  </div>
+                </div>
+              </div>
+
+              {/* 3rd Place */}
+              <div className="flex flex-col items-center flex-1">
+                <div className="mb-3 relative">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-amber-600 to-amber-800 flex items-center justify-center shadow-lg">
+                    <Medal className="h-8 w-8 sm:h-10 sm:w-10 text-amber-200" />
+                  </div>
+                  <div className="absolute -top-1 -right-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-700 border-2 border-amber-600 flex items-center justify-center">
+                    <span className="text-xs sm:text-sm font-bold text-amber-400">
+                      3
+                    </span>
+                  </div>
+                </div>
+                <Link
+                  href={`/user/${leaderboard[2].username}`}
+                  className="font-semibold text-sm sm:text-base text-white hover:text-amber-300 transition-colors text-center mb-1 line-clamp-1 max-w-full"
+                  aria-label={`Third place winner: ${leaderboard[2].username}`}
+                >
+                  {leaderboard[2].username}
+                </Link>
+                <div className="text-xl sm:text-2xl font-bold text-amber-500 mb-2">
+                  {leaderboard[2].totalPoints}
+                </div>
+                <div className="w-full bg-gradient-to-t from-amber-700/30 to-amber-600/30 rounded-t-lg border-2 border-amber-600/50 px-3 py-2 sm:py-3 flex flex-col items-center">
+                  <div className="text-xs text-amber-400 font-medium">
+                    Bronze
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-bold text-amber-500 mt-1">
+                    3rd
+                  </div>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
