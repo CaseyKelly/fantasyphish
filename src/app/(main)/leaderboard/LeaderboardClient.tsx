@@ -53,7 +53,7 @@ interface Show {
     name: string
     startDate: Date
     endDate: Date | null
-    status: "ACTIVE" | "COMPLETED" | "CLOSED"
+    status: "FUTURE" | "ACTIVE" | "COMPLETED" | "CLOSED"
   } | null
 }
 

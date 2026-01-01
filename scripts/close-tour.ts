@@ -134,7 +134,7 @@ async function main() {
   console.log(`   The main leaderboard will now show the next active tour.`)
 
   // Check what will be shown on the main leaderboard now
-  const nextTour = await prisma.tour.findFirst({
+  const activeTour = await prisma.tour.findFirst({
     where: {
       status: "ACTIVE",
       shows: {
@@ -144,14 +144,34 @@ async function main() {
     orderBy: { startDate: "asc" },
   })
 
-  if (nextTour) {
-    console.log(`\n📅 Next tour on main leaderboard:`)
-    console.log(`   ${nextTour.name}`)
+  if (activeTour) {
+    console.log(`\n📅 Next ACTIVE tour on main leaderboard:`)
+    console.log(`   ${activeTour.name}`)
     console.log(
-      `   Start Date: ${nextTour.startDate.toISOString().split("T")[0]}`
+      `   Start Date: ${activeTour.startDate.toISOString().split("T")[0]}`
     )
   } else {
-    console.log(`\n⚠️  No active tours found - leaderboard may be empty`)
+    console.log(`\n⚠️  No ACTIVE tours found - leaderboard will be empty`)
+
+    // Check for FUTURE tours that could be activated
+    const futureTours = await prisma.tour.findMany({
+      where: { status: "FUTURE" },
+      orderBy: { startDate: "asc" },
+      take: 5,
+    })
+
+    if (futureTours.length > 0) {
+      console.log(`\n🔮 Available FUTURE tours to activate:`)
+      futureTours.forEach((t, index) => {
+        console.log(
+          `   ${index + 1}. ${t.name} (starts ${t.startDate.toISOString().split("T")[0]})`
+        )
+      })
+      console.log(`\n💡 Activate the next tour with:`)
+      console.log(
+        `   npx tsx scripts/activate-tour.ts "${futureTours[0].name}"`
+      )
+    }
   }
 
   console.log(`\n📝 Access this tour's results at:`)

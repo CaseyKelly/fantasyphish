@@ -30,7 +30,7 @@ model Tour {
   name      String     // e.g., "Summer Tour 2024"
   startDate DateTime
   endDate   DateTime?
-  status    TourStatus @default(ACTIVE)
+  status    TourStatus @default(FUTURE)
   shows     Show[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
@@ -152,7 +152,8 @@ enum AchievementCategory {
 }
 
 enum TourStatus {
-  ACTIVE    // Tour is currently happening or upcoming
+  FUTURE    // Tour exists but not open for picks yet
+  ACTIVE    // Tour is open for picks and currently happening
   COMPLETED // All shows complete, showing podium/winners
   CLOSED    // Tour archived, moved to history
 }

@@ -29,7 +29,16 @@ async function main() {
       where: { tourId: tour.id, isComplete: true },
     })
 
-    console.log(`${tour.name}`)
+    const statusEmoji =
+      tour.status === "FUTURE"
+        ? "🔮"
+        : tour.status === "ACTIVE"
+          ? "🎸"
+          : tour.status === "COMPLETED"
+            ? "🏆"
+            : "📦"
+
+    console.log(`${statusEmoji} ${tour.name}`)
     console.log(`  Status: ${tour.status}`)
     console.log(
       `  Dates: ${tour.startDate.toISOString().split("T")[0]} - ${tour.endDate?.toISOString().split("T")[0] || "N/A"}`
@@ -37,7 +46,7 @@ async function main() {
     console.log(`  Shows: ${tour._count.shows} (${completedShows} complete)`)
     console.log(`  Submissions: ${submissionCount}`)
     console.log(
-      `  Should show in history?: ${submissionCount > 0 ? "YES" : "NO"}`
+      `  Will show in history?: ${submissionCount > 0 && tour.status === "CLOSED" ? "YES" : "NO"}`
     )
     console.log()
   }

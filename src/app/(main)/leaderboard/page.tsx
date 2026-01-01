@@ -99,6 +99,7 @@ async function getCurrentTour() {
   if (activeTour) return activeTour
 
   // 3. Fall back to next upcoming ACTIVE tour with incomplete shows
+  // Note: FUTURE tours are excluded - they don't show on leaderboard until activated
   const upcomingTour = await prisma.tour.findFirst({
     where: {
       status: "ACTIVE",
