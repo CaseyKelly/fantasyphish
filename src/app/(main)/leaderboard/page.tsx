@@ -284,12 +284,30 @@ export default async function LeaderboardPage({
         }
       : nextShow
 
+  // Check if there are any past tours with data to show
+  const hasPastTours =
+    (await prisma.tour.count({
+      where: {
+        status: "CLOSED",
+        shows: {
+          some: {
+            submissions: {
+              some: {
+                isScored: true,
+              },
+            },
+          },
+        },
+      },
+    })) > 0
+
   return (
     <LeaderboardClient
       leaderboard={leaderboard}
       nextShow={showForDisplay}
       currentUserRank={currentUserRank}
       currentUserId={session?.user?.id || null}
+      hasPastTours={hasPastTours}
     />
   )
 }
