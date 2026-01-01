@@ -150,6 +150,21 @@ export default function LeaderboardClient({
         </Card>
       )}
 
+      {/* Tour Complete Banner */}
+      {nextShow?.tour?.status === "COMPLETED" && (
+        <Card className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500/50">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-center space-x-3">
+              <Trophy className="h-6 w-6 text-yellow-500" />
+              <p className="text-lg font-semibold text-white">
+                Tour Complete - Final Results
+              </p>
+              <Trophy className="h-6 w-6 text-yellow-500" />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Podium Display for Completed Tours */}
       {nextShow?.tour?.status === "COMPLETED" && leaderboard.length >= 3 && (
         <Card className="bg-gradient-to-b from-slate-800/80 to-slate-900/80 border-slate-700">
