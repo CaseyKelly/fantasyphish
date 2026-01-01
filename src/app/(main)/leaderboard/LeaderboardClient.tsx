@@ -112,15 +112,37 @@ export default function LeaderboardClient({
 
       {/* Current Tour Info */}
       {nextShow?.tour && (
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card
+          className={
+            nextShow.tour.status === "COMPLETED"
+              ? "bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500/50"
+              : "bg-slate-800/50 border-slate-700"
+          }
+        >
           <CardContent className="py-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center space-x-4">
-                <div className="p-2 bg-orange-500/20 rounded-lg">
-                  <Calendar className="h-5 w-5 text-orange-500" />
+                <div
+                  className={
+                    nextShow.tour.status === "COMPLETED"
+                      ? "p-2 bg-yellow-500/20 rounded-lg"
+                      : "p-2 bg-orange-500/20 rounded-lg"
+                  }
+                >
+                  {nextShow.tour.status === "COMPLETED" ? (
+                    <Trophy className="h-5 w-5 text-yellow-500" />
+                  ) : (
+                    <Calendar className="h-5 w-5 text-orange-500" />
+                  )}
                 </div>
                 <div>
-                  <p className="font-semibold text-white">
+                  <p
+                    className={
+                      nextShow.tour.status === "COMPLETED"
+                        ? "font-semibold text-yellow-400"
+                        : "font-semibold text-white"
+                    }
+                  >
                     {nextShow.tour.name}
                   </p>
                   <p className="text-sm text-slate-400">
@@ -134,32 +156,26 @@ export default function LeaderboardClient({
                   </p>
                 </div>
               </div>
-              {nextShow.venue && nextShow.tour.status !== "COMPLETED" && (
-                <div className="flex items-center space-x-2 text-sm text-slate-400">
-                  <MapPin className="h-4 w-4" />
-                  <span>
-                    Next: {nextShow.venue}
-                    {nextShow.city && `, ${nextShow.city}`}
-                    {nextShow.state && `, ${nextShow.state}`} •{" "}
-                    {parseUTCDate(nextShow.showDate, "MMM d")}
+              {nextShow.tour.status === "COMPLETED" ? (
+                <div className="flex items-center space-x-2 text-sm">
+                  <Trophy className="h-4 w-4 text-yellow-500" />
+                  <span className="font-semibold text-yellow-400">
+                    Tour Complete - Final Results
                   </span>
                 </div>
+              ) : (
+                nextShow.venue && (
+                  <div className="flex items-center space-x-2 text-sm text-slate-400">
+                    <MapPin className="h-4 w-4" />
+                    <span>
+                      Next: {nextShow.venue}
+                      {nextShow.city && `, ${nextShow.city}`}
+                      {nextShow.state && `, ${nextShow.state}`} •{" "}
+                      {parseUTCDate(nextShow.showDate, "MMM d")}
+                    </span>
+                  </div>
+                )
               )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Tour Complete Banner */}
-      {nextShow?.tour?.status === "COMPLETED" && (
-        <Card className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500/50">
-          <CardContent className="py-4">
-            <div className="flex items-center justify-center space-x-3">
-              <Trophy className="h-6 w-6 text-yellow-500" />
-              <p className="text-lg font-semibold text-white">
-                Tour Complete - Final Results
-              </p>
-              <Trophy className="h-6 w-6 text-yellow-500" />
             </div>
           </CardContent>
         </Card>
