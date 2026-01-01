@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
-import { PrismaClient } from "@prisma/client"
-
-const prisma = new PrismaClient()
+import { prisma } from "@/lib/prisma"
+import { withRetry } from "@/lib/db-retry"
 
 const PHISHNET_API_BASE = "https://api.phish.net/v5"
 
@@ -102,14 +101,18 @@ export async function POST(request: Request) {
           }
         }
 
-        await prisma.song.update({
-          where: { slug: song.slug },
-          data: {
-            timesPlayed: song.times_played || 0,
-            gap: song.gap,
-            lastPlayed: lastPlayedDate,
-          },
-        })
+        await withRetry(
+          async () =>
+            prisma.song.update({
+              where: { slug: song.slug },
+              data: {
+                timesPlayed: song.times_played || 0,
+                gap: song.gap,
+                lastPlayed: lastPlayedDate,
+              },
+            }),
+          { operationName: `update song ${song.slug}` }
+        )
         updated++
 
         // Log first 3 successful updates as examples
