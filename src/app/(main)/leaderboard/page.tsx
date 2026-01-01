@@ -54,10 +54,29 @@ async function getNextShow() {
 async function getCurrentTour() {
   const now = new Date()
 
-  // First, try to find a tour with locked but incomplete shows (tour in progress)
-  // Use the tour with the earliest start date among active tours to handle edge cases
+  // 1. Prioritize COMPLETED tours (all shows complete, showing podium)
+  const completedTour = await prisma.tour.findFirst({
+    where: {
+      status: "COMPLETED",
+      shows: {
+        some: {}, // Has at least one show
+      },
+    },
+    orderBy: { endDate: "desc" }, // Most recent completed tour first
+    include: {
+      shows: {
+        orderBy: { showDate: "asc" },
+        take: 1,
+      },
+    },
+  })
+
+  if (completedTour) return completedTour
+
+  // 2. Check for ACTIVE tour with locked incomplete shows (tour currently happening)
   const activeTour = await prisma.tour.findFirst({
     where: {
+      status: "ACTIVE",
       shows: {
         some: {
           isComplete: false,
@@ -79,9 +98,11 @@ async function getCurrentTour() {
 
   if (activeTour) return activeTour
 
-  // If no active tour, get the next upcoming tour with incomplete shows
-  const tour = await prisma.tour.findFirst({
+  // 3. Fall back to next upcoming ACTIVE tour with incomplete shows
+  // Note: FUTURE tours are excluded - they don't show on leaderboard until activated
+  const upcomingTour = await prisma.tour.findFirst({
     where: {
+      status: "ACTIVE",
       shows: {
         some: {
           isComplete: false,
@@ -98,7 +119,7 @@ async function getCurrentTour() {
     },
   })
 
-  return tour
+  return upcomingTour
 }
 
 async function getLeaderboard(tourId?: string) {
@@ -258,6 +279,7 @@ export default async function LeaderboardPage({
             name: currentTour.name,
             startDate: currentTour.startDate,
             endDate: currentTour.endDate,
+            status: currentTour.status,
           },
         }
       : nextShow
@@ -268,7 +290,6 @@ export default async function LeaderboardPage({
       nextShow={showForDisplay}
       currentUserRank={currentUserRank}
       currentUserId={session?.user?.id || null}
-      hasInProgressShows={!!hasInProgressShows}
     />
   )
 }
