@@ -248,10 +248,9 @@ export default async function LeaderboardPage({
     },
   })
 
-  // If we have a current tour but no next show, create a show object with tour info for display
+  // Show the tour info from the current tour being displayed in the leaderboard
   const showForDisplay =
-    nextShow ||
-    (currentTour && currentTour.shows.length > 0
+    currentTour && currentTour.shows.length > 0
       ? {
           ...currentTour.shows[0],
           tour: {
@@ -261,7 +260,7 @@ export default async function LeaderboardPage({
             endDate: currentTour.endDate,
           },
         }
-      : null)
+      : nextShow
 
   return (
     <LeaderboardClient
