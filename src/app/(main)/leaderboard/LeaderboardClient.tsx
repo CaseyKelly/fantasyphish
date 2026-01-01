@@ -134,7 +134,7 @@ export default function LeaderboardClient({
                   </p>
                 </div>
               </div>
-              {nextShow.venue && (
+              {nextShow.venue && nextShow.tour.status !== "COMPLETED" && (
                 <div className="flex items-center space-x-2 text-sm text-slate-400">
                   <MapPin className="h-4 w-4" />
                   <span>
