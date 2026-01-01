@@ -51,6 +51,56 @@ async function getNextShow() {
   return nextShow
 }
 
+async function getCurrentTour() {
+  const now = new Date()
+
+  // First, try to find a tour with locked but incomplete shows (tour in progress)
+  // Use the tour with the earliest start date among active tours to handle edge cases
+  const activeTour = await prisma.tour.findFirst({
+    where: {
+      shows: {
+        some: {
+          isComplete: false,
+          lockTime: {
+            lte: now,
+          },
+        },
+      },
+    },
+    orderBy: { startDate: "asc" },
+    include: {
+      shows: {
+        where: { isComplete: false },
+        orderBy: { showDate: "asc" },
+        take: 1,
+      },
+    },
+  })
+
+  if (activeTour) return activeTour
+
+  // If no active tour, get the next upcoming tour with incomplete shows
+  const tour = await prisma.tour.findFirst({
+    where: {
+      shows: {
+        some: {
+          isComplete: false,
+        },
+      },
+    },
+    orderBy: { startDate: "asc" },
+    include: {
+      shows: {
+        where: { isComplete: false },
+        orderBy: { showDate: "asc" },
+        take: 1,
+      },
+    },
+  })
+
+  return tour
+}
+
 async function getLeaderboard(tourId?: string) {
   // Include submissions that are either scored OR locked (show has started)
   const now = new Date()
@@ -177,7 +227,10 @@ export default async function LeaderboardPage({
   const tourId = params.tourId
 
   const nextShow = await getNextShow()
-  const currentTourId = tourId || nextShow?.tourId || undefined
+  const currentTour = await getCurrentTour()
+  // Prioritize: manual tourId > active tour (locked shows) > next show
+  const currentTourId =
+    tourId || currentTour?.id || nextShow?.tourId || undefined
   const leaderboard = await getLeaderboard(currentTourId)
 
   const currentUserRank = session?.user?.id
@@ -195,10 +248,25 @@ export default async function LeaderboardPage({
     },
   })
 
+  // If we have a current tour but no next show, create a show object with tour info for display
+  const showForDisplay =
+    nextShow ||
+    (currentTour && currentTour.shows.length > 0
+      ? {
+          ...currentTour.shows[0],
+          tour: {
+            id: currentTour.id,
+            name: currentTour.name,
+            startDate: currentTour.startDate,
+            endDate: currentTour.endDate,
+          },
+        }
+      : null)
+
   return (
     <LeaderboardClient
       leaderboard={leaderboard}
-      nextShow={nextShow}
+      nextShow={showForDisplay}
       currentUserRank={currentUserRank}
       currentUserId={session?.user?.id || null}
       hasInProgressShows={!!hasInProgressShows}
