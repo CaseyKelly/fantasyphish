@@ -111,22 +111,8 @@ async function main() {
     )
   }
 
-  // Update tour status to COMPLETED
-  await prisma.tour.update({
-    where: { id: tour.id },
-    data: { status: "COMPLETED" },
-  })
-
-  console.log(`\n✅ Tour marked as COMPLETED`)
-  console.log(
-    `   The leaderboard will now display final results with a podium banner.`
-  )
-  console.log(
-    `   This tour will remain on the main leaderboard until you run close-tour.ts`
-  )
-
   // TODO: Award achievements for tour winners (1st, 2nd, 3rd place)
-  // Get final leaderboard standings
+  // Get final leaderboard standings first to check for participants
   const submissions = await prisma.submission.findMany({
     where: {
       show: {
@@ -173,6 +159,32 @@ async function main() {
   const standings = Array.from(userScores.values())
     .sort((a, b) => b.totalPoints - a.totalPoints)
     .slice(0, 10) // Top 10
+
+  // Check if there are any participants
+  if (standings.length === 0) {
+    console.log(`\n⚠️  Warning: This tour has NO participants!`)
+    console.log(
+      `   Tours without participants will not appear in /leaderboard/history`
+    )
+    console.log(
+      `   Consider skipping this tour or closing it directly with close-tour.ts`
+    )
+    process.exit(0)
+  }
+
+  // Update tour status to COMPLETED
+  await prisma.tour.update({
+    where: { id: tour.id },
+    data: { status: "COMPLETED" },
+  })
+
+  console.log(`\n✅ Tour marked as COMPLETED`)
+  console.log(
+    `   The leaderboard will now display final results with a podium banner.`
+  )
+  console.log(
+    `   This tour will remain on the main leaderboard until you run close-tour.ts`
+  )
 
   console.log(`\n🏆 Final Leaderboard (Top 10):`)
   standings.forEach((entry, index) => {

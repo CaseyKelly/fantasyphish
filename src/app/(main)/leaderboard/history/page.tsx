@@ -117,6 +117,9 @@ async function getPastTours(): Promise<TourWithWinners[]> {
 export default async function LeaderboardHistoryPage() {
   const pastTours = await getPastTours()
 
+  // Only show tours with participants (filter out synced tours with no data)
+  const toursWithData = pastTours.filter((tour) => tour.participantCount > 0)
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -137,7 +140,7 @@ export default async function LeaderboardHistoryPage() {
       </div>
 
       {/* Past Tours */}
-      {pastTours.length === 0 ? (
+      {toursWithData.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <Trophy className="h-12 w-12 text-slate-500 mx-auto mb-4" />
@@ -149,7 +152,7 @@ export default async function LeaderboardHistoryPage() {
         </Card>
       ) : (
         <div className="space-y-6">
-          {pastTours.map((tour) => (
+          {toursWithData.map((tour) => (
             <Card
               key={tour.id}
               className="bg-slate-800/50 border-slate-700 hover:border-orange-500/50 transition-colors"
