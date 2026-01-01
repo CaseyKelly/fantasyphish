@@ -54,6 +54,12 @@ async function getNextShow() {
 async function getCurrentTour() {
   const now = new Date()
 
+  // Priority order:
+  // 1. COMPLETED tours (manually marked, showing final podium)
+  // 2. ACTIVE tours with locked incomplete shows (tour currently happening)
+  // 3. ACTIVE tours where all shows are complete (awaiting manual COMPLETED status)
+  // 4. ACTIVE tours with any incomplete shows (upcoming tour)
+
   // 1. Prioritize COMPLETED tours (all shows complete, showing podium)
   const completedTour = await prisma.tour.findFirst({
     where: {
@@ -98,7 +104,28 @@ async function getCurrentTour() {
 
   if (activeTour) return activeTour
 
-  // 3. Fall back to next upcoming ACTIVE tour with incomplete shows
+  // 3. Check for ACTIVE tour where all shows are complete (needs manual COMPLETED status update)
+  const finishedActiveTour = await prisma.tour.findFirst({
+    where: {
+      status: "ACTIVE",
+      shows: {
+        every: {
+          isComplete: true,
+        },
+      },
+    },
+    orderBy: { endDate: "desc" },
+    include: {
+      shows: {
+        orderBy: { showDate: "asc" },
+        take: 1,
+      },
+    },
+  })
+
+  if (finishedActiveTour) return finishedActiveTour
+
+  // 4. Fall back to next upcoming ACTIVE tour with incomplete shows
   // Note: FUTURE tours are excluded - they don't show on leaderboard until activated
   const upcomingTour = await prisma.tour.findFirst({
     where: {
