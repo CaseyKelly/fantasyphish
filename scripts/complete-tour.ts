@@ -22,6 +22,30 @@ config({ path: ".env" })
 
 const prisma = new PrismaClient()
 
+/**
+ * Get emoji for placement
+ */
+function getPlacementEmoji(placement: 1 | 2 | 3): string {
+  const emojis = {
+    1: "🥇",
+    2: "🥈",
+    3: "🥉",
+  }
+  return emojis[placement]
+}
+
+/**
+ * Get ordinal suffix for placement (1st, 2nd, 3rd)
+ */
+function getOrdinalSuffix(placement: 1 | 2 | 3): string {
+  const suffixes = {
+    1: "st",
+    2: "nd",
+    3: "rd",
+  }
+  return suffixes[placement]
+}
+
 async function main() {
   const args = process.argv.slice(2)
 
@@ -225,7 +249,7 @@ async function main() {
     if (result.awarded) {
       achievementsAwarded++
       console.log(
-        `   ✓ Awarded ${placement === 1 ? "🥇" : placement === 2 ? "🥈" : "🥉"} ${placement}${placement === 1 ? "st" : placement === 2 ? "nd" : "rd"} place achievement to ${winner.username}`
+        `   ✓ Awarded ${getPlacementEmoji(placement)} ${placement}${getOrdinalSuffix(placement)} place achievement to ${winner.username}`
       )
     } else if (result.error) {
       console.error(

@@ -129,7 +129,11 @@ export default function LeaderboardClient({
           {leaderboard.length >= 3 && (
             <Card className="bg-gradient-to-b from-slate-800/80 to-slate-900/80 border-slate-700">
               <CardContent className="py-8 px-4">
-                <div className="flex items-end justify-center gap-4 sm:gap-8 max-w-3xl mx-auto">
+                <div
+                  className="flex items-end justify-center gap-4 sm:gap-8 max-w-3xl mx-auto"
+                  role="region"
+                  aria-label="Tournament podium"
+                >
                   {/* 2nd Place */}
                   <div className="flex flex-col items-center flex-1">
                     <div className="mb-3 relative">
@@ -145,6 +149,7 @@ export default function LeaderboardClient({
                     <Link
                       href={`/user/${leaderboard[1].username}`}
                       className="font-semibold text-sm sm:text-base text-white hover:text-gray-300 transition-colors text-center mb-1 line-clamp-1 max-w-full"
+                      aria-label={`Second place winner: ${leaderboard[1].username}`}
                     >
                       {leaderboard[1].username}
                     </Link>
@@ -176,6 +181,7 @@ export default function LeaderboardClient({
                     <Link
                       href={`/user/${leaderboard[0].username}`}
                       className="font-bold text-base sm:text-lg text-yellow-400 hover:text-yellow-300 transition-colors text-center mb-1 line-clamp-1 max-w-full"
+                      aria-label={`First place winner: ${leaderboard[0].username}`}
                     >
                       {leaderboard[0].username}
                     </Link>
@@ -207,6 +213,7 @@ export default function LeaderboardClient({
                     <Link
                       href={`/user/${leaderboard[2].username}`}
                       className="font-semibold text-sm sm:text-base text-white hover:text-amber-300 transition-colors text-center mb-1 line-clamp-1 max-w-full"
+                      aria-label={`Third place winner: ${leaderboard[2].username}`}
                     >
                       {leaderboard[2].username}
                     </Link>

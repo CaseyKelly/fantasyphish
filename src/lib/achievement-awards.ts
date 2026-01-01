@@ -146,6 +146,28 @@ export async function processPickAchievements(
 }
 
 /**
+ * Sanitize a tour name into a URL-friendly slug
+ */
+function sanitizeTourName(tourName: string): string {
+  return tourName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+}
+
+/**
+ * Get placement suffix for achievement slug
+ */
+function getPlacementSuffix(placement: 1 | 2 | 3): string {
+  const suffixes = {
+    1: "champion",
+    2: "runner-up",
+    3: "third-place",
+  }
+  return suffixes[placement]
+}
+
+/**
  * Award a tour placement achievement to a user
  * This is idempotent - safe to call multiple times
  */
@@ -161,13 +183,7 @@ export async function awardTourPlacementAchievement(
 ): Promise<{ awarded: boolean; error?: string }> {
   try {
     // Generate unique slug for this tour placement
-    const slug = `${tourName
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(
-        /^-|-$/g,
-        ""
-      )}-${placement === 1 ? "champion" : placement === 2 ? "runner-up" : "third-place"}`
+    const slug = `${sanitizeTourName(tourName)}-${getPlacementSuffix(placement)}`
 
     // Define achievement properties based on placement
     const placementData = {
