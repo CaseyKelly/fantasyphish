@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { getSetlist, isShowComplete, parseSetlist } from "@/lib/phishnet"
 import { scoreSubmissionProgressive } from "@/lib/scoring"
 import { processPickAchievements } from "@/lib/achievement-awards"
+import { withRetry } from "@/lib/db-retry"
 
 // Force dynamic rendering and disable caching
 export const dynamic = "force-dynamic"
@@ -49,21 +50,25 @@ export async function POST(request: Request) {
     // Find shows that need scoring:
     // 1. Shows with locked picks (lockTime has passed)
     // 2. Shows that aren't complete yet (isComplete is only set after grace period)
-    const showsToScore = await prisma.show.findMany({
-      where: {
-        lockTime: { lte: new Date() }, // Only score shows that are locked
-        isComplete: false, // Only check incomplete shows (includes grace period)
-      },
-      include: {
-        submissions: {
+    const showsToScore = await withRetry(
+      async () =>
+        prisma.show.findMany({
+          where: {
+            lockTime: { lte: new Date() }, // Only score shows that are locked
+            isComplete: false, // Only check incomplete shows (includes grace period)
+          },
           include: {
-            picks: {
-              include: { song: true },
+            submissions: {
+              include: {
+                picks: {
+                  include: { song: true },
+                },
+              },
             },
           },
-        },
-      },
-    })
+        }),
+      { operationName: "find shows to score" }
+    )
 
     console.log(`[Score:POST] Found ${showsToScore.length} show(s) to check`)
 
@@ -188,10 +193,14 @@ export async function POST(request: Request) {
       }
 
       // Update show with latest setlist data
-      await prisma.show.update({
-        where: { id: show.id },
-        data: updateData,
-      })
+      await withRetry(
+        async () =>
+          prisma.show.update({
+            where: { id: show.id },
+            data: updateData,
+          }),
+        { operationName: `update show ${show.id}` }
+      )
 
       // Score each submission progressively
       let submissionsProcessed = 0
@@ -222,27 +231,35 @@ export async function POST(request: Request) {
 
           // Update picks with scores
           for (const scoredPick of scoredPicks) {
-            await prisma.pick.update({
-              where: { id: scoredPick.id },
-              data: {
-                wasPlayed: scoredPick.wasPlayed,
-                pointsEarned: scoredPick.pointsEarned,
-              },
-            })
+            await withRetry(
+              async () =>
+                prisma.pick.update({
+                  where: { id: scoredPick.id },
+                  data: {
+                    wasPlayed: scoredPick.wasPlayed,
+                    pointsEarned: scoredPick.pointsEarned,
+                  },
+                }),
+              { operationName: `update pick ${scoredPick.id}` }
+            )
           }
 
           // Update submission
           // Only mark as fully scored if grace period has expired (1 hour after encore)
           const shouldMarkScored = Boolean(gracePeriodExpired)
 
-          await prisma.submission.update({
-            where: { id: submission.id },
-            data: {
-              isScored: shouldMarkScored,
-              totalPoints,
-              lastSongCount: currentSongCount,
-            },
-          })
+          await withRetry(
+            async () =>
+              prisma.submission.update({
+                where: { id: submission.id },
+                data: {
+                  isScored: shouldMarkScored,
+                  totalPoints,
+                  lastSongCount: currentSongCount,
+                },
+              }),
+            { operationName: `update submission ${submission.id}` }
+          )
 
           // Award achievements for newly correct opener/closer picks
           try {

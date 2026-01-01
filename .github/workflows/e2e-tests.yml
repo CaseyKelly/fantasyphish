@@ -33,6 +33,7 @@ jobs:
         run: npm run db:push
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
 
       - name: Run E2E tests
         run: npm test
@@ -40,6 +41,7 @@ jobs:
           CI: true
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
           NEXT_PUBLIC_APP_URL: http://localhost:3000
