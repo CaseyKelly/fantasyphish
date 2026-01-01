@@ -62,7 +62,6 @@ interface LeaderboardClientProps {
   nextShow: Show | null
   currentUserRank: LeaderboardEntry | null
   currentUserId: string | null
-  hasInProgressShows: boolean
 }
 
 export default function LeaderboardClient({

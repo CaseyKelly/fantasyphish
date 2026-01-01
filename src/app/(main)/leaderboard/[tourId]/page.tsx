@@ -199,7 +199,6 @@ export default async function TourLeaderboardPage({
         nextShow={showForDisplay}
         currentUserRank={currentUserRank}
         currentUserId={session?.user?.id || null}
-        hasInProgressShows={false}
       />
     </div>
   )

@@ -270,7 +270,7 @@ export default async function LeaderboardPage({
 
   // Show the tour info from the current tour being displayed in the leaderboard
   const showForDisplay =
-    currentTour && currentTour.shows && currentTour.shows.length > 0
+    currentTour && currentTour.shows.length > 0
       ? {
           ...currentTour.shows[0],
           tour: {
@@ -289,7 +289,6 @@ export default async function LeaderboardPage({
       nextShow={showForDisplay}
       currentUserRank={currentUserRank}
       currentUserId={session?.user?.id || null}
-      hasInProgressShows={!!hasInProgressShows}
     />
   )
 }
