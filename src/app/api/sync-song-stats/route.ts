@@ -101,14 +101,18 @@ export async function POST(request: Request) {
           }
         }
 
-        await prisma.song.update({
-          where: { slug: song.slug },
-          data: {
-            timesPlayed: song.times_played || 0,
-            gap: song.gap,
-            lastPlayed: lastPlayedDate,
-          },
-        })
+        await withRetry(
+          async () =>
+            prisma.song.update({
+              where: { slug: song.slug },
+              data: {
+                timesPlayed: song.times_played || 0,
+                gap: song.gap,
+                lastPlayed: lastPlayedDate,
+              },
+            }),
+          { operationName: `update song ${song.slug}` }
+        )
         updated++
 
         // Log first 3 successful updates as examples

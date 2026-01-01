@@ -92,9 +92,13 @@ async function syncYear(year: number): Promise<{
 
   // Batch fetch all existing tours and shows for this year
   const tourIds = Array.from(tourMap.keys()).map((id) => `phishnet-${id}`)
-  const existingTours = await prisma.tour.findMany({
-    where: { id: { in: tourIds } },
-  })
+  const existingTours = await withRetry(
+    async () =>
+      prisma.tour.findMany({
+        where: { id: { in: tourIds } },
+      }),
+    { operationName: "fetch existing tours" }
+  )
   const existingToursMap = new Map(existingTours.map((t) => [t.id, t]))
 
   const allShowDates = shows.map((show) => {
@@ -102,9 +106,13 @@ async function syncYear(year: number): Promise<{
     date.setUTCHours(0, 0, 0, 0)
     return date
   })
-  const existingShows = await prisma.show.findMany({
-    where: { showDate: { in: allShowDates } },
-  })
+  const existingShows = await withRetry(
+    async () =>
+      prisma.show.findMany({
+        where: { showDate: { in: allShowDates } },
+      }),
+    { operationName: "fetch existing shows" }
+  )
   const existingShowsMap = new Map(
     existingShows.map((s) => [s.showDate.getTime(), s])
   )
@@ -133,25 +141,33 @@ async function syncYear(year: number): Promise<{
 
     // Create or update tour only if needed
     if (!existingTour) {
-      await prisma.tour.create({
-        data: {
-          id: tourIdStr,
-          name: tourData.name,
-          startDate: tourStartDate,
-          endDate: tourEndDate,
-        },
-      })
+      await withRetry(
+        async () =>
+          prisma.tour.create({
+            data: {
+              id: tourIdStr,
+              name: tourData.name,
+              startDate: tourStartDate,
+              endDate: tourEndDate,
+            },
+          }),
+        { operationName: `create tour ${tourData.name}` }
+      )
       toursCreated++
       console.log(`[Sync Tours]   ✓ Created tour: ${tourData.name}`)
     } else if (tourNeedsUpdate) {
-      await prisma.tour.update({
-        where: { id: tourIdStr },
-        data: {
-          name: tourData.name,
-          startDate: tourStartDate,
-          endDate: tourEndDate,
-        },
-      })
+      await withRetry(
+        async () =>
+          prisma.tour.update({
+            where: { id: tourIdStr },
+            data: {
+              name: tourData.name,
+              startDate: tourStartDate,
+              endDate: tourEndDate,
+            },
+          }),
+        { operationName: `update tour ${tourData.name}` }
+      )
       toursUpdated++
       console.log(`[Sync Tours]   ✓ Updated tour: ${tourData.name}`)
     } else {
@@ -186,32 +202,40 @@ async function syncYear(year: number): Promise<{
         existingShow.lockTime?.getTime() !== lockTime.getTime()
 
       if (!existingShow) {
-        await prisma.show.create({
-          data: {
-            showDate: showDate,
-            venue: show.venue,
-            city: show.city,
-            state: show.state,
-            country: show.country,
-            tourId: tourIdStr,
-            timezone: timezone,
-            lockTime: lockTime,
-          },
-        })
+        await withRetry(
+          async () =>
+            prisma.show.create({
+              data: {
+                showDate: showDate,
+                venue: show.venue,
+                city: show.city,
+                state: show.state,
+                country: show.country,
+                tourId: tourIdStr,
+                timezone: timezone,
+                lockTime: lockTime,
+              },
+            }),
+          { operationName: `create show ${show.venue}` }
+        )
         showsCreated++
       } else if (showNeedsUpdate) {
-        await prisma.show.update({
-          where: { showDate: showDate },
-          data: {
-            venue: show.venue,
-            city: show.city,
-            state: show.state,
-            country: show.country,
-            tourId: tourIdStr,
-            timezone: timezone,
-            lockTime: lockTime,
-          },
-        })
+        await withRetry(
+          async () =>
+            prisma.show.update({
+              where: { showDate: showDate },
+              data: {
+                venue: show.venue,
+                city: show.city,
+                state: show.state,
+                country: show.country,
+                tourId: tourIdStr,
+                timezone: timezone,
+                lockTime: lockTime,
+              },
+            }),
+          { operationName: `update show ${show.venue}` }
+        )
         showsUpdated++
       } else {
         showsSkipped++
