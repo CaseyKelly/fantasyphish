@@ -86,9 +86,17 @@ export async function syncSongStats() {
           }
         }
 
-        await prisma.song.update({
+        await prisma.song.upsert({
           where: { slug: song.slug },
-          data: {
+          create: {
+            name: song.song,
+            slug: song.slug,
+            artist: song.artist || "Phish",
+            timesPlayed: song.times_played || 0,
+            gap: song.gap,
+            lastPlayed: lastPlayedDate,
+          },
+          update: {
             timesPlayed: song.times_played || 0,
             gap: song.gap,
             lastPlayed: lastPlayedDate,
@@ -96,10 +104,10 @@ export async function syncSongStats() {
         })
         updated++
       } catch (error) {
-        // Song might not exist in our database yet, skip it
+        // Handle any unexpected database errors
         errors++
         console.error(
-          `[Sync Song Stats] Error updating ${song.slug}:`,
+          `[Sync Song Stats] Error upserting ${song.slug}:`,
           error instanceof Error ? error.message : "Unknown error"
         )
       }

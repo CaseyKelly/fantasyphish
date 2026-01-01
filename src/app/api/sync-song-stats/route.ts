@@ -103,15 +103,23 @@ export async function POST(request: Request) {
 
         await withRetry(
           async () =>
-            prisma.song.update({
+            prisma.song.upsert({
               where: { slug: song.slug },
-              data: {
+              create: {
+                name: song.song,
+                slug: song.slug,
+                artist: song.artist || "Phish",
+                timesPlayed: song.times_played || 0,
+                gap: song.gap,
+                lastPlayed: lastPlayedDate,
+              },
+              update: {
                 timesPlayed: song.times_played || 0,
                 gap: song.gap,
                 lastPlayed: lastPlayedDate,
               },
             }),
-          { operationName: `update song ${song.slug}` }
+          { operationName: `upsert song ${song.slug}` }
         )
         updated++
 
@@ -122,12 +130,12 @@ export async function POST(request: Request) {
           )
         }
       } catch (error) {
-        // Song might not exist in our database yet, skip it
+        // Handle any unexpected database errors
         errors++
         if (errors <= 5) {
           // Only log first 5 errors to avoid spam
           console.error(
-            `[Sync Song Stats] Error updating ${song.slug}:`,
+            `[Sync Song Stats] Error upserting ${song.slug}:`,
             error instanceof Error ? error.message : "Unknown error"
           )
         }
