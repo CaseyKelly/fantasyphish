@@ -62,6 +62,7 @@ interface LeaderboardClientProps {
   nextShow: Show | null
   currentUserRank: LeaderboardEntry | null
   currentUserId: string | null
+  hasPastTours: boolean
 }
 
 export default function LeaderboardClient({
@@ -69,6 +70,7 @@ export default function LeaderboardClient({
   nextShow,
   currentUserRank,
   currentUserId,
+  hasPastTours,
 }: LeaderboardClientProps) {
   const [expandedUserIds, setExpandedUserIds] = useState<Set<string>>(new Set())
 
@@ -421,13 +423,15 @@ export default function LeaderboardClient({
           <TrendingUp className="h-4 w-4 mr-1" />
           Points are cumulative per tour
         </span>
-        <Link
-          href="/leaderboard/history"
-          className="flex items-center gap-2 text-orange-400 hover:text-orange-300 transition-colors"
-        >
-          <Trophy className="h-4 w-4" />
-          View Past Tour Winners
-        </Link>
+        {hasPastTours && (
+          <Link
+            href="/leaderboard/history"
+            className="flex items-center gap-2 text-orange-400 hover:text-orange-300 transition-colors"
+          >
+            <Trophy className="h-4 w-4" />
+            View Past Tour Winners
+          </Link>
+        )}
       </div>
     </div>
   )
