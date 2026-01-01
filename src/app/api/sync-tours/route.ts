@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server"
-import { PrismaClient } from "@prisma/client"
+import { prisma } from "@/lib/prisma"
+import { withRetry } from "@/lib/db-retry"
 import { getTimezoneForLocation, getShowLockTime } from "@/lib/timezone"
-
-const prisma = new PrismaClient()
 
 const PHISHNET_API_BASE = "https://api.phish.net/v5"
 

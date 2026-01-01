@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
-import { PrismaClient } from "@prisma/client"
-
-const prisma = new PrismaClient()
+import { prisma } from "@/lib/prisma"
+import { withRetry } from "@/lib/db-retry"
 
 const PHISHNET_API_BASE = "https://api.phish.net/v5"
 
