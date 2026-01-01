@@ -1,5 +1,17 @@
 # Database Connection Fix for Intermittent Errors
 
+## ⚠️ Action Required Before Merge
+
+**You must add the `DIRECT_URL` secret to GitHub Actions before this PR can pass CI:**
+
+1. Go to GitHub repository settings → Secrets and variables → Actions
+2. Add new secret: `DIRECT_URL` with your Neon direct connection string (without `-pooler`)
+3. Re-run the failed GitHub Actions workflow
+
+See "Required Environment Variables" section below for details.
+
+---
+
 ## Problem
 
 Intermittent database connection errors in cron jobs:
@@ -58,7 +70,7 @@ All database operations in cron jobs now use `withRetry()`:
 
 ## Required Environment Variables
 
-You need to add `DIRECT_URL` to your Vercel environment variables:
+You need to add `DIRECT_URL` to both Vercel and GitHub Actions:
 
 ### Getting the URLs from Neon
 
@@ -87,6 +99,15 @@ The difference is `-pooler` in the hostname. The pooler is for queries, direct i
 3. Add `DIRECT_URL` with the direct connection string (without `-pooler`)
 4. Make sure `DATABASE_URL` has the pooled connection string (with `-pooler`)
 5. Set both for all environments (Production, Preview, Development)
+
+### Setting in GitHub Actions
+
+1. Go to your GitHub repository settings
+2. Navigate to "Secrets and variables" → "Actions"
+3. Add a new repository secret:
+   - Name: `DIRECT_URL`
+   - Value: Your direct connection string (without `-pooler`)
+4. The `DATABASE_URL` secret should already exist with the pooled connection string
 
 ## Connection String Format
 
