@@ -144,3 +144,127 @@ export async function processPickAchievements(
 
   return { awarded, errors }
 }
+
+/**
+ * Sanitize a tour name into a URL-friendly slug
+ */
+function sanitizeTourName(tourName: string): string {
+  return tourName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+}
+
+/**
+ * Get placement suffix for achievement slug
+ */
+function getPlacementSuffix(placement: 1 | 2 | 3): string {
+  const suffixes = {
+    1: "champion",
+    2: "runner-up",
+    3: "third-place",
+  }
+  return suffixes[placement]
+}
+
+/**
+ * Award a tour placement achievement to a user
+ * This is idempotent - safe to call multiple times
+ */
+export async function awardTourPlacementAchievement(
+  userId: string,
+  tourId: string,
+  tourName: string,
+  placement: 1 | 2 | 3,
+  metadata?: {
+    totalPoints?: number
+    showsPlayed?: number
+  }
+): Promise<{ awarded: boolean; error?: string }> {
+  try {
+    // Generate unique slug for this tour placement
+    const slug = `${sanitizeTourName(tourName)}-${getPlacementSuffix(placement)}`
+
+    // Define achievement properties based on placement
+    const placementData = {
+      1: {
+        name: `${tourName} Champion`,
+        description: `1st place in ${tourName}`,
+        icon: "🥇",
+      },
+      2: {
+        name: `${tourName} Runner-Up`,
+        description: `2nd place in ${tourName}`,
+        icon: "🥈",
+      },
+      3: {
+        name: `${tourName} Third Place`,
+        description: `3rd place in ${tourName}`,
+        icon: "🥉",
+      },
+    }
+
+    const achievementData = placementData[placement]
+
+    // 1. Get or create the achievement record
+    const achievement = await prisma.achievement.upsert({
+      where: { slug },
+      update: {
+        name: achievementData.name,
+        description: achievementData.description,
+        icon: achievementData.icon,
+        category: "RANKING",
+        metadata: {
+          tourId,
+          tourName,
+          placement,
+        },
+      },
+      create: {
+        slug,
+        name: achievementData.name,
+        description: achievementData.description,
+        icon: achievementData.icon,
+        category: "RANKING",
+        metadata: {
+          tourId,
+          tourName,
+          placement,
+        },
+      },
+    })
+
+    // 2. Check if user already has this achievement
+    const existing = await prisma.userAchievement.findUnique({
+      where: {
+        userId_achievementId: {
+          userId,
+          achievementId: achievement.id,
+        },
+      },
+    })
+
+    if (existing) {
+      // User already has this achievement
+      return { awarded: false }
+    }
+
+    // 3. Award the achievement
+    await prisma.userAchievement.create({
+      data: {
+        userId,
+        achievementId: achievement.id,
+        metadata: metadata || {},
+      },
+    })
+
+    return { awarded: true }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error(
+      `[AwardTourPlacementAchievement] Error awarding placement ${placement} achievement:`,
+      errorMessage
+    )
+    return { awarded: false, error: errorMessage }
+  }
+}

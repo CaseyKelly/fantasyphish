@@ -22,6 +22,30 @@ config({ path: ".env" })
 
 const prisma = new PrismaClient()
 
+/**
+ * Get emoji for placement
+ */
+function getPlacementEmoji(placement: 1 | 2 | 3): string {
+  const emojis = {
+    1: "🥇",
+    2: "🥈",
+    3: "🥉",
+  }
+  return emojis[placement]
+}
+
+/**
+ * Get ordinal suffix for placement (1st, 2nd, 3rd)
+ */
+function getOrdinalSuffix(placement: 1 | 2 | 3): string {
+  const suffixes = {
+    1: "st",
+    2: "nd",
+    3: "rd",
+  }
+  return suffixes[placement]
+}
+
 async function main() {
   const args = process.argv.slice(2)
 
@@ -111,20 +135,23 @@ async function main() {
     )
   }
 
-  // TODO: Award achievements for tour winners (1st, 2nd, 3rd place)
-  // Get final leaderboard standings first to check for participants
+  // Get final leaderboard standings (excluding admins)
   const submissions = await prisma.submission.findMany({
     where: {
       show: {
         tourId: tour.id,
       },
       isScored: true,
+      user: {
+        isAdmin: false, // Exclude admin submissions
+      },
     },
     include: {
       user: {
         select: {
           id: true,
           username: true,
+          isAdmin: true,
         },
       },
     },
@@ -196,16 +223,53 @@ async function main() {
     )
   })
 
+  // Award achievements for top 3 placements
+  console.log(`\n🏅 Awarding placement achievements...`)
+  let achievementsAwarded = 0
+
+  // Dynamically import the achievement awards module
+  const { awardTourPlacementAchievement } =
+    await import("../src/lib/achievement-awards.js")
+
+  for (let i = 0; i < Math.min(3, standings.length); i++) {
+    const placement = (i + 1) as 1 | 2 | 3
+    const winner = standings[i]
+
+    const result = await awardTourPlacementAchievement(
+      winner.userId,
+      tour.id,
+      tour.name,
+      placement,
+      {
+        totalPoints: winner.totalPoints,
+        showsPlayed: winner.showsPlayed,
+      }
+    )
+
+    if (result.awarded) {
+      achievementsAwarded++
+      console.log(
+        `   ✓ Awarded ${getPlacementEmoji(placement)} ${placement}${getOrdinalSuffix(placement)} place achievement to ${winner.username}`
+      )
+    } else if (result.error) {
+      console.error(
+        `   ✗ Failed to award achievement to ${winner.username}:`,
+        result.error
+      )
+    } else {
+      console.log(`   - ${winner.username} already has this achievement`)
+    }
+  }
+
+  console.log(`\n🎖️  Total achievements awarded: ${achievementsAwarded}`)
+
   console.log(`\n📝 Next Steps:`)
   console.log(
-    `   1. The leaderboard will now show "Tour Complete - Final Results" banner`
+    `   1. The leaderboard will now show "Tour Complete - Final Results" banner with podium`
   )
   console.log(`   2. Leave this status for a couple months to showcase winners`)
   console.log(
     `   3. Before the next tour starts, run: npx tsx scripts/close-tour.ts "${tour.name}"`
-  )
-  console.log(
-    `   4. TODO: Implement achievement awarding for 1st, 2nd, 3rd place winners`
   )
 
   console.log(`\n🎉 Done!`)
