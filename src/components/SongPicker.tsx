@@ -645,6 +645,7 @@ export function SongPicker({
           <>
             {/* Search - only show on desktop */}
             {!isMobile && (
+              // z-10 ensures focus ring isn't clipped by card below
               <div className="relative z-10 mb-6">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
                 <Input
