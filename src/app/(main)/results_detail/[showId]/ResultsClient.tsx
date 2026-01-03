@@ -285,7 +285,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
       </div>
 
       {/* Status Banner */}
-      <Card className="p-4 border-l-4 border-l-blue-500">
+      <Card className="p-4 border-l-4 border-l-blue-500 border-2 border-[#4a6b7d]/60">
         <div className="flex items-center justify-between">
           <div>
             {show.isComplete ? (
@@ -343,7 +343,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
                       return (
                         <div
                           key={idx}
-                          className="flex items-center gap-3 py-1.5 border-b border-slate-700"
+                          className="flex items-center gap-3 py-1.5 border-b-2 border-[#4a6b7d]/40"
                         >
                           <span className="text-slate-500 w-6 text-right text-sm">
                             {song.position}
@@ -406,7 +406,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
               <button
                 onClick={handleDeleteSubmission}
                 disabled={deletingSubmission}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-red-500/30 hover:border-red-500/50 rounded-lg"
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:text-red-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed border-2 border-red-500/30 hover:border-red-500/50 rounded-lg"
                 title="Delete this submission"
               >
                 {deletingSubmission ? (
@@ -433,7 +433,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
               {openerPicks.map((pick) => (
                 <div
                   key={pick.id}
-                  className="flex items-center justify-between py-2 border-b border-slate-700"
+                  className="flex items-center justify-between py-2 border-b-2 border-[#4a6b7d]/40"
                 >
                   <div className="flex items-center gap-3">
                     <span className={getPickStatus(pick)}>{pick.song}</span>
@@ -455,7 +455,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
               {encorePicks.map((pick) => (
                 <div
                   key={pick.id}
-                  className="flex items-center justify-between py-2 border-b border-slate-700"
+                  className="flex items-center justify-between py-2 border-b-2 border-[#4a6b7d]/40"
                 >
                   <div className="flex items-center gap-3">
                     <span className={getPickStatus(pick)}>{pick.song}</span>
@@ -477,7 +477,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
               {regularPicks.map((pick) => (
                 <div
                   key={pick.id}
-                  className="flex items-center gap-3 py-2 border-b border-slate-700"
+                  className="flex items-center gap-3 py-2 border-b-2 border-[#4a6b7d]/40"
                 >
                   <span className={`text-xl ${getPickStatus(pick)}`}>
                     {getPickIcon(pick)}

@@ -115,8 +115,8 @@ export default function LeaderboardClient({
         <Card
           className={
             nextShow.tour.status === "COMPLETED"
-              ? "bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500/50"
-              : "bg-slate-800/50 border-slate-700"
+              ? "bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-2 border-yellow-500/50"
+              : "bg-[#233d4d]/90 border-2 border-[#4a6b7d]/60"
           }
         >
           <CardContent className="py-4">
@@ -183,7 +183,7 @@ export default function LeaderboardClient({
 
       {/* Podium Display for Completed Tours */}
       {nextShow?.tour?.status === "COMPLETED" && leaderboard.length >= 3 && (
-        <Card className="bg-gradient-to-b from-slate-800/80 to-slate-900/80 border-slate-700">
+        <Card className="bg-gradient-to-b from-[#233d4d]/80 to-[#1e3340]/80 border-2 border-[#4a6b7d]/60">
           <CardContent className="py-8 px-4">
             <div
               className="flex items-end justify-center gap-4 sm:gap-8 max-w-3xl mx-auto"
@@ -292,7 +292,7 @@ export default function LeaderboardClient({
 
       {/* Current User Rank */}
       {currentUserRank && (
-        <Card className="bg-orange-500/10 border-orange-500/30">
+        <Card className="bg-orange-500/10 border-2 border-orange-500/30">
           <CardContent className="py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
@@ -329,7 +329,7 @@ export default function LeaderboardClient({
         </Card>
       ) : (
         <Card>
-          <CardHeader className="border-b border-slate-700 px-3 sm:px-6">
+          <CardHeader className="border-b-2 border-[#4a6b7d]/60 px-3 sm:px-6">
             <div className="grid grid-cols-12 text-sm font-medium text-slate-400 gap-2 items-center">
               <div className="col-span-1">
                 <span className="sr-only">Rank</span>
@@ -344,7 +344,7 @@ export default function LeaderboardClient({
             </div>
           </CardHeader>
           <CardContent className="p-0 overflow-hidden">
-            <div className="divide-y divide-slate-700/50">
+            <div className="divide-y divide-[#4a6b7d]/40">
               {leaderboard.map((user) => {
                 const isCurrentUser = currentUserId === user.userId
                 const isExpanded = expandedUserIds.has(user.userId)
@@ -358,7 +358,7 @@ export default function LeaderboardClient({
                   >
                     {/* Main row with rank, username, stats */}
                     <div
-                      className="grid grid-cols-12 items-center gap-2 cursor-pointer hover:bg-slate-700/30 -mx-3 sm:-mx-6 px-3 sm:px-6 py-2 rounded-lg transition-colors"
+                      className="grid grid-cols-12 items-center gap-2 cursor-pointer hover:bg-[#4a6b7d]/20 -mx-3 sm:-mx-6 px-3 sm:px-6 py-2 rounded-lg transition-colors"
                       onClick={() => toggleExpanded(user.userId)}
                     >
                       <div className="col-span-1 flex justify-center">
@@ -431,10 +431,10 @@ export default function LeaderboardClient({
                               return (
                                 <div
                                   key={showIdx}
-                                  className="border border-slate-700/50 rounded-lg p-3 bg-slate-800/30"
+                                  className="border-2 border-[#4a6b7d]/40 rounded-lg p-3 bg-[#233d4d]/30"
                                 >
                                   {/* Show header */}
-                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 pb-2 border-b border-slate-700/50">
+                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 pb-2 border-b-2 border-[#4a6b7d]/40">
                                     <div className="text-xs text-slate-400">
                                       {new Date(
                                         showPicks.show.showDate
@@ -464,8 +464,8 @@ export default function LeaderboardClient({
                                       <div
                                         className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
                                           openerPick.pointsEarned > 0
-                                            ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                                            : "bg-slate-700/50 text-slate-400 border border-slate-600/30"
+                                            ? "bg-green-500/20 text-green-400 border-2 border-green-500/30"
+                                            : "bg-[#4a6b7d]/30 text-slate-400 border-2 border-[#4a6b7d]/40"
                                         }`}
                                       >
                                         {openerPick.pointsEarned > 0 && (
@@ -488,8 +488,8 @@ export default function LeaderboardClient({
                                             key={idx}
                                             className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
                                               pick.pointsEarned > 0
-                                                ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                                                : "bg-slate-700/50 text-slate-400 border border-slate-600/30"
+                                                ? "bg-green-500/20 text-green-400 border-2 border-green-500/30"
+                                                : "bg-[#4a6b7d]/30 text-slate-400 border-2 border-[#4a6b7d]/40"
                                             }`}
                                           >
                                             {pick.pointsEarned > 0 && (
@@ -514,8 +514,8 @@ export default function LeaderboardClient({
                                             key={idx}
                                             className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
                                               pick.pointsEarned > 0
-                                                ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                                                : "bg-slate-700/50 text-slate-400 border border-slate-600/30"
+                                                ? "bg-green-500/20 text-green-400 border-2 border-green-500/30"
+                                                : "bg-[#4a6b7d]/30 text-slate-400 border-2 border-[#4a6b7d]/40"
                                             }`}
                                           >
                                             {pick.pointsEarned > 0 && (

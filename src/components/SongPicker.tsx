@@ -298,7 +298,7 @@ export function SongPicker({
   const isComplete = openerPick && encorePick && regularPicks.length === 11
 
   const renderSongList = (pickType: "OPENER" | "ENCORE" | "REGULAR") => (
-    <div className="max-h-64 overflow-y-auto space-y-1">
+    <div className="max-h-64 overflow-y-auto space-y-1 p-1">
       {filteredSongs.length === 0 ? (
         <p className="text-center text-gray-400 py-4">No songs found</p>
       ) : (
@@ -311,10 +311,10 @@ export function SongPicker({
               key={song.id}
               onClick={() => !isDisabled && handleSelectSong(song, pickType)}
               disabled={isDisabled}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
+              className={`w-full text-left px-3 py-2 rounded-lg transition-all ${
                 isSelected
-                  ? "bg-[#3d5a6c]/50 text-gray-500 cursor-not-allowed"
-                  : "hover:bg-[#3d5a6c] text-white"
+                  ? "bg-[#1e3340]/60 text-gray-500 cursor-not-allowed"
+                  : "hover:bg-[#4a6b7d]/50 focus:bg-[#4a6b7d]/50 focus:outline-none focus:ring-2 focus:ring-[#c23a3a]/50 text-white"
               }`}
             >
               <div className="flex items-center justify-between gap-2">
@@ -367,13 +367,13 @@ export function SongPicker({
         className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
         style={{ minHeight: "100dvh" }}
       >
-        <div className="bg-[#2d4654] w-full max-w-2xl rounded-lg max-h-[90dvh] flex flex-col">
+        <div className="bg-[#233d4d] w-full max-w-2xl rounded-lg max-h-[90dvh] flex flex-col border-2 border-[#4a6b7d]/60">
           {/* Modal Header */}
-          <div className="flex items-center justify-between p-4 border-b border-[#3d5a6c]">
+          <div className="flex items-center justify-between p-4 border-b-2 border-[#4a6b7d]/60">
             <h2 className="text-xl font-semibold text-white">{title}</h2>
             <button
               onClick={() => setMobileModalOpen(null)}
-              className="p-2 hover:bg-[#3d5a6c] rounded-lg transition-colors"
+              className="p-2 hover:bg-[#4a6b7d]/50 rounded-lg transition-colors"
             >
               <X className="h-5 w-5 text-gray-400" />
             </button>
@@ -381,10 +381,10 @@ export function SongPicker({
 
           {/* Current Selection */}
           {pickType !== "REGULAR" && currentPick && !isLocked && (
-            <div className="p-4 border-b border-[#3d5a6c]">
+            <div className="p-4 border-b-2 border-[#4a6b7d]/60">
               <button
                 onClick={() => handleRemovePick(pickType)}
-                className="w-full flex items-center justify-between px-4 py-3 bg-[#3d5a6c] rounded-lg text-white hover:bg-[#4a6b7d]"
+                className="w-full flex items-center justify-between px-4 py-3 bg-[#4a6b7d] rounded-lg text-white hover:bg-[#5a7b8d] transition-colors"
               >
                 <span>Current: {currentPick.songName}</span>
                 <X className="h-4 w-4" />
@@ -393,7 +393,7 @@ export function SongPicker({
           )}
 
           {pickType === "REGULAR" && picks.length > 0 && !isLocked && (
-            <div className="p-4 border-b border-[#3d5a6c]">
+            <div className="p-4 border-b-2 border-[#4a6b7d]/60">
               <p className="text-sm text-gray-400 mb-2">
                 Selected ({picks.length}/11):
               </p>
@@ -402,7 +402,7 @@ export function SongPicker({
                   <button
                     key={pick.songId}
                     onClick={() => handleRemovePick("REGULAR", pick.songId)}
-                    className="flex items-center space-x-1 px-3 py-1.5 bg-[#3d5a6c] rounded-full text-sm text-white hover:bg-[#4a6b7d]"
+                    className="flex items-center space-x-1 px-3 py-1.5 bg-[#4a6b7d] rounded-full text-sm text-white hover:bg-[#5a7b8d] transition-colors"
                   >
                     <span>{pick.songName}</span>
                     <X className="h-3 w-3" />
@@ -413,7 +413,7 @@ export function SongPicker({
           )}
 
           {/* Search */}
-          <div className="p-4 border-b border-[#3d5a6c]">
+          <div className="p-4 border-b-2 border-[#4a6b7d]/60">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <Input
@@ -435,7 +435,7 @@ export function SongPicker({
           </div>
 
           {/* Song List */}
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
             {pickType === "REGULAR" && picks.length === 11 ? (
               <p className="text-center text-green-400 py-4">
                 All 11 regular picks selected!
@@ -475,7 +475,9 @@ export function SongPicker({
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 overflow-hidden">
               <div
                 className={`p-2 rounded-lg flex-shrink-0 ${
-                  pickType === "REGULAR" ? "bg-[#3d5a6c]" : "bg-[#c23a3a]/20"
+                  pickType === "REGULAR"
+                    ? "bg-[#4a6b7d]"
+                    : "bg-[#c23a3a]/30 border border-[#c23a3a]/30"
                 }`}
               >
                 {icon}
@@ -523,7 +525,7 @@ export function SongPicker({
             {pickType !== "REGULAR" && currentPick && !isLocked && (
               <button
                 onClick={() => handleRemovePick(pickType)}
-                className="mb-4 flex items-center space-x-2 px-3 py-2 bg-[#3d5a6c] rounded-lg text-sm text-white hover:bg-[#4a6b7d]"
+                className="mb-4 flex items-center space-x-2 px-3 py-2 bg-[#4a6b7d] rounded-lg text-sm text-white hover:bg-[#5a7b8d] transition-colors"
               >
                 <X className="h-4 w-4" />
                 <span>Remove: {currentPick.songName}</span>
@@ -535,7 +537,7 @@ export function SongPicker({
                   <button
                     key={pick.songId}
                     onClick={() => handleRemovePick("REGULAR", pick.songId)}
-                    className="flex items-center space-x-1 px-3 py-1.5 bg-[#3d5a6c] rounded-full text-sm text-white hover:bg-[#4a6b7d]"
+                    className="flex items-center space-x-1 px-3 py-1.5 bg-[#4a6b7d] rounded-full text-sm text-white hover:bg-[#5a7b8d] transition-colors"
                   >
                     <span>{pick.songName}</span>
                     <X className="h-3 w-3" />
@@ -630,7 +632,7 @@ export function SongPicker({
                 back after the show for results and scoring!
               </p>
               {existingPicks && existingPicks.length > 0 && (
-                <div className="inline-flex items-center space-x-3 px-6 py-3 bg-[#3d5a6c]/50 rounded-xl border border-[#3d5a6c]/70">
+                <div className="inline-flex items-center space-x-3 px-6 py-3 bg-[#4a6b7d]/40 rounded-xl border-2 border-[#4a6b7d]/60">
                   <CheckCircle className="h-5 w-5 text-green-400" />
                   <span className="text-gray-300 font-medium">
                     Your picks are saved
@@ -643,8 +645,9 @@ export function SongPicker({
           <>
             {/* Search - only show on desktop */}
             {!isMobile && (
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              // z-10 ensures focus ring isn't clipped by card below
+              <div className="relative z-10 mb-6">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
                 <Input
                   type="text"
                   placeholder="Search songs..."
@@ -655,7 +658,7 @@ export function SongPicker({
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -692,7 +695,7 @@ export function SongPicker({
             {/* Desktop: Overlay on top of picker content */}
             {isLocked && !isMobile && (
               <div className="absolute inset-0 z-40 flex items-center justify-center">
-                <div className="max-w-md mx-4 text-center bg-[#1e3340]/95 backdrop-blur-sm p-8 rounded-2xl border border-[#3d5a6c]/70 shadow-2xl">
+                <div className="max-w-md mx-4 text-center bg-[#233d4d]/95 backdrop-blur-sm p-8 rounded-2xl border-2 border-[#4a6b7d]/70 shadow-2xl">
                   <div className="mb-6 flex justify-center">
                     <div className="relative">
                       <div className="absolute inset-0 bg-[#c23a3a]/30 blur-3xl rounded-full animate-pulse" />
@@ -735,12 +738,12 @@ export function SongPicker({
       {/* Submit Button */}
       {!isLocked && (
         <div
-          className={`bg-[#2d4654]/95 backdrop-blur-sm p-3 sm:p-4 rounded-xl border transition-colors ${
+          className={`bg-[#233d4d]/95 backdrop-blur-sm p-3 sm:p-4 rounded-xl border-2 transition-colors ${
             hasUnsavedChanges && isComplete
               ? "border-yellow-500/50 bg-yellow-500/5"
               : justSaved && isComplete
                 ? "border-green-500/50 bg-green-500/5"
-                : "border-[#3d5a6c]"
+                : "border-[#4a6b7d]/60"
           }`}
         >
           <div className="flex items-center justify-between gap-3">
