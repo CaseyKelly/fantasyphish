@@ -298,7 +298,7 @@ export function SongPicker({
   const isComplete = openerPick && encorePick && regularPicks.length === 11
 
   const renderSongList = (pickType: "OPENER" | "ENCORE" | "REGULAR") => (
-    <div className="max-h-64 overflow-y-auto space-y-1">
+    <div className="max-h-64 overflow-y-auto space-y-1 px-0.5 py-0.5">
       {filteredSongs.length === 0 ? (
         <p className="text-center text-gray-400 py-4">No songs found</p>
       ) : (
@@ -311,10 +311,10 @@ export function SongPicker({
               key={song.id}
               onClick={() => !isDisabled && handleSelectSong(song, pickType)}
               disabled={isDisabled}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
+              className={`w-full text-left px-3 py-2 rounded-lg transition-all ${
                 isSelected
                   ? "bg-[#1e3340]/60 text-gray-500 cursor-not-allowed"
-                  : "hover:bg-[#4a6b7d]/50 text-white"
+                  : "hover:bg-[#4a6b7d]/50 focus:bg-[#4a6b7d]/50 focus:outline-none focus:ring-2 focus:ring-[#c23a3a]/50 text-white"
               }`}
             >
               <div className="flex items-center justify-between gap-2">
