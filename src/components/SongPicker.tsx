@@ -298,7 +298,7 @@ export function SongPicker({
   const isComplete = openerPick && encorePick && regularPicks.length === 11
 
   const renderSongList = (pickType: "OPENER" | "ENCORE" | "REGULAR") => (
-    <div className="max-h-64 overflow-y-auto space-y-1 px-0.5 py-0.5">
+    <div className="max-h-64 overflow-y-auto space-y-1 p-1">
       {filteredSongs.length === 0 ? (
         <p className="text-center text-gray-400 py-4">No songs found</p>
       ) : (
@@ -435,7 +435,7 @@ export function SongPicker({
           </div>
 
           {/* Song List */}
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
             {pickType === "REGULAR" && picks.length === 11 ? (
               <p className="text-center text-green-400 py-4">
                 All 11 regular picks selected!
