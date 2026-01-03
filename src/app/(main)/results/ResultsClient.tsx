@@ -231,7 +231,7 @@ export default function ResultsClient({
                 <button
                   onClick={handleCreateTestSubmission}
                   disabled={!!adminLoading}
-                  className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded-lg border-2 border-purple-500/30 hover:border-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {adminLoading === "creating" ? (
                     <>
@@ -248,7 +248,7 @@ export default function ResultsClient({
                 <button
                   onClick={() => (window.location.href = "/pick/test")}
                   disabled={!!adminLoading}
-                  className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg border-2 border-blue-500/30 hover:border-blue-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   <Plus className="h-4 w-4" />
                   Create Test Submission
@@ -391,7 +391,7 @@ export default function ResultsClient({
                     <div className="flex items-center gap-2 mt-3">
                       <Link
                         href={`/results_detail/${submission.show.id}`}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 hover:text-blue-300 rounded-lg border border-blue-500/30 hover:border-blue-500/50 transition-all font-medium"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 hover:text-blue-300 rounded-lg border-2 border-blue-500/30 hover:border-blue-500/50 transition-all font-medium"
                       >
                         <Eye className="h-4 w-4" />
                         View Details
@@ -405,7 +405,7 @@ export default function ResultsClient({
                             )
                           }
                           disabled={deletingSubmission === submission.id}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 hover:text-red-300 rounded-lg border border-red-500/30 hover:border-red-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 hover:text-red-300 rounded-lg border-2 border-red-500/30 hover:border-red-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                           title="Delete submission"
                         >
                           {deletingSubmission === submission.id ? (
@@ -432,9 +432,9 @@ export default function ResultsClient({
                           className={`flex items-center justify-between p-3 rounded-lg ${
                             pick.wasPlayed !== null
                               ? pick.wasPlayed
-                                ? "bg-green-500/10 border border-green-500/30"
-                                : "bg-red-500/10 border border-red-500/30"
-                              : "bg-slate-700/50"
+                                ? "bg-green-500/10 border-2 border-green-500/30"
+                                : "bg-red-500/10 border-2 border-red-500/30"
+                              : "bg-[#4a6b7d]/30 border-2 border-[#4a6b7d]/40"
                           }`}
                         >
                           <div>
