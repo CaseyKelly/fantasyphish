@@ -103,15 +103,24 @@ export async function POST(request: Request) {
 
         await withRetry(
           async () =>
-            prisma.song.update({
+            prisma.song.upsert({
               where: { slug: song.slug },
-              data: {
+              create: {
+                name: song.song,
+                slug: song.slug,
+                artist: song.artist || "Phish",
+                timesPlayed: song.times_played || 0,
+                gap: song.gap,
+                lastPlayed: lastPlayedDate,
+              },
+              update: {
+                // Only update stats, preserve name/artist to avoid breaking existing picks
                 timesPlayed: song.times_played || 0,
                 gap: song.gap,
                 lastPlayed: lastPlayedDate,
               },
             }),
-          { operationName: `update song ${song.slug}` }
+          { operationName: `upsert song ${song.slug}` }
         )
         updated++
 
