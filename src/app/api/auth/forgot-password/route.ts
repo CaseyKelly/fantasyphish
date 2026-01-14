@@ -8,6 +8,10 @@ const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email address"),
 })
 
+// Token size: 32 bytes = 64 hex characters
+const PASSWORD_RESET_TOKEN_BYTES = 32
+const PASSWORD_RESET_EXPIRY_HOURS = 1
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -29,8 +33,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate password reset token
-    const passwordResetToken = randomBytes(32).toString("hex")
-    const passwordResetExpiry = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+    const passwordResetToken = randomBytes(PASSWORD_RESET_TOKEN_BYTES).toString(
+      "hex"
+    )
+    const passwordResetExpiry = new Date(
+      Date.now() + PASSWORD_RESET_EXPIRY_HOURS * 60 * 60 * 1000
+    )
 
     // Update user with reset token
     await prisma.user.update({

@@ -9,6 +9,9 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { DonutLogo } from "@/components/DonutLogo"
 
+// Delay before redirecting to login after successful password reset
+const REDIRECT_DELAY_MS = 2000
+
 function ResetPasswordForm() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -56,10 +59,10 @@ function ResetPasswordForm() {
         setError(data.error || "An error occurred")
       } else {
         setSuccess(true)
-        // Redirect to login after 2 seconds
+        // Redirect to login after success message
         setTimeout(() => {
           router.push("/login")
-        }, 2000)
+        }, REDIRECT_DELAY_MS)
       }
     } catch {
       setError("An unexpected error occurred")
