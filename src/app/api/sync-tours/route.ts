@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { withRetry } from "@/lib/db-retry"
 import { getTimezoneForLocation, getShowLockTime } from "@/lib/timezone"
+import { shouldRunCronJobs } from "@/lib/cron-helpers"
 
 const PHISHNET_API_BASE = "https://api.phish.net/v5"
 
@@ -288,6 +289,18 @@ export async function POST(request: Request) {
     }
 
     console.log("[Sync Tours] Authorization successful")
+
+    // Check if cron jobs should run (only when tours are active)
+    const { shouldRun, reason } = await shouldRunCronJobs()
+    if (!shouldRun) {
+      console.log(`[Sync Tours] Skipping: ${reason}`)
+      return NextResponse.json(
+        { skipped: true, reason: reason || "No active tours" },
+        { status: 200 }
+      )
+    }
+
+    console.log("[Sync Tours] Active tours found, proceeding with tour sync")
 
     const currentYear = new Date().getFullYear()
     const nextYear = currentYear + 1
