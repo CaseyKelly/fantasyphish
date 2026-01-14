@@ -1,0 +1,13 @@
+User-Agent: *
+Allow: /
+Allow: /login
+Allow: /register
+Allow: /leaderboard
+Allow: /results_detail/
+Disallow: /api/
+Disallow: /pick/
+Disallow: /picks
+Disallow: /profile
+Disallow: /results
+
+Sitemap: https://www.fantasyphish.com/sitemap.xml
