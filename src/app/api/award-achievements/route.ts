@@ -49,10 +49,7 @@ export async function POST(request: Request) {
     const { shouldRun, reason } = await shouldRunCronJobs()
     if (!shouldRun) {
       console.log(`[AwardAchievements:POST] Skipping: ${reason}`)
-      return NextResponse.json(
-        { skipped: true, reason: reason || "No active tours" },
-        { status: 200 }
-      )
+      return NextResponse.json({ skipped: true, reason }, { status: 200 })
     }
 
     console.log(

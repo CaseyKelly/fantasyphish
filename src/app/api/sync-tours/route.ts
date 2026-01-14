@@ -294,10 +294,7 @@ export async function POST(request: Request) {
     const { shouldRun, reason } = await shouldRunCronJobs()
     if (!shouldRun) {
       console.log(`[Sync Tours] Skipping: ${reason}`)
-      return NextResponse.json(
-        { skipped: true, reason: reason || "No active tours" },
-        { status: 200 }
-      )
+      return NextResponse.json({ skipped: true, reason }, { status: 200 })
     }
 
     console.log("[Sync Tours] Active tours found, proceeding with tour sync")
