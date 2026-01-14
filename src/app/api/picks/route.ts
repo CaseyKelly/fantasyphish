@@ -113,17 +113,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Show not found" }, { status: 404 })
     }
 
-    // Check if tour is FUTURE (not yet open for picks)
-    if (show.tour?.status === "FUTURE") {
-      return NextResponse.json(
-        {
-          error:
-            "This tour is not yet open for picks. Check back when the tour is activated.",
-        },
-        { status: 400 }
-      )
-    }
-
     // Check if show has started (now timezone-aware)
     // Extract the date in UTC to avoid timezone conversion
     const showDateStr = show.showDate.toISOString().split("T")[0]
