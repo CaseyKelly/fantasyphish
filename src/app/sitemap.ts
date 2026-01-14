@@ -1,6 +1,8 @@
 import { MetadataRoute } from "next"
 import { prisma } from "@/lib/prisma"
 
+const MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
 
@@ -37,7 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
   const showUrls = completedShows.map((show) => {
     const daysSinceUpdate = Math.floor(
-      (now.getTime() - show.updatedAt.getTime()) / (1000 * 60 * 60 * 24)
+      (now.getTime() - show.updatedAt.getTime()) / MILLISECONDS_PER_DAY
     )
 
     // Recent shows get higher priority
