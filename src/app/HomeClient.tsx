@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { formatInTimeZone } from "date-fns-tz"
-import { Target, ArrowRight } from "lucide-react"
+import { Target, ArrowRight, Trophy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DonutLogo } from "@/components/DonutLogo"
 import { SongPicker } from "@/components/SongPicker"
@@ -180,7 +180,14 @@ export function HomeClient() {
               <DonutLogo size="lg" />
               <span className="text-xl font-bold text-white">FantasyPhish</span>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-6">
+              <Link
+                href="/leaderboard"
+                className="flex items-center space-x-2 px-4 py-2 bg-[#c23a3a]/10 border border-[#c23a3a]/30 rounded-lg text-[#c23a3a] hover:bg-[#c23a3a]/20 hover:border-[#c23a3a]/50 transition-all"
+              >
+                <Trophy className="h-4 w-4" />
+                <span className="font-semibold">Leaderboard</span>
+              </Link>
               <Link
                 href="/login"
                 className="text-gray-300 hover:text-white transition-colors"
