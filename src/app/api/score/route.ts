@@ -10,8 +10,8 @@ import { shouldRunCronJobs } from "@/lib/cron-helpers"
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-// Grace period after encore detection (30 minutes in milliseconds)
-const GRACE_PERIOD_MS = 30 * 60 * 1000
+// Grace period after encore detection (60 minutes in milliseconds)
+const GRACE_PERIOD_MS = 60 * 60 * 1000
 
 // This endpoint is called by the cron job to score shows progressively
 export async function POST(request: Request) {
