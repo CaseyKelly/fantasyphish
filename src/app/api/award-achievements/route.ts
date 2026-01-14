@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { ACHIEVEMENT_DEFINITIONS } from "@/lib/achievements"
+import { shouldRunCronJobs } from "@/lib/cron-helpers"
 
 // Force dynamic rendering and disable caching
 export const dynamic = "force-dynamic"
@@ -43,6 +44,17 @@ export async function POST(request: Request) {
     }
 
     console.log("[AwardAchievements:POST] Authorization successful")
+
+    // Check if cron jobs should run (only when tours are active)
+    const { shouldRun, reason } = await shouldRunCronJobs()
+    if (!shouldRun) {
+      console.log(`[AwardAchievements:POST] Skipping: ${reason}`)
+      return NextResponse.json({ skipped: true, reason }, { status: 200 })
+    }
+
+    console.log(
+      "[AwardAchievements:POST] Active tours found, proceeding with achievement awards"
+    )
 
     const results = []
 

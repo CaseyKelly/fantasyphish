@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { withRetry } from "@/lib/db-retry"
+import { shouldRunCronJobs } from "@/lib/cron-helpers"
 
 const PHISHNET_API_BASE = "https://api.phish.net/v5"
 
@@ -71,6 +72,17 @@ export async function POST(request: Request) {
     }
 
     console.log("[Sync Song Stats] Authorization successful")
+
+    // Check if cron jobs should run (only when tours are active)
+    const { shouldRun, reason } = await shouldRunCronJobs()
+    if (!shouldRun) {
+      console.log(`[Sync Song Stats] Skipping: ${reason}`)
+      return NextResponse.json({ skipped: true, reason }, { status: 200 })
+    }
+
+    console.log(
+      "[Sync Song Stats] Active tours found, proceeding with song stats sync"
+    )
 
     // Fetch songs from Phish.net
     const songs = await fetchSongs()
