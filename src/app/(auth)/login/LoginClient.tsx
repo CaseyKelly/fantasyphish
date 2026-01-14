@@ -186,6 +186,15 @@ function LoginForm() {
             Sign up
           </Link>
         </p>
+
+        <p className="mt-4 text-center text-sm">
+          <Link
+            href="/forgot-password"
+            className="text-[#c23a3a] hover:text-[#d64545] font-medium"
+          >
+            Forgot password?
+          </Link>
+        </p>
       </CardContent>
     </Card>
   )
