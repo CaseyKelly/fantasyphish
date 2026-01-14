@@ -12,18 +12,20 @@ datasource db {
 }
 
 model User {
-  id                 String    @id @default(cuid())
-  email              String    @unique
-  username           String    @unique @default("")
-  passwordHash       String
-  emailVerified      DateTime?
-  verificationToken  String?   @unique
-  verificationExpiry DateTime?
-  isAdmin            Boolean   @default(false)
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  submissions        Submission[]
-  achievements       UserAchievement[]
+  id                    String    @id @default(cuid())
+  email                 String    @unique
+  username              String    @unique @default("")
+  passwordHash          String
+  emailVerified         DateTime?
+  verificationToken     String?   @unique
+  verificationExpiry    DateTime?
+  passwordResetToken    String?   @unique
+  passwordResetExpiry   DateTime?
+  isAdmin               Boolean   @default(false)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  submissions           Submission[]
+  achievements          UserAchievement[]
 }
 
 model Tour {
