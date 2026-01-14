@@ -4,6 +4,7 @@ import { getSetlist, isShowComplete, parseSetlist } from "@/lib/phishnet"
 import { scoreSubmissionProgressive } from "@/lib/scoring"
 import { processPickAchievements } from "@/lib/achievement-awards"
 import { withRetry } from "@/lib/db-retry"
+import { shouldRunCronJobs } from "@/lib/cron-helpers"
 
 // Force dynamic rendering and disable caching
 export const dynamic = "force-dynamic"
@@ -46,6 +47,15 @@ export async function POST(request: Request) {
     }
 
     console.log("[Score:POST] Authorization successful")
+
+    // Check if cron jobs should run (only when tours are active)
+    const { shouldRun, reason } = await shouldRunCronJobs()
+    if (!shouldRun) {
+      console.log(`[Score:POST] Skipping: ${reason}`)
+      return NextResponse.json({ skipped: true, reason }, { status: 200 })
+    }
+
+    console.log("[Score:POST] Active tours found, proceeding with scoring")
 
     // Find shows that need scoring:
     // 1. Shows with locked picks (lockTime has passed)
