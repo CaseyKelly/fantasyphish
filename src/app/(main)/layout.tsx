@@ -11,13 +11,12 @@ export default async function MainLayout({
 }) {
   const session = await auth()
 
-  if (!session) {
-    redirect("/login")
-  }
+  // Allow optional authentication for public pages (leaderboard, results_detail)
+  // Individual pages handle their own auth requirements if needed
 
   return (
     <div className="min-h-screen flex flex-col">
-      <ImpersonationBanner />
+      {session && <ImpersonationBanner />}
       <Navbar />
       <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
         {children}
