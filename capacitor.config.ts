@@ -5,9 +5,9 @@ const config: CapacitorConfig = {
   appName: "Fantasy Phish",
   webDir: "out",
   server: {
-    // Use the production URL for the app
+    // Use the production URL for the app (with www to match redirect)
     // For local development, change to: http://localhost:3000
-    url: process.env.NEXT_PUBLIC_APP_URL || "https://fantasyphish.com",
+    url: process.env.NEXT_PUBLIC_APP_URL || "https://www.fantasyphish.com",
     cleartext: true,
   },
   plugins: {
