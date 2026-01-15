@@ -1,0 +1,125 @@
+name: Lighthouse CI
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  lighthouse:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: lighthouse_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Setup database schema
+        run: npm run db:push
+        env:
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/lighthouse_test"
+
+      - name: Build production app
+        run: npm run build
+        env:
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/lighthouse_test"
+          AUTH_SECRET: "lighthouse-test-secret"
+          NEXTAUTH_SECRET: "lighthouse-test-secret"
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          PHISHNET_API_KEY: "mock-key"
+          RESEND_API_KEY: "re_mock_key_for_lighthouse"
+
+      - name: Start production server
+        run: npm start &
+        env:
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/lighthouse_test"
+          AUTH_SECRET: "lighthouse-test-secret"
+          NEXTAUTH_SECRET: "lighthouse-test-secret"
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          PHISHNET_API_KEY: "mock-key"
+          RESEND_API_KEY: "re_mock_key_for_lighthouse"
+
+      - name: Wait for server
+        run: npx wait-on http://localhost:3000 --timeout 60000
+
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            http://localhost:3000
+            http://localhost:3000/leaderboard
+            http://localhost:3000/picks
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+
+      - name: Format Lighthouse scores
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const links = JSON.parse(fs.readFileSync('.lighthouseci/links.json', 'utf8'));
+            const results = JSON.parse(fs.readFileSync('.lighthouseci/manifest.json', 'utf8'));
+
+            let comment = '## Lighthouse Report\n\n';
+            comment += '| URL | Performance | Accessibility | Best Practices | SEO | Report |\n';
+            comment += '|-----|-------------|---------------|----------------|-----|--------|\n';
+
+            for (let i = 0; i < results.length; i++) {
+              const result = results[i];
+              const report = JSON.parse(fs.readFileSync(result.jsonPath, 'utf8'));
+              const url = new URL(report.finalUrl).pathname || '/';
+              const scores = report.categories;
+              
+              const formatScore = (score) => {
+                const percentage = Math.round(score * 100);
+                let emoji = '🔴';
+                if (percentage >= 90) emoji = '🟢';
+                else if (percentage >= 50) emoji = '🟡';
+                return `${emoji} ${percentage}`;
+              };
+              
+              // Get the report link from links.json
+              const reportUrl = links[report.finalUrl] || result.summary;
+              const reportLink = reportUrl ? `[📊 View](${reportUrl})` : 'N/A';
+              
+              comment += `| ${url} | ${formatScore(scores.performance.score)} | ${formatScore(scores.accessibility.score)} | ${formatScore(scores['best-practices'].score)} | ${formatScore(scores.seo.score)} | ${reportLink} |\n`;
+            }
+
+            comment += '\n---\n';
+            comment += '*Performance scores: 🟢 90+ | 🟡 50-89 | 🔴 0-49*';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
