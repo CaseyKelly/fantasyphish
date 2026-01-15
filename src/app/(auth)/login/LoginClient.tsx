@@ -93,54 +93,12 @@ function LoginForm() {
   }, [authError])
 
   const handleBiometricLogin = async () => {
-    setError("")
-    setIsLoading(true)
-
-    try {
-      // Get stored credentials
-      const storedEmail = localStorage.getItem("biometric-email")
-      const storedPassword = localStorage.getItem("biometric-password")
-
-      if (!storedEmail || !storedPassword) {
-        setError(
-          "No saved credentials. Please log in with email/password first and enable biometric login."
-        )
-        setIsLoading(false)
-        return
-      }
-
-      // Authenticate with biometrics
-      const authenticated = await authenticateWithBiometrics(
-        "Authenticate to sign in to FantasyPhish"
-      )
-
-      if (!authenticated) {
-        setError("Biometric authentication failed or was cancelled.")
-        setIsLoading(false)
-        return
-      }
-
-      // Sign in with stored credentials
-      const result = await signIn("credentials", {
-        email: storedEmail,
-        password: storedPassword,
-        redirect: false,
-      })
-
-      if (result?.error) {
-        setError("Authentication failed. Please try signing in manually.")
-        // Clear invalid stored credentials
-        localStorage.removeItem("biometric-email")
-        localStorage.removeItem("biometric-password")
-      } else {
-        router.push(callbackUrl)
-        router.refresh()
-      }
-    } catch {
-      setError("An unexpected error occurred")
-    } finally {
-      setIsLoading(false)
-    }
+    // TODO: Implement secure biometric login with proper secure storage
+    // Current implementation is disabled for security reasons (was storing passwords in localStorage)
+    // Needs: Capacitor SecureStorage plugin or similar secure keychain/keystore solution
+    setError(
+      "Biometric login is temporarily disabled. Please use email/password to sign in."
+    )
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -181,15 +139,10 @@ function LoginForm() {
       if (result?.error) {
         setError("Incorrect password. Please try again.")
       } else {
-        // Successful login - offer to save credentials for biometric login
+        // Successful login - save email only for convenience (NOT password for security)
         if (biometricAvailable && isNativePlatform()) {
-          const shouldSave = confirm(
-            `Enable ${biometricType || "biometric"} login for next time?`
-          )
-          if (shouldSave) {
-            localStorage.setItem("biometric-email", email)
-            localStorage.setItem("biometric-password", password)
-          }
+          // Only store email for form convenience, never store passwords in localStorage
+          localStorage.setItem("biometric-email", email)
         }
         router.push(callbackUrl)
         router.refresh()
