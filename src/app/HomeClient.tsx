@@ -196,7 +196,7 @@ export function HomeClient() {
                   Log In
                 </Link>
                 <Link href="/register">
-                  <Button>Sign Up</Button>
+                  <Button className="whitespace-nowrap">Sign Up</Button>
                 </Link>
               </div>
             </div>
