@@ -13,6 +13,9 @@ const nextConfig: NextConfig = {
             key: "X-DNS-Prefetch-Control",
             value: "on",
           },
+          // X-Frame-Options: SAMEORIGIN allows the site to be loaded in Capacitor WebView
+          // since the native app loads from the same origin (fantasyphish.com)
+          // This prevents clickjacking while allowing native mobile app functionality
           {
             key: "X-Frame-Options",
             value: "SAMEORIGIN",
