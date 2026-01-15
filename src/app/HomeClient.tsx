@@ -175,28 +175,30 @@ export function HomeClient() {
       {/* Hero Section */}
       <header className="relative overflow-hidden">
         <nav className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between gap-3">
             <div className="flex items-center space-x-2">
               <DonutLogo size="lg" />
               <span className="text-xl font-bold text-white">FantasyPhish</span>
             </div>
-            <div className="flex items-center space-x-6">
+            <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-4 lg:gap-6">
               <Link
                 href="/leaderboard"
-                className="flex items-center space-x-2 px-4 py-2 bg-[#c23a3a]/10 border border-[#c23a3a]/30 rounded-lg text-[#c23a3a] hover:bg-[#c23a3a]/20 hover:border-[#c23a3a]/50 transition-all"
+                className="flex items-center space-x-2 px-4 py-2 bg-[#c23a3a]/10 border border-[#c23a3a]/30 rounded-lg text-[#c23a3a] hover:bg-[#c23a3a]/20 hover:border-[#c23a3a]/50 transition-all order-2 sm:order-1"
               >
-                <Trophy className="h-4 w-4" />
+                <Trophy className="h-4 w-4 flex-shrink-0" />
                 <span className="font-semibold">Leaderboard</span>
               </Link>
-              <Link
-                href="/login"
-                className="text-gray-300 hover:text-white transition-colors"
-              >
-                Log In
-              </Link>
-              <Link href="/register">
-                <Button>Sign Up</Button>
-              </Link>
+              <div className="flex items-center gap-3 order-1 sm:order-2">
+                <Link
+                  href="/login"
+                  className="text-gray-300 hover:text-white transition-colors whitespace-nowrap"
+                >
+                  Log In
+                </Link>
+                <Link href="/register">
+                  <Button className="whitespace-nowrap">Sign Up</Button>
+                </Link>
+              </div>
             </div>
           </div>
         </nav>
