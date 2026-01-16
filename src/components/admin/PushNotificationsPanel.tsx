@@ -1,10 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import {
-  getNotificationStats,
-  getRecentNotificationLogs,
-} from "@/lib/notifications"
 
 type NotificationStats = {
   totalActiveTokens: number
@@ -52,12 +48,16 @@ export function PushNotificationsPanel() {
   async function loadData() {
     try {
       setLoading(true)
-      const [statsData, logsData] = await Promise.all([
-        getNotificationStats(),
-        getRecentNotificationLogs(20),
+      const [statsRes, logsRes] = await Promise.all([
+        fetch("/api/admin/notification-stats"),
+        fetch("/api/admin/notification-logs?limit=20"),
       ])
+
+      const statsData = await statsRes.json()
+      const logsData = await logsRes.json()
+
       setStats(statsData)
-      setLogs(logsData)
+      setLogs(logsData.logs)
     } catch (err) {
       setError("Failed to load notification data")
       console.error(err)
