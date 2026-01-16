@@ -23,10 +23,10 @@ class DioClient {
   BaseOptions _getBaseOptions() {
     // For iOS Simulator, use 127.0.0.1 or localhost should work
     // For Android Emulator, use 10.0.2.2
-    // For physical device, use your computer's IP address
+    // For physical device, use your computer's IP address (192.168.50.166)
     const baseUrl = String.fromEnvironment(
       'API_URL',
-      defaultValue: 'http://127.0.0.1:3000',
+      defaultValue: 'http://192.168.50.166:3000',
     );
 
     return BaseOptions(

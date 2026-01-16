@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
       },
       select: {
         id: true,
+        username: true,
         email: true,
         submissions: {
           where: submissionWhere,
@@ -53,9 +54,10 @@ export async function GET(request: NextRequest) {
     const rankedUsers = leaderboard
       .map((user) => ({
         userId: user.id,
+        username: user.username,
         email: user.email,
-        // Mask email for privacy
-        displayName: user.email.split("@")[0].slice(0, 3) + "***",
+        // Use username, no masking
+        displayName: user.username,
         totalPoints: user.submissions.reduce(
           (sum, sub) => sum + (sub.totalPoints || 0),
           0

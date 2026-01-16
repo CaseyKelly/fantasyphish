@@ -138,23 +138,45 @@ class LeaderboardScreen extends ConsumerWidget {
           : AppTheme.cardDecoration,
       child: Row(
         children: [
-          // Rank
+          // Rank with stars for top 3
           SizedBox(
-            width: 40,
-            child: Text(
-              '#${entry.rank}',
-              style: TextStyle(
-                fontSize: entry.rank <= 3 ? 20 : 16,
-                fontWeight: FontWeight.bold,
-                color: entry.rank == 1
-                    ? Colors.amber
-                    : entry.rank == 2
-                        ? Colors.grey.shade400
-                        : entry.rank == 3
-                            ? Colors.orange.shade300
-                            : Colors.white70,
-              ),
-            ),
+            width: 50,
+            child: entry.rank <= 3
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.star,
+                        size: 24,
+                        color: entry.rank == 1
+                            ? Colors.amber
+                            : entry.rank == 2
+                                ? Colors.grey.shade300
+                                : Colors.orange.shade300,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '#${entry.rank}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: entry.rank == 1
+                              ? Colors.amber
+                              : entry.rank == 2
+                                  ? Colors.grey.shade300
+                                  : Colors.orange.shade300,
+                        ),
+                      ),
+                    ],
+                  )
+                : Text(
+                    '#${entry.rank}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white70,
+                    ),
+                  ),
           ),
           const SizedBox(width: 12),
           
