@@ -1,0 +1,56 @@
+name: fantasyphish_mobile
+description: Fantasy Phish mobile app - Pick 13 songs before each show and compete on the leaderboard
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.2.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management
+  flutter_riverpod: ^2.5.1
+
+  # API & Networking
+  dio: ^5.4.3
+  dio_cookie_manager: ^3.1.1
+  cookie_jar: ^4.0.8
+  json_annotation: ^4.9.0
+
+  # Storage
+  flutter_secure_storage: ^10.0.0
+  shared_preferences: ^2.2.3
+
+  # UI Components
+  flutter_svg: ^2.0.10
+  cached_network_image: ^3.3.1
+  shimmer: ^3.0.0
+
+  # Navigation
+  go_router: ^14.0.2
+
+  # Utilities
+  intl: ^0.19.0
+  timezone: ^0.9.3
+  logger: ^2.3.0
+
+  # Icons
+  cupertino_icons: ^1.0.6
+  local_auth: ^3.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+  # Code Generation
+  build_runner: ^2.4.9
+  json_serializable: ^6.8.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
