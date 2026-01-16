@@ -12,7 +12,8 @@ class ApiService {
 
   // Auth endpoints
   Future<AuthResponse> register(RegisterRequest request) async {
-    final response = await _dio.post('/api/auth/register', data: request.toJson());
+    final response =
+        await _dio.post('/api/auth/register', data: request.toJson());
     return AuthResponse.fromJson(response.data);
   }
 
@@ -31,8 +32,10 @@ class ApiService {
     return response.data;
   }
 
-  Future<Map<String, dynamic>> resendVerification(Map<String, dynamic> body) async {
-    final response = await _dio.post('/api/auth/resend-verification', data: body);
+  Future<Map<String, dynamic>> resendVerification(
+      Map<String, dynamic> body) async {
+    final response =
+        await _dio.post('/api/auth/resend-verification', data: body);
     return response.data;
   }
 
@@ -102,5 +105,23 @@ class ApiService {
   Future<Map<String, dynamic>> getUserAchievements() async {
     final response = await _dio.get('/api/user/achievements');
     return response.data as Map<String, dynamic>;
+  }
+
+  // Push notifications endpoints
+  Future<void> registerPushToken(Map<String, dynamic> body) async {
+    await _dio.post('/api/push/register', data: body);
+  }
+
+  Future<void> unregisterPushToken(Map<String, dynamic> body) async {
+    await _dio.delete('/api/push/unregister', data: body);
+  }
+
+  Future<Map<String, dynamic>> getNotificationPreferences() async {
+    final response = await _dio.get('/api/user/notification-preferences');
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<void> updateNotificationPreferences(Map<String, dynamic> body) async {
+    await _dio.put('/api/user/notification-preferences', data: body);
   }
 }

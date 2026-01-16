@@ -26,11 +26,14 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _biometricService = BiometricService();
   bool _biometricEnabled = false;
+  bool _notificationsEnabled = true;
+  bool _loadingNotifications = true;
 
   @override
   void initState() {
     super.initState();
     _checkBiometricStatus();
+    _loadNotificationPreferences();
   }
 
   Future<void> _checkBiometricStatus() async {
@@ -39,6 +42,61 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       setState(() {
         _biometricEnabled = enabled;
       });
+    }
+  }
+
+  Future<void> _loadNotificationPreferences() async {
+    try {
+      final apiService = ApiService(DioClient().dio);
+      final prefs = await apiService.getNotificationPreferences();
+      if (mounted) {
+        setState(() {
+          _notificationsEnabled = prefs['pickRemindersEnabled'] ?? true;
+          _loadingNotifications = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _loadingNotifications = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _toggleNotifications(bool value) async {
+    setState(() {
+      _notificationsEnabled = value;
+    });
+
+    try {
+      final apiService = ApiService(DioClient().dio);
+      await apiService.updateNotificationPreferences({
+        'pickRemindersEnabled': value,
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                value ? 'Pick reminders enabled' : 'Pick reminders disabled'),
+          ),
+        );
+      }
+    } catch (e) {
+      // Revert on error
+      setState(() {
+        _notificationsEnabled = !value;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to update notification preferences'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -218,6 +276,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   onTap: _toggleBiometric,
                 ),
               if (_biometricEnabled) const SizedBox(height: 8),
+              _buildNotificationToggle(),
+              const SizedBox(height: 8),
               _buildSettingsCard(
                 context,
                 icon: Icons.help_outline,
@@ -331,7 +391,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             itemCount: achievements.length,
             itemBuilder: (context, index) {
               final achievement = achievements[index];
-              
+
               return GestureDetector(
                 onTap: () => _showAchievementDialog(
                   context,
@@ -391,7 +451,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  void _showAchievementDialog(BuildContext context, String title, String description, DateTime earnedAt) {
+  void _showAchievementDialog(BuildContext context, String title,
+      String description, DateTime earnedAt) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -428,6 +489,36 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: const Text('Close'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildNotificationToggle() {
+    return Container(
+      decoration: AppTheme.cardDecoration,
+      child: ListTile(
+        leading: const Icon(Icons.notifications_outlined),
+        title: const Text('Pick Reminders'),
+        subtitle: Text(
+          _notificationsEnabled
+              ? 'Get notified 1 hour before shows'
+              : 'Disabled',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey.shade400,
+          ),
+        ),
+        trailing: _loadingNotifications
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Switch(
+                value: _notificationsEnabled,
+                onChanged: _toggleNotifications,
+                activeColor: AppTheme.accentColor,
+              ),
       ),
     );
   }
