@@ -10,6 +10,20 @@ const prisma = new PrismaClient()
 
 const PHISHNET_API_BASE = "https://api.phish.net/v5"
 
+/**
+ * Check if a tour name indicates the show is not part of a real tour.
+ * Shows with these tour names should have tourId set to null.
+ */
+function isNotPartOfTour(tourName: string): boolean {
+  const normalizedName = tourName.trim().toLowerCase()
+  return (
+    normalizedName === "" ||
+    normalizedName === "not part of a tour" ||
+    normalizedName === "not part of tour" ||
+    normalizedName.includes("not part of")
+  )
+}
+
 interface PhishNetShow {
   showid: number
   showdate: string
@@ -63,10 +77,17 @@ async function syncYear(year: number): Promise<void> {
   const shows = allShows.filter((show) => show.artistid === 1)
   console.log(`Filtered to ${shows.length} Phish shows`)
 
-  // Group shows by tour
+  // Group shows by tour (excluding shows that are "not part of a tour")
   const tourMap = new Map<number, { name: string; shows: PhishNetShow[] }>()
+  const nonTourShows: PhishNetShow[] = [] // Shows not part of any real tour
 
   for (const show of shows) {
+    // Skip shows that are "not part of a tour" - treat them as standalone shows
+    if (isNotPartOfTour(show.tour_name)) {
+      nonTourShows.push(show)
+      continue
+    }
+
     if (!tourMap.has(show.tourid)) {
       tourMap.set(show.tourid, {
         name: show.tour_name,
@@ -77,6 +98,11 @@ async function syncYear(year: number): Promise<void> {
   }
 
   console.log(`Found ${tourMap.size} tours`)
+  if (nonTourShows.length > 0) {
+    console.log(
+      `Found ${nonTourShows.length} shows not part of any tour (standalone shows)`
+    )
+  }
 
   // Create/update tours and shows
   for (const [tourId, tourData] of tourMap) {
@@ -148,6 +174,49 @@ async function syncYear(year: number): Promise<void> {
     }
 
     console.log(`  - ${tourData.shows.length} shows synced`)
+  }
+
+  // Process shows that are not part of any tour
+  if (nonTourShows.length > 0) {
+    console.log(`\nProcessing ${nonTourShows.length} standalone shows...`)
+    for (const show of nonTourShows) {
+      // Normalize showDate to midnight UTC to prevent duplicate shows
+      const showDate = new Date(show.showdate)
+      showDate.setUTCHours(0, 0, 0, 0)
+
+      const timezone = getTimezoneForLocation(show.state)
+      const lockTime = getShowLockTime(showDate, timezone)
+
+      // Determine if show is complete
+      const now = new Date()
+      const isComplete = now > lockTime
+
+      await prisma.show.upsert({
+        where: { showDate: showDate },
+        create: {
+          showDate: showDate,
+          venue: show.venue,
+          city: show.city,
+          state: show.state,
+          country: show.country,
+          tourId: null, // No tour association
+          timezone: timezone,
+          lockTime: lockTime,
+          isComplete: isComplete,
+        },
+        update: {
+          venue: show.venue,
+          city: show.city,
+          state: show.state,
+          country: show.country,
+          tourId: null, // Unlink from any tour
+          timezone: timezone,
+          lockTime: lockTime,
+          isComplete: isComplete,
+        },
+      })
+    }
+    console.log(`  - ${nonTourShows.length} standalone shows synced`)
   }
 }
 

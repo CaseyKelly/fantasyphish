@@ -6,6 +6,20 @@ import { shouldRunCronJobs } from "@/lib/cron-helpers"
 
 const PHISHNET_API_BASE = "https://api.phish.net/v5"
 
+/**
+ * Check if a tour name indicates the show is not part of a real tour.
+ * Shows with these tour names should have tourId set to null.
+ */
+function isNotPartOfTour(tourName: string): boolean {
+  const normalizedName = tourName.trim().toLowerCase()
+  return (
+    normalizedName === "" ||
+    normalizedName === "not part of a tour" ||
+    normalizedName === "not part of tour" ||
+    normalizedName.includes("not part of")
+  )
+}
+
 interface PhishNetShow {
   showid: number
   showdate: string
@@ -69,10 +83,17 @@ async function syncYear(year: number): Promise<{
   const shows = allShows.filter((show) => show.artistid === 1)
   console.log(`[Sync Tours] Filtered to ${shows.length} Phish shows`)
 
-  // Group shows by tour
+  // Group shows by tour (excluding shows that are "not part of a tour")
   const tourMap = new Map<number, { name: string; shows: PhishNetShow[] }>()
+  const nonTourShows: PhishNetShow[] = [] // Shows not part of any real tour
 
   for (const show of shows) {
+    // Skip shows that are "not part of a tour" - treat them as standalone shows
+    if (isNotPartOfTour(show.tour_name)) {
+      nonTourShows.push(show)
+      continue
+    }
+
     if (!tourMap.has(show.tourid)) {
       tourMap.set(show.tourid, {
         name: show.tour_name,
@@ -241,6 +262,77 @@ async function syncYear(year: number): Promise<{
       } else {
         showsSkipped++
       }
+    }
+  }
+
+  // Process shows that are not part of any tour
+  console.log(
+    `[Sync Tours] Processing ${nonTourShows.length} shows not part of a tour`
+  )
+  for (const show of nonTourShows) {
+    // Normalize showDate to midnight UTC to prevent duplicate shows
+    const showDate = new Date(show.showdate)
+    showDate.setUTCHours(0, 0, 0, 0)
+
+    const timezone = getTimezoneForLocation(show.state)
+    const lockTime = getShowLockTime(showDate, timezone)
+
+    const existingShow = existingShowsMap.get(showDate.getTime())
+
+    // Don't update shows that have already been scored
+    if (existingShow?.isComplete) {
+      showsSkippedComplete++
+      continue
+    }
+
+    const showNeedsUpdate =
+      !existingShow ||
+      existingShow.venue !== show.venue ||
+      existingShow.city !== show.city ||
+      existingShow.state !== show.state ||
+      existingShow.country !== show.country ||
+      existingShow.tourId !== null || // Update if currently linked to a tour
+      existingShow.timezone !== timezone ||
+      existingShow.lockTime?.getTime() !== lockTime.getTime()
+
+    if (!existingShow) {
+      await withRetry(
+        async () =>
+          prisma.show.create({
+            data: {
+              showDate: showDate,
+              venue: show.venue,
+              city: show.city,
+              state: show.state,
+              country: show.country,
+              tourId: null, // No tour association
+              timezone: timezone,
+              lockTime: lockTime,
+            },
+          }),
+        { operationName: `create standalone show ${show.venue}` }
+      )
+      showsCreated++
+    } else if (showNeedsUpdate) {
+      await withRetry(
+        async () =>
+          prisma.show.update({
+            where: { showDate: showDate },
+            data: {
+              venue: show.venue,
+              city: show.city,
+              state: show.state,
+              country: show.country,
+              tourId: null, // Unlink from any tour
+              timezone: timezone,
+              lockTime: lockTime,
+            },
+          }),
+        { operationName: `update standalone show ${show.venue}` }
+      )
+      showsUpdated++
+    } else {
+      showsSkipped++
     }
   }
 
