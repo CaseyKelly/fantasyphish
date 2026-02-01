@@ -20,7 +20,7 @@ function isNotPartOfTour(tourName: string): boolean {
     normalizedName === "" ||
     normalizedName === "not part of a tour" ||
     normalizedName === "not part of tour" ||
-    normalizedName.includes("not part of")
+    normalizedName.startsWith("not part of") // More precise than includes
   )
 }
 

@@ -16,7 +16,7 @@ function isNotPartOfTour(tourName: string): boolean {
     normalizedName === "" ||
     normalizedName === "not part of a tour" ||
     normalizedName === "not part of tour" ||
-    normalizedName.includes("not part of")
+    normalizedName.startsWith("not part of") // More precise than includes
   )
 }
 
@@ -291,7 +291,7 @@ async function syncYear(year: number): Promise<{
       existingShow.city !== show.city ||
       existingShow.state !== show.state ||
       existingShow.country !== show.country ||
-      existingShow.tourId !== null || // Update if currently linked to a tour
+      (existingShow.tourId !== null && existingShow.tourId !== undefined) || // Only update if currently linked to a tour
       existingShow.timezone !== timezone ||
       existingShow.lockTime?.getTime() !== lockTime.getTime()
 
