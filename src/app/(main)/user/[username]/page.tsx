@@ -4,6 +4,40 @@ import { User, Calendar, Trophy, Target, TrendingUp, Star } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { AchievementBadge } from "@/components/AchievementBadge"
 import { notFound } from "next/navigation"
+import { Metadata } from "next"
+
+interface UserPageProps {
+  params: Promise<{ username: string }>
+}
+
+export async function generateMetadata({
+  params,
+}: UserPageProps): Promise<Metadata> {
+  const { username } = await params
+
+  const user = await prisma.user.findUnique({
+    where: { username },
+    select: { username: true },
+  })
+
+  if (!user) {
+    return {
+      title: "User Not Found",
+    }
+  }
+
+  return {
+    title: `${username}'s Profile`,
+    description: `View ${username}'s FantasyPhish profile, achievements, and game stats.`,
+    openGraph: {
+      title: `${username}'s Profile | FantasyPhish`,
+      description: `View ${username}'s FantasyPhish profile, achievements, and game stats.`,
+    },
+    alternates: {
+      canonical: `/user/${username}`,
+    },
+  }
+}
 
 async function getUserProfile(username: string) {
   const now = new Date()
@@ -110,11 +144,7 @@ async function getUserProfile(username: string) {
   }
 }
 
-export default async function UserProfilePage({
-  params,
-}: {
-  params: Promise<{ username: string }>
-}) {
+export default async function UserProfilePage({ params }: UserPageProps) {
   const { username } = await params
   const profile = await getUserProfile(username)
 

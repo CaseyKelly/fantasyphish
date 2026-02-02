@@ -31,6 +31,9 @@ export async function generateMetadata({
       title: `${tour.name} Leaderboard | FantasyPhish`,
       description: `View the final leaderboard and results for ${tour.name}.`,
     },
+    alternates: {
+      canonical: `/leaderboard/${tourId}`,
+    },
   }
 }
 
