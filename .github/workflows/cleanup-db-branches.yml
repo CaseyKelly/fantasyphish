@@ -92,7 +92,14 @@ jobs:
           echo "🧹 Running orphaned branch cleanup..."
           echo "This will delete archived and old preview branches"
 
-          # Run the cleanup script in non-interactive mode
-          npx tsx scripts/cleanup-neon-branches.ts || echo "Cleanup completed with warnings"
-
-          echo "✅ Orphaned branch cleanup complete"
+          # Run the cleanup script in non-interactive mode and report detailed status
+          if ! output=$(npx tsx scripts/cleanup-neon-branches.ts 2>&1); then
+            status=$?
+            echo "⚠️ Cleanup script completed with warnings or errors (exit code ${status})."
+            echo "----- Cleanup script output start -----"
+            echo "${output}"
+            echo "----- Cleanup script output end -----"
+          else
+            echo "${output}"
+            echo "✅ Orphaned branch cleanup complete"
+          fi
