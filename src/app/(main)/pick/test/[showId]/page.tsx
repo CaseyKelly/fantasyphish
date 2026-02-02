@@ -3,9 +3,28 @@ import { prisma } from "@/lib/prisma"
 import { notFound, redirect } from "next/navigation"
 import { isAdminFeaturesEnabled } from "@/lib/env"
 import { SongPicker } from "@/components/SongPicker"
+import { Metadata } from "next"
 
 interface TestPickPageProps {
   params: Promise<{ showId: string }>
+}
+
+export async function generateMetadata({
+  params,
+}: TestPickPageProps): Promise<Metadata> {
+  const { showId } = await params
+
+  return {
+    title: "Test Submission",
+    description: "Admin page for testing submissions.",
+    alternates: {
+      canonical: `/pick/test/${showId}`,
+    },
+    robots: {
+      index: false,
+      follow: false,
+    },
+  }
 }
 
 async function getShowData(showId: string) {

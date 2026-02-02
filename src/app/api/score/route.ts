@@ -169,7 +169,7 @@ export async function POST(request: Request) {
         updateData.encoreStartedAt = new Date()
         updateData.lastEncoreCount = currentEncoreCount
         console.log(
-          `[Score:POST]   ✓ Encore just started - will continue scoring for 30 minutes`
+          `[Score:POST]   ✓ Encore just started - will continue scoring for 60 minutes`
         )
       }
 
@@ -178,7 +178,7 @@ export async function POST(request: Request) {
         updateData.encoreStartedAt = new Date()
         updateData.lastEncoreCount = currentEncoreCount
         console.log(
-          `[Score:POST]   ✓ New encore song(s) added (${show.lastEncoreCount} → ${currentEncoreCount}) - resetting 30-minute timer`
+          `[Score:POST]   ✓ New encore song(s) added (${show.lastEncoreCount} → ${currentEncoreCount}) - resetting 60-minute timer`
         )
       }
 

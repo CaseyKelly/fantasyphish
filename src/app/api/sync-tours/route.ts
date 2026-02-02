@@ -192,6 +192,16 @@ async function syncYear(year: number): Promise<{
         continue
       }
 
+      // Don't update shows assigned to custom tours (tours not from phish.net)
+      // Custom tours have IDs that don't start with "phishnet-"
+      if (
+        existingShow?.tourId &&
+        !existingShow.tourId.startsWith("phishnet-")
+      ) {
+        showsSkipped++
+        continue
+      }
+
       const showNeedsUpdate =
         !existingShow ||
         existingShow.venue !== show.venue ||

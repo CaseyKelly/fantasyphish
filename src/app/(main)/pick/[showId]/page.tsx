@@ -3,9 +3,49 @@ import { prisma } from "@/lib/prisma"
 import { notFound, redirect } from "next/navigation"
 import { hasShowStarted } from "@/lib/phishnet"
 import { SongPicker } from "@/components/SongPicker"
+import { Metadata } from "next"
 
 interface PickPageProps {
   params: Promise<{ showId: string }>
+}
+
+export async function generateMetadata({
+  params,
+}: PickPageProps): Promise<Metadata> {
+  const { showId } = await params
+
+  const show = await prisma.show.findUnique({
+    where: { id: showId },
+    include: { tour: true },
+  })
+
+  if (!show) {
+    return {
+      title: "Show Not Found",
+    }
+  }
+
+  const showDateStr = new Date(show.showDate).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  })
+
+  const title = `Make Picks for Phish at ${show.venue} - ${show.city}, ${show.state}`
+  const tourInfo = show.tour ? ` Part of the ${show.tour.name}.` : ""
+  const description = `Make your song picks for Phish at ${show.venue} in ${show.city}, ${show.state} on ${showDateStr}.${tourInfo}`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title: `${title} | FantasyPhish`,
+      description,
+    },
+    alternates: {
+      canonical: `/pick/${showId}`,
+    },
+  }
 }
 
 async function getShowData(showId: string, userId: string) {

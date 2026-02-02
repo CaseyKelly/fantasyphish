@@ -2,7 +2,22 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { isAdminFeaturesEnabled } from "@/lib/env"
+import { Metadata } from "next"
 import ResultsClient from "./ResultsClient"
+
+export const metadata: Metadata = {
+  title: "Results",
+  description:
+    "View your FantasyPhish game results, scores, and performance across all shows you've played.",
+  openGraph: {
+    title: "Results | FantasyPhish",
+    description:
+      "View your FantasyPhish game results, scores, and performance across all shows you've played.",
+  },
+  alternates: {
+    canonical: "/results",
+  },
+}
 
 async function getResults(userId: string) {
   const submissions = await prisma.submission.findMany({
