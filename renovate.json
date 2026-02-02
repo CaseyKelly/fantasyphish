@@ -1,0 +1,167 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommits", ":dependencyDashboard"],
+  "schedule": ["before 10am on monday"],
+  "timezone": "America/New_York",
+  "labels": ["dependencies"],
+  "prConcurrentLimit": 3,
+  "branchConcurrentLimit": 5,
+  "prCreation": "not-pending",
+  "rebaseWhen": "behind-base-branch",
+  "packageRules": [
+    {
+      "description": "Next.js ecosystem - group major updates for testing together",
+      "groupName": "Next.js ecosystem",
+      "matchPackageNames": ["next", "eslint-config-next"],
+      "matchPackagePatterns": ["^@next/"],
+      "automerge": false,
+      "schedule": ["before 10am on monday"]
+    },
+    {
+      "description": "React ecosystem - pin versions, manual updates only",
+      "groupName": "React",
+      "matchPackageNames": [
+        "react",
+        "react-dom",
+        "@types/react",
+        "@types/react-dom"
+      ],
+      "automerge": false,
+      "rangeStrategy": "pin",
+      "schedule": ["before 10am on monday"]
+    },
+    {
+      "description": "Prisma - requires schema review and potential migrations",
+      "groupName": "Prisma",
+      "matchPackageNames": ["prisma", "@prisma/client"],
+      "automerge": false,
+      "labels": ["dependencies", "database"],
+      "schedule": ["before 10am on monday"],
+      "prBodyNotes": [
+        "⚠️ **Database Migration Required:** Review schema changes and run `npm run db:migrate` before merging.",
+        "Test with: `npm run db:push` locally, then run E2E tests."
+      ]
+    },
+    {
+      "description": "NextAuth beta - needs careful review",
+      "groupName": "NextAuth",
+      "matchPackageNames": ["next-auth"],
+      "matchPackagePatterns": ["^@auth/"],
+      "automerge": false,
+      "labels": ["dependencies", "authentication"],
+      "schedule": ["before 10am on monday"],
+      "prBodyNotes": [
+        "⚠️ **Breaking Changes Possible:** NextAuth is in beta. Review changelog carefully.",
+        "Test authentication flows: registration, login, email verification, password reset."
+      ]
+    },
+    {
+      "description": "Testing tools - group together",
+      "groupName": "Testing tools",
+      "matchPackageNames": ["@playwright/test", "dotenv"],
+      "automerge": false,
+      "schedule": ["before 10am on monday"]
+    },
+    {
+      "description": "TypeScript and type definitions - group minor/patch",
+      "groupName": "TypeScript and types",
+      "matchPackageNames": ["typescript", "tsx"],
+      "matchPackagePatterns": ["^@types/"],
+      "automerge": true,
+      "automergeType": "pr",
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "description": "Linting and formatting - automerge minor/patch",
+      "groupName": "Linting and formatting",
+      "matchPackageNames": ["eslint", "prettier", "lint-staged", "husky"],
+      "matchPackagePatterns": ["^eslint-", "^@typescript-eslint/"],
+      "automerge": true,
+      "automergeType": "pr",
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "description": "Build tools and CSS - automerge minor/patch",
+      "groupName": "Build and CSS",
+      "matchPackageNames": ["tailwindcss", "@tailwindcss/postcss"],
+      "automerge": true,
+      "automergeType": "pr",
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "description": "Utility libraries - automerge patch updates only",
+      "groupName": "Utilities",
+      "matchPackageNames": [
+        "date-fns",
+        "date-fns-tz",
+        "zod",
+        "bcryptjs",
+        "@types/bcryptjs",
+        "lucide-react",
+        "sonner"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "matchUpdateTypes": ["patch"]
+    },
+    {
+      "description": "Vercel packages - automerge minor/patch",
+      "groupName": "Vercel",
+      "matchPackagePatterns": ["^@vercel/"],
+      "automerge": true,
+      "automergeType": "pr",
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "description": "Email service - manual review for API changes",
+      "groupName": "Resend",
+      "matchPackageNames": ["resend"],
+      "automerge": false,
+      "labels": ["dependencies", "email"],
+      "prBodyNotes": [
+        "⚠️ **Email Service:** Test email verification flow after updating."
+      ]
+    },
+    {
+      "description": "Major updates always require review",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["dependencies", "major-update"],
+      "prBodyNotes": [
+        "⚠️ **Major Update:** Review breaking changes carefully before merging."
+      ]
+    },
+    {
+      "description": "GitHub Actions - weekly updates, automerge minor/patch",
+      "matchManagers": ["github-actions"],
+      "automerge": true,
+      "automergeType": "pr",
+      "matchUpdateTypes": ["minor", "patch"],
+      "schedule": ["before 10am on monday"]
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security"],
+    "automerge": true,
+    "schedule": ["at any time"]
+  },
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 10am on the first day of the month"],
+    "automerge": true,
+    "automergeType": "pr"
+  },
+  "ignorePresets": [":prHourlyLimit2"],
+  "prHourlyLimit": 0,
+  "stabilityDays": 3,
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "Dependency Updates Dashboard",
+  "dependencyDashboardHeader": "This dashboard provides an overview of all pending dependency updates. Updates are grouped by category and run weekly on Monday mornings.",
+  "semanticCommits": "enabled",
+  "commitMessagePrefix": "chore:",
+  "commitMessageAction": "update",
+  "commitMessageTopic": "{{depName}}",
+  "commitMessageExtra": "to {{newVersion}}",
+  "prFooter": "Co-Authored-By: Renovate Bot <bot@renovateapp.com>"
+}
