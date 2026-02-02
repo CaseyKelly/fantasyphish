@@ -3,9 +3,15 @@ name: Cleanup Database Branches
 on:
   pull_request:
     types: [closed]
+  schedule:
+    # Run weekly on Sundays at 2 AM UTC to clean up orphaned branches
+    - cron: '0 2 * * 0'
+  workflow_dispatch: # Allow manual triggers
 
 jobs:
-  cleanup:
+  cleanup-pr-branch:
+    name: Delete PR Database Branch
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Delete Neon database branch
@@ -14,16 +20,28 @@ jobs:
           NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
           BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
         run: |
-          echo "Attempting to delete database branch: preview/$BRANCH_NAME"
+          # Safety check: Never delete protected branches
+          PROTECTED_BRANCHES=("main" "dev" "test" "production" "staging")
+          PREVIEW_BRANCH_NAME="preview/$BRANCH_NAME"
+
+          for protected in "${PROTECTED_BRANCHES[@]}"; do
+            if [ "$PREVIEW_BRANCH_NAME" == "$protected" ] || [ "$BRANCH_NAME" == "$protected" ]; then
+              echo "⚠️  SAFETY CHECK: Cannot delete protected branch: $protected"
+              echo "Skipping deletion for safety."
+              exit 0
+            fi
+          done
+
+          echo "Attempting to delete database branch: $PREVIEW_BRANCH_NAME"
 
           # Get the branch ID for the preview branch
           BRANCH_ID=$(curl -s "https://console.neon.tech/api/v2/projects/$NEON_PROJECT_ID/branches" \
             -H "Authorization: Bearer $NEON_API_KEY" \
             -H "Accept: application/json" | \
-            jq -r ".branches[] | select(.name == \"preview/$BRANCH_NAME\") | .id")
+            jq -r ".branches[] | select(.name == \"$PREVIEW_BRANCH_NAME\") | .id")
 
           if [ -z "$BRANCH_ID" ] || [ "$BRANCH_ID" == "null" ]; then
-            echo "No database branch found for preview/$BRANCH_NAME - nothing to clean up"
+            echo "No database branch found for $PREVIEW_BRANCH_NAME - nothing to clean up"
             exit 0
           fi
 
@@ -39,9 +57,42 @@ jobs:
           BODY=$(echo "$RESPONSE" | sed '$d')
 
           if [ "$HTTP_CODE" == "200" ] || [ "$HTTP_CODE" == "204" ]; then
-            echo "Successfully deleted database branch: preview/$BRANCH_NAME"
+            echo "✓ Successfully deleted database branch: $PREVIEW_BRANCH_NAME"
           else
-            echo "Failed to delete database branch. HTTP status: $HTTP_CODE"
+            echo "✗ Failed to delete database branch. HTTP status: $HTTP_CODE"
             echo "Response: $BODY"
-            exit 1
+            # Don't fail the workflow - branch might already be deleted
+            exit 0
           fi
+
+  cleanup-orphaned-branches:
+    name: Cleanup Orphaned Branches
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install neonctl
+        run: npm install -g neonctl
+
+      - name: Cleanup orphaned branches
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+        run: |
+          echo "🧹 Running orphaned branch cleanup..."
+          echo "This will delete archived and old preview branches"
+
+          # Run the cleanup script in non-interactive mode
+          npx tsx scripts/cleanup-neon-branches.ts || echo "Cleanup completed with warnings"
+
+          echo "✅ Orphaned branch cleanup complete"

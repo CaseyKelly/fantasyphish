@@ -6,7 +6,7 @@ This document describes the automated cron jobs that keep FantasyPhish's data up
 
 FantasyPhish uses four Vercel cron jobs to automate scoring, tour synchronization, song statistics, and achievements:
 
-1. **Scoring Cron** - Runs every minute to score shows progressively
+1. **Scoring Cron** - Runs every 10 minutes to score shows progressively
 2. **Tour Sync Cron** - Runs daily at 6 AM UTC to sync tour and show data
 3. **Song Stats Sync Cron** - Runs daily at 7 AM UTC (midnight MT) to sync song gap data
 4. **Award Achievements Cron** - Runs daily at 8 AM UTC as a backup to catch missed achievements
@@ -71,18 +71,18 @@ Authorization: Bearer <CRON_SECRET>
    - Fetches current setlist from Phish.net API
    - Compares with previous song count
    - Updates scores if new songs detected
-   - Marks show complete 30 minutes after the last encore song appears
-   - Resets the 30-minute timer if additional encore songs are added
+   - Marks show complete 60 minutes after the last encore song appears
+   - Resets the 60-minute timer if additional encore songs are added
 
 3. Logs every step for troubleshooting
 
 ### Encore Grace Period
 
-The scoring system implements a 30-minute grace period after encore songs appear:
+The scoring system implements a 60-minute grace period after encore songs appear:
 
-- **Initial Detection:** When the first encore song is detected, a 30-minute timer starts
-- **Timer Reset:** If additional encore songs are added (2nd encore, 3rd encore, etc.), the timer resets to 30 minutes
-- **Show Complete:** The show is marked complete only after 30 minutes have passed without any new encore songs
+- **Initial Detection:** When the first encore song is detected, a 60-minute timer starts
+- **Timer Reset:** If additional encore songs are added (2nd encore, 3rd encore, etc.), the timer resets to 60 minutes
+- **Show Complete:** The show is marked complete only after 60 minutes have passed without any new encore songs
 - **Progressive Scoring:** Scores continue to update during the grace period as new songs are added
 
 This ensures that multi-song encores and late additions are properly captured before finalizing scores.
@@ -128,7 +128,7 @@ The cron outputs detailed logs to help troubleshoot issues:
 [Score]   ✓ Fetched setlist with 12 songs
 [Score]   Encore detected: true
 [Score]   Current encore count: 2, Previous: 1
-[Score]   ✓ New encore song(s) added (1 → 2) - resetting 30-minute timer
+[Score]   ✓ New encore song(s) added (1 → 2) - resetting 60-minute timer
 [Score]   Show complete: false
 [Score]   Updating submission abc123: 10 → 12 songs, 8 points
 [Score]   ✓ Show updated (5/8 submissions had changes)
@@ -319,7 +319,7 @@ npx tsx scripts/sync-song-stats.ts
 
 ### What It Does
 
-This cron serves as a **backup/safety net** for achievement awarding. The primary achievement awarding happens inline during the scoring cron (every minute). This daily cron catches any achievements that may have been missed.
+This cron serves as a **backup/safety net** for achievement awarding. The primary achievement awarding happens inline during the scoring cron (every 10 minutes). This daily cron catches any achievements that may have been missed.
 
 1. Awards **PERFECT_OPENER** achievement to users who correctly guessed an opener
 2. Awards **PERFECT_CLOSER** achievement to users who correctly guessed an encore

@@ -47,7 +47,7 @@ FantasyPhish is a fantasy game for Phish fans. Users pick 13 songs before each s
 **Pick Submission → Locking → Progressive Scoring → Achievements**
 
 1. Users submit picks before show lock time (7 PM venue timezone)
-2. Cron job (`/api/score`) runs every 3 minutes during active shows
+2. Cron job (`/api/score`) runs every 10 minutes during active shows
 3. Fetches setlist from phish.net API progressively
 4. Updates scores as new songs are added
 5. Awards achievements inline during scoring
@@ -90,7 +90,7 @@ All external setlist/show data comes from phish.net v5 API:
 
 ### Progressive Scoring Cron (`/api/score/route.ts`)
 
-Runs every 3 minutes during active tours (checks `shouldRunCronJobs()`):
+Runs every 10 minutes during active tours (checks `shouldRunCronJobs()`):
 
 1. Find shows with `lockTime <= now` and `isComplete = false`
 2. Fetch fresh setlist with `{ noCache: true }`
@@ -153,7 +153,7 @@ Important fields:
 
 All cron endpoints require `CRON_SECRET` or Vercel-Cron user-agent:
 
-1. **Scoring** (`/api/score`) - Every 3 minutes
+1. **Scoring** (`/api/score`) - Every 10 minutes
    - Only runs when active tours exist (via `shouldRunCronJobs()`)
    - Progressive scoring with fresh setlist data
    - Awards achievements inline
