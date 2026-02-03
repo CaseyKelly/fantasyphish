@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getUpcomingShows } from "@/lib/phishnet"
 import { auth } from "@/lib/auth"
+import { excludeTestShows } from "@/lib/test-filters"
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,13 +19,7 @@ export async function GET(request: NextRequest) {
       const nextShow = await prisma.show.findFirst({
         where: {
           isComplete: false,
-          // Exclude test shows created by Playwright tests
-          NOT: {
-            OR: [
-              { venue: { contains: "test", mode: "insensitive" } },
-              { city: { contains: "test", mode: "insensitive" } },
-            ],
-          },
+          ...excludeTestShows,
         },
         orderBy: { showDate: "asc" },
         include: {
@@ -99,13 +94,7 @@ export async function GET(request: NextRequest) {
     // For admin, we want all shows; for users, we could filter differently
     const shows = await prisma.show.findMany({
       where: {
-        // Exclude test shows created by Playwright tests
-        NOT: {
-          OR: [
-            { venue: { contains: "test", mode: "insensitive" } },
-            { city: { contains: "test", mode: "insensitive" } },
-          ],
-        },
+        ...excludeTestShows,
         OR: [
           // Shows in the last 7 days
           {

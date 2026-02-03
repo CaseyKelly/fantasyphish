@@ -9,9 +9,10 @@ if (process.env.TEST_DATABASE_URL) {
   process.env.DATABASE_URL = process.env.TEST_DATABASE_URL
   console.log("✓ Using TEST_DATABASE_URL for Playwright tests")
 } else {
-  console.warn(
-    "⚠️  WARNING: TEST_DATABASE_URL not set! Tests may use production database!"
-  )
+  const message =
+    "⚠️  TEST_DATABASE_URL not set! Aborting tests to prevent possible use of production database."
+  console.error(message)
+  throw new Error(message)
 }
 
 export default defineConfig({
