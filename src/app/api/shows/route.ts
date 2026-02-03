@@ -18,6 +18,13 @@ export async function GET(request: NextRequest) {
       const nextShow = await prisma.show.findFirst({
         where: {
           isComplete: false,
+          // Exclude test shows created by Playwright tests
+          NOT: {
+            OR: [
+              { venue: { contains: "test", mode: "insensitive" } },
+              { city: { contains: "test", mode: "insensitive" } },
+            ],
+          },
         },
         orderBy: { showDate: "asc" },
         include: {
@@ -92,6 +99,13 @@ export async function GET(request: NextRequest) {
     // For admin, we want all shows; for users, we could filter differently
     const shows = await prisma.show.findMany({
       where: {
+        // Exclude test shows created by Playwright tests
+        NOT: {
+          OR: [
+            { venue: { contains: "test", mode: "insensitive" } },
+            { city: { contains: "test", mode: "insensitive" } },
+          ],
+        },
         OR: [
           // Shows in the last 7 days
           {
