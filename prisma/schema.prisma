@@ -12,20 +12,23 @@ datasource db {
 }
 
 model User {
-  id                    String    @id @default(cuid())
-  email                 String    @unique
-  username              String    @unique @default("")
-  passwordHash          String
-  emailVerified         DateTime?
-  verificationToken     String?   @unique
-  verificationExpiry    DateTime?
-  passwordResetToken    String?   @unique
-  passwordResetExpiry   DateTime?
-  isAdmin               Boolean   @default(false)
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-  submissions           Submission[]
-  achievements          UserAchievement[]
+  id                      String                    @id @default(cuid())
+  email                   String                    @unique
+  username                String                    @unique @default("")
+  passwordHash            String
+  emailVerified           DateTime?
+  verificationToken       String?                   @unique
+  verificationExpiry      DateTime?
+  passwordResetToken      String?                   @unique
+  passwordResetExpiry     DateTime?
+  isAdmin                 Boolean                   @default(false)
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  submissions             Submission[]
+  achievements            UserAchievement[]
+  pushTokens              PushToken[]
+  notificationPreferences NotificationPreferences?
+  notificationLogs        NotificationLog[]
 }
 
 model Tour {
@@ -40,25 +43,26 @@ model Tour {
 }
 
 model Show {
-  id              String       @id @default(cuid())
-  showDate        DateTime     @unique
-  venue           String
-  city            String?
-  state           String?
-  country         String?
-  tourId          String?
-  tour            Tour?        @relation(fields: [tourId], references: [id])
-  setlistJson     Json?        // Cached setlist from phish.net
-  isComplete      Boolean      @default(false)
-  fetchedAt       DateTime?
-  timezone        String?      // Venue timezone (e.g., "America/New_York")
-  lockTime        DateTime?    // Time when picks locked (7 PM in venue timezone)
-  lastScoredAt    DateTime?    // Last progressive scoring run
-  encoreStartedAt DateTime?    // When encore was first detected (for grace period)
-  lastEncoreCount Int?         // Track encore song count to detect when new encores are added
-  submissions     Submission[]
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  id               String            @id @default(cuid())
+  showDate         DateTime          @unique
+  venue            String
+  city             String?
+  state            String?
+  country          String?
+  tourId           String?
+  tour             Tour?             @relation(fields: [tourId], references: [id])
+  setlistJson      Json?             // Cached setlist from phish.net
+  isComplete       Boolean           @default(false)
+  fetchedAt        DateTime?
+  timezone         String?           // Venue timezone (e.g., "America/New_York")
+  lockTime         DateTime?         // Time when picks locked (7 PM in venue timezone)
+  lastScoredAt     DateTime?         // Last progressive scoring run
+  encoreStartedAt  DateTime?         // When encore was first detected (for grace period)
+  lastEncoreCount  Int?              // Track encore song count to detect when new encores are added
+  submissions      Submission[]
+  notificationLogs NotificationLog[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
   @@index([showDate])
   @@index([tourId])
@@ -159,4 +163,48 @@ enum TourStatus {
   ACTIVE    // Tour is open for picks and currently happening
   COMPLETED // All shows complete, showing podium/winners
   CLOSED    // Tour archived, moved to history
+}
+
+// Push notification tokens for mobile devices
+model PushToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique // FCM token
+  platform  String   // "ios" or "android"
+  isActive  Boolean  @default(true) // Can be disabled if token invalid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([token])
+}
+
+// User notification preferences
+model NotificationPreferences {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pickRemindersEnabled Boolean  @default(true) // Can opt out
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+// Log sent notifications for debugging and analytics
+model NotificationLog {
+  id      String   @id @default(cuid())
+  userId  String
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  showId  String?
+  show    Show?    @relation(fields: [showId], references: [id], onDelete: SetNull)
+  type    String   // "pick_reminder", "manual_test"
+  title   String
+  body    String
+  success Boolean
+  error   String?
+  sentAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([showId])
+  @@index([sentAt])
 }

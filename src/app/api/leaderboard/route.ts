@@ -3,34 +3,40 @@ import { prisma } from "@/lib/prisma"
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const tourId = searchParams.get("tourId")
+    // Get the most recent active or completed tour
+    const currentTour = await prisma.tour.findFirst({
+      where: {
+        status: { in: ["ACTIVE", "COMPLETED"] },
+      },
+      orderBy: { startDate: "desc" },
+    })
 
-    // Build the where clause for filtering by tour
-    const whereClause = tourId
+    // Build where clause for submissions
+    const submissionWhere = currentTour
       ? {
           isScored: true,
           show: {
-            tourId,
+            tourId: currentTour.id,
           },
         }
       : {
           isScored: true,
         }
 
-    // Get all scored submissions grouped by user (exclude admin users)
+    // Get all scored submissions (exclude admin users)
     const leaderboard = await prisma.user.findMany({
       where: {
         isAdmin: false, // Exclude admin users from leaderboard
         submissions: {
-          some: whereClause,
+          some: submissionWhere,
         },
       },
       select: {
         id: true,
+        username: true,
         email: true,
         submissions: {
-          where: whereClause,
+          where: submissionWhere,
           select: {
             totalPoints: true,
             show: {
@@ -48,9 +54,10 @@ export async function GET(request: NextRequest) {
     const rankedUsers = leaderboard
       .map((user) => ({
         userId: user.id,
+        username: user.username,
         email: user.email,
-        // Mask email for privacy
-        displayName: user.email.split("@")[0].slice(0, 3) + "***",
+        // Use username, no masking
+        displayName: user.username,
         totalPoints: user.submissions.reduce(
           (sum, sub) => sum + (sub.totalPoints || 0),
           0
@@ -74,20 +81,16 @@ export async function GET(request: NextRequest) {
         rank: index + 1,
       }))
 
-    // Get available tours for filtering
-    const tours = await prisma.tour.findMany({
-      orderBy: { startDate: "desc" },
-      select: {
-        id: true,
-        name: true,
-        startDate: true,
-        endDate: true,
-      },
-    })
-
     return NextResponse.json({
       leaderboard: rankedUsers,
-      tours,
+      currentTour: currentTour
+        ? {
+            id: currentTour.id,
+            name: currentTour.name,
+            startDate: currentTour.startDate,
+            endDate: currentTour.endDate,
+          }
+        : null,
     })
   } catch (error) {
     console.error("Error fetching leaderboard:", error)
