@@ -83,6 +83,8 @@ export function SongPicker({
     "OPENER" | "ENCORE" | "REGULAR" | null
   >(null)
   const [justSaved, setJustSaved] = useState(false)
+  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null)
+  const [submitBounce, setSubmitBounce] = useState(false)
 
   // Detect mobile viewport
   useEffect(() => {
@@ -187,6 +189,9 @@ export function SongPicker({
       pickType,
     }
 
+    setLastSelectedId(song.id)
+    setTimeout(() => setLastSelectedId(null), 800)
+
     if (pickType === "OPENER") {
       setOpenerPick(pick)
       if (isMobile) {
@@ -203,8 +208,11 @@ export function SongPicker({
       }
     } else {
       if (regularPicks.length < 11) {
-        setRegularPicks([...regularPicks, pick])
-        if (regularPicks.length === 10) {
+        const newRegular = [...regularPicks, pick]
+        setRegularPicks(newRegular)
+        if (newRegular.length === 11) {
+          setSubmitBounce(true)
+          setTimeout(() => setSubmitBounce(false), 600)
           if (isMobile) {
             setMobileModalOpen(null)
           } else {
@@ -311,10 +319,12 @@ export function SongPicker({
               key={song.id}
               onClick={() => !isDisabled && handleSelectSong(song, pickType)}
               disabled={isDisabled}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all ${
+              className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-150 ${
                 isSelected
                   ? "bg-[#1e3340]/60 text-gray-500 cursor-not-allowed"
-                  : "hover:bg-[#4a6b7d]/50 focus:bg-[#4a6b7d]/50 focus:outline-none focus:ring-2 focus:ring-[#c23a3a]/50 text-white"
+                  : lastSelectedId === song.id
+                    ? "bg-[#c23a3a]/10 ring-2 ring-[#c23a3a]/50 scale-[1.01] text-white"
+                    : "hover:bg-[#4a6b7d]/50 focus:bg-[#4a6b7d]/50 focus:outline-none focus:ring-2 focus:ring-[#c23a3a]/50 text-white"
               }`}
             >
               <div className="flex items-center justify-between gap-2">
@@ -333,7 +343,11 @@ export function SongPicker({
                         </span>
                       )
                     })()}
-                  {isSelected && <Check className="h-4 w-4 text-green-500" />}
+                  {isSelected && (
+                    <Check
+                      className={`h-4 w-4 text-green-500 ${lastSelectedId === song.id ? "animate-pulse" : ""}`}
+                    />
+                  )}
                 </div>
               </div>
             </button>
@@ -783,7 +797,7 @@ export function SongPicker({
               isLoading={isSubmitting}
               size="lg"
               variant="success"
-              className="flex-shrink-0"
+              className={`flex-shrink-0 transition-transform duration-150 ${submitBounce ? "animate-bounce" : ""}`}
             >
               <span className="hidden sm:inline">
                 {existingPicks ? "Update Picks" : "Submit Picks"}

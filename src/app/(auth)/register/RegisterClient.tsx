@@ -74,7 +74,7 @@ export default function RegisterClient() {
           <div className="text-center mb-8">
             <Link href="/" className="inline-flex items-center space-x-2">
               <DonutLogo size="lg" />
-              <span className="text-2xl font-bold text-white">
+              <span className="text-2xl font-bold text-white font-display">
                 FantasyPhish
               </span>
             </Link>
@@ -86,7 +86,7 @@ export default function RegisterClient() {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/20 mb-6">
                   <CheckCircle className="h-8 w-8 text-green-400" />
                 </div>
-                <h1 className="text-2xl font-bold text-white mb-4">
+                <h1 className="font-display text-2xl font-bold text-white mb-4">
                   Check your email
                 </h1>
                 <p className="text-gray-400 mb-6">
@@ -118,13 +118,15 @@ export default function RegisterClient() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2">
             <DonutLogo size="lg" />
-            <span className="text-2xl font-bold text-white">FantasyPhish</span>
+            <span className="text-2xl font-bold text-white font-display">
+              FantasyPhish
+            </span>
           </Link>
         </div>
 
         <Card>
           <CardHeader>
-            <h1 className="text-2xl font-bold text-white text-center">
+            <h1 className="font-display text-2xl font-bold text-white text-center">
               Create your account
             </h1>
             <p className="text-gray-400 text-center">

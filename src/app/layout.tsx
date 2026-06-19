@@ -1,12 +1,18 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Fraunces, DM_Sans } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { Providers } from "@/components/Providers"
 
-const inter = Inter({
+const fraunces = Fraunces({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-display",
+  axes: ["opsz"],
+})
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
 })
 
 export const metadata: Metadata = {
@@ -131,7 +137,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${inter.variable} font-sans antialiased bg-slate-900 text-white min-h-screen`}
+        className={`${fraunces.variable} ${dmSans.variable} font-sans antialiased bg-slate-900 text-white min-h-screen`}
         suppressHydrationWarning
       >
         <Providers>{children}</Providers>

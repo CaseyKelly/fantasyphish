@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
 
   /* Phish Donut Color Palette */
   --color-phish-blue: #3d5a6c;
@@ -10,6 +11,56 @@
   --color-phish-red: #c23a3a;
   --color-phish-red-light: #d64545;
   --color-phish-red-dark: #a32e2e;
+  --color-phish-gold: #c9973a;
+}
+
+/* Display font utility */
+.font-display {
+  font-family: var(--font-display), Georgia, serif;
+}
+
+/* Slow donut drift animation */
+@keyframes donut-drift {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-18px) rotate(4deg);
+  }
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+}
+
+.animate-donut-drift {
+  animation: donut-drift 30s ease-in-out infinite;
+}
+
+/* Live badge glow pulse */
+@keyframes glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 6px rgba(194, 58, 58, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(194, 58, 58, 0.6);
+  }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* Content entrance after skeleton */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Custom scrollbar for dark theme */

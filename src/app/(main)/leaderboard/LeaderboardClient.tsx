@@ -89,11 +89,11 @@ export default function LeaderboardClient({
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
-        return <Trophy className="h-6 w-6 text-yellow-500" />
+        return <Trophy className="h-6 w-6 text-[#c9973a]" />
       case 2:
-        return <Medal className="h-6 w-6 text-gray-400" />
+        return <Medal className="h-6 w-6 text-slate-300" />
       case 3:
-        return <Medal className="h-6 w-6 text-amber-600" />
+        return <Medal className="h-6 w-6 text-[#b87333]" />
       default:
         return (
           <span className="w-6 h-6 flex items-center justify-center text-slate-400 font-medium">
@@ -107,7 +107,9 @@ export default function LeaderboardClient({
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Leaderboard</h1>
+        <h1 className="font-display text-3xl font-bold text-white">
+          Leaderboard
+        </h1>
       </div>
 
       {/* Current Tour Info */}

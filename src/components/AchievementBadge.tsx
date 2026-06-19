@@ -38,8 +38,8 @@ export function AchievementBadge({
         </div>
       )}
 
-      {/* Icon */}
-      <div className="flex items-center justify-center w-16 h-16">
+      {/* Icon with donut-ring accent */}
+      <div className="flex items-center justify-center w-16 h-16 rounded-full ring-2 ring-[#c9973a]/40 ring-offset-2 ring-offset-[#1e3340]/60">
         {isLucideIcon && LucideIcon ? (
           <LucideIcon className="w-12 h-12 text-[#c23a3a]" />
         ) : (

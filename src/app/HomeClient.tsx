@@ -123,7 +123,7 @@ export function HomeClient() {
   return (
     <div className="min-h-screen bg-[#2d4654] relative">
       {/* Repeating donut pattern background */}
-      <div className="fixed inset-0 opacity-10 pointer-events-none">
+      <div className="fixed inset-0 opacity-[0.22] pointer-events-none">
         <svg width="100%" height="100%">
           <defs>
             <pattern
@@ -174,11 +174,15 @@ export function HomeClient() {
 
       {/* Hero Section */}
       <header className="relative overflow-hidden">
+        {/* Radial red glow behind hero */}
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_80%_40%_at_50%_0%,rgba(194,58,58,0.12),transparent)]" />
         <nav className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center space-x-2">
               <DonutLogo size="lg" />
-              <span className="text-xl font-bold text-white">FantasyPhish</span>
+              <span className="text-xl font-bold text-white font-display">
+                FantasyPhish
+              </span>
             </div>
             <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-4 lg:gap-6">
               <Link
@@ -204,19 +208,39 @@ export function HomeClient() {
         </nav>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20 pb-8 sm:pb-12">
-          <div className="text-center">
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-white mb-6">
+          <div className="flex flex-col items-center text-center">
+            {/* Statement donut */}
+            <DonutLogo
+              size="2xl"
+              glow
+              className="mb-8 animate-[spin_24s_linear_infinite]"
+            />
+            <h1 className="font-display text-4xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
               You Knew{" "}
-              <span className="text-[#c23a3a]">
+              <span className="text-[#c23a3a] italic">
                 They&apos;d Bust Out Fluffhead
               </span>
             </h1>
-            <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-gray-300 max-w-2xl">
               Now prove it. Pick 13 songs before showtime, rack up points when
               Trey plays your calls, and show the lot who really knows
               what&apos;s coming.
             </p>
           </div>
+        </div>
+        {/* Wave divider */}
+        <div className="relative z-10 -mb-1">
+          <svg
+            viewBox="0 0 1440 40"
+            xmlns="http://www.w3.org/2000/svg"
+            preserveAspectRatio="none"
+            className="w-full h-10 block"
+          >
+            <path
+              d="M0,20 C240,40 480,0 720,20 C960,40 1200,0 1440,20 L1440,40 L0,40 Z"
+              fill="#1e3340"
+            />
+          </svg>
         </div>
       </header>
 
@@ -270,10 +294,10 @@ export function HomeClient() {
             ) : (
               nextShow &&
               songs.length > 0 && (
-                <>
+                <div className="animate-[fadeSlideIn_0.3s_ease-out]">
                   {/* Header inside container */}
                   <div className="text-center mb-6">
-                    <h2 className="text-3xl sm:text-4xl font-bold text-white mb-2">
+                    <h2 className="font-display text-3xl sm:text-4xl font-bold text-white mb-2">
                       {isLocked ? "Show In Progress" : "Make Your Picks"}
                     </h2>
                     {isLocked && <LiveBadge />}
@@ -313,7 +337,7 @@ export function HomeClient() {
                     guestMode={true}
                     onGuestSubmit={(picks) => setGuestPicks(picks)}
                   />
-                </>
+                </div>
               )
             )}
           </div>
@@ -330,10 +354,28 @@ export function HomeClient() {
       )}
 
       {/* Scoring Section */}
-      <section className="py-20 bg-[#1e3340] relative z-10">
+      <section className="py-20 bg-[#1e3340] relative z-10 overflow-hidden">
+        {/* Decorative background donut */}
+        <div className="absolute -bottom-16 -right-16 opacity-[0.05] pointer-events-none animate-donut-drift">
+          <svg
+            viewBox="0 0 120 120"
+            className="w-64 h-64"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="60"
+              cy="60"
+              r="40"
+              stroke="#c23a3a"
+              strokeWidth="24"
+              fill="none"
+            />
+          </svg>
+        </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl sm:text-4xl font-bold text-center text-white mb-12">
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-center text-white mb-12">
               Scoring
             </h2>
 
@@ -349,7 +391,7 @@ export function HomeClient() {
                       </p>
                     </div>
                   </div>
-                  <span className="text-2xl font-bold text-[#c23a3a] whitespace-nowrap flex-shrink-0">
+                  <span className="font-display text-2xl font-bold text-[#c23a3a] whitespace-nowrap flex-shrink-0">
                     3 pts
                   </span>
                 </div>
@@ -364,7 +406,7 @@ export function HomeClient() {
                       </p>
                     </div>
                   </div>
-                  <span className="text-2xl font-bold text-[#c23a3a] whitespace-nowrap flex-shrink-0">
+                  <span className="font-display text-2xl font-bold text-[#c23a3a] whitespace-nowrap flex-shrink-0">
                     3 pts
                   </span>
                 </div>
@@ -381,14 +423,14 @@ export function HomeClient() {
                       </p>
                     </div>
                   </div>
-                  <span className="text-2xl font-bold text-gray-300 whitespace-nowrap flex-shrink-0">
+                  <span className="font-display text-2xl font-bold text-gray-300 whitespace-nowrap flex-shrink-0">
                     1 pt each
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between gap-4 p-6 bg-[#3d5a6c]/30">
                   <p className="font-semibold text-white">Maximum Points</p>
-                  <span className="text-2xl font-bold text-white whitespace-nowrap flex-shrink-0">
+                  <span className="font-display text-2xl font-bold text-white whitespace-nowrap flex-shrink-0">
                     17 pts
                   </span>
                 </div>
@@ -401,7 +443,7 @@ export function HomeClient() {
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-b from-transparent to-[#c23a3a]/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
+          <h2 className="font-display text-3xl sm:text-4xl font-bold text-white mb-6">
             Your Couch Tour Just Got Competitive
           </h2>
           <p className="text-lg text-gray-300 mb-8 max-w-xl mx-auto">
