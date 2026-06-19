@@ -74,7 +74,7 @@ export default function RegisterClient() {
           <div className="text-center mb-8">
             <Link href="/" className="inline-flex items-center space-x-2">
               <DonutLogo size="lg" />
-              <span className="text-2xl font-bold text-white">
+              <span className="text-2xl font-bold font-display text-white">
                 FantasyPhish
               </span>
             </Link>
@@ -124,7 +124,7 @@ export default function RegisterClient() {
 
         <Card>
           <CardHeader>
-            <h1 className="text-2xl font-bold text-white text-center">
+            <h1 className="text-2xl font-bold font-display text-white text-center">
               Create your account
             </h1>
             <p className="text-gray-400 text-center">

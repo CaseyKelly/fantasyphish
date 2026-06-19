@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Inter, Righteous } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { Providers } from "@/components/Providers"
@@ -7,6 +7,12 @@ import { Providers } from "@/components/Providers"
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+})
+
+const righteous = Righteous({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-righteous",
 })
 
 export const metadata: Metadata = {
@@ -131,7 +137,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${inter.variable} font-sans antialiased bg-slate-900 text-white min-h-screen`}
+        className={`${inter.variable} ${righteous.variable} font-sans antialiased bg-slate-900 text-white min-h-screen`}
         suppressHydrationWarning
       >
         <Providers>{children}</Providers>

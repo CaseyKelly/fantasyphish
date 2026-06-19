@@ -178,7 +178,9 @@ export function HomeClient() {
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center space-x-2">
               <DonutLogo size="lg" />
-              <span className="text-xl font-bold text-white">FantasyPhish</span>
+              <span className="text-xl font-bold font-display text-white">
+                FantasyPhish
+              </span>
             </div>
             <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-4 lg:gap-6">
               <Link
@@ -205,7 +207,7 @@ export function HomeClient() {
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20 pb-8 sm:pb-12">
           <div className="text-center">
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-white mb-6">
+            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold font-display text-white mb-6">
               You Knew{" "}
               <span className="text-[#c23a3a]">
                 They&apos;d Bust Out Fluffhead
@@ -273,7 +275,7 @@ export function HomeClient() {
                 <>
                   {/* Header inside container */}
                   <div className="text-center mb-6">
-                    <h2 className="text-3xl sm:text-4xl font-bold text-white mb-2">
+                    <h2 className="text-3xl sm:text-4xl font-bold font-display text-white mb-2">
                       {isLocked ? "Show In Progress" : "Make Your Picks"}
                     </h2>
                     {isLocked && <LiveBadge />}
@@ -333,7 +335,7 @@ export function HomeClient() {
       <section className="py-20 bg-[#1e3340] relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl sm:text-4xl font-bold text-center text-white mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold font-display text-center text-white mb-12">
               Scoring
             </h2>
 
@@ -401,7 +403,7 @@ export function HomeClient() {
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-b from-transparent to-[#c23a3a]/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
+          <h2 className="text-3xl sm:text-4xl font-bold font-display text-white mb-6">
             Your Couch Tour Just Got Competitive
           </h2>
           <p className="text-lg text-gray-300 mb-8 max-w-xl mx-auto">

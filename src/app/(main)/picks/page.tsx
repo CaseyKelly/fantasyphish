@@ -106,7 +106,9 @@ export default function PicksPage() {
       <div className="space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-white">Make Your Picks</h1>
+          <h1 className="text-3xl font-bold font-display text-white">
+            Make Your Picks
+          </h1>
           <p className="text-slate-400 mt-1">
             Select your songs for the next show
           </p>
@@ -127,7 +129,7 @@ export default function PicksPage() {
               </div>
 
               {/* Main Message */}
-              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
+              <h2 className="text-3xl sm:text-4xl font-bold font-display text-white mb-6">
                 Picks Opening Soon!
               </h2>
 
@@ -163,7 +165,7 @@ export default function PicksPage() {
     <div className="space-y-6 pb-8">
       {/* Header */}
       <div className="text-center mb-4">
-        <h1 className="text-3xl font-bold text-white mb-2">
+        <h1 className="text-3xl font-bold font-display text-white mb-2">
           {isLocked ? "Show In Progress" : "Make Your Picks"}
         </h1>
         {isLocked && <LiveBadge />}

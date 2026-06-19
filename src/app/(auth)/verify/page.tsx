@@ -70,7 +70,7 @@ function VerifyContent() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#3d5a6c] mb-6">
                 <Loader2 className="h-8 w-8 text-[#c23a3a] animate-spin" />
               </div>
-              <h1 className="text-2xl font-bold text-white mb-4">
+              <h1 className="text-2xl font-bold font-display text-white mb-4">
                 Verifying your email...
               </h1>
               <p className="text-gray-400">Please wait a moment.</p>
@@ -82,7 +82,7 @@ function VerifyContent() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/20 mb-6">
                 <CheckCircle className="h-8 w-8 text-green-400" />
               </div>
-              <h1 className="text-2xl font-bold text-white mb-4">
+              <h1 className="text-2xl font-bold font-display text-white mb-4">
                 Email verified!
               </h1>
               <p className="text-gray-400 mb-6">
@@ -99,7 +99,7 @@ function VerifyContent() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#c23a3a]/20 mb-6">
                 <XCircle className="h-8 w-8 text-[#d64545]" />
               </div>
-              <h1 className="text-2xl font-bold text-white mb-4">
+              <h1 className="text-2xl font-bold font-display text-white mb-4">
                 Verification failed
               </h1>
               <p className="text-gray-400 mb-6">{message}</p>
@@ -121,7 +121,9 @@ export default function VerifyPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2">
             <DonutLogo size="lg" />
-            <span className="text-2xl font-bold text-white">FantasyPhish</span>
+            <span className="text-2xl font-bold font-display text-white">
+              FantasyPhish
+            </span>
           </Link>
         </div>
         <Suspense
@@ -132,7 +134,7 @@ export default function VerifyPage() {
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#3d5a6c] mb-6">
                     <Loader2 className="h-8 w-8 text-[#c23a3a] animate-spin" />
                   </div>
-                  <h1 className="text-2xl font-bold text-white mb-4">
+                  <h1 className="text-2xl font-bold font-display text-white mb-4">
                     Loading...
                   </h1>
                 </div>

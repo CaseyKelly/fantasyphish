@@ -115,7 +115,9 @@ export function Navbar() {
               className="flex items-center space-x-2"
             >
               <DonutLogo size="md" />
-              <span className="text-xl font-bold text-white">FantasyPhish</span>
+              <span className="text-xl font-bold font-display text-white">
+                FantasyPhish
+              </span>
             </Link>
 
             {/* Desktop Nav */}

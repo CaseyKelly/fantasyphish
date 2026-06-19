@@ -107,7 +107,9 @@ export default function LeaderboardClient({
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Leaderboard</h1>
+        <h1 className="text-3xl font-bold font-display text-white">
+          Leaderboard
+        </h1>
       </div>
 
       {/* Current Tour Info */}
@@ -216,7 +218,7 @@ export default function LeaderboardClient({
                   <div className="text-xs text-gray-300 font-medium">
                     Silver
                   </div>
-                  <div className="text-2xl sm:text-3xl font-bold text-gray-200 mt-1">
+                  <div className="text-2xl sm:text-3xl font-bold font-display text-gray-200 mt-1">
                     2nd
                   </div>
                 </div>
@@ -248,7 +250,7 @@ export default function LeaderboardClient({
                   <div className="text-xs text-yellow-300 font-medium">
                     Gold
                   </div>
-                  <div className="text-3xl sm:text-4xl font-bold text-yellow-400 mt-1">
+                  <div className="text-3xl sm:text-4xl font-bold font-display text-yellow-400 mt-1">
                     1st
                   </div>
                 </div>
@@ -280,7 +282,7 @@ export default function LeaderboardClient({
                   <div className="text-xs text-amber-400 font-medium">
                     Bronze
                   </div>
-                  <div className="text-2xl sm:text-3xl font-bold text-amber-500 mt-1">
+                  <div className="text-2xl sm:text-3xl font-bold font-display text-amber-500 mt-1">
                     3rd
                   </div>
                 </div>
