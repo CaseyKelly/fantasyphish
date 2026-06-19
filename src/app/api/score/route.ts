@@ -49,7 +49,20 @@ export async function POST(request: Request) {
     console.log("[Score:POST] Authorization successful")
 
     // Check if cron jobs should run (only when tours are active)
-    const { shouldRun, reason } = await shouldRunCronJobs()
+    let shouldRunResult: { shouldRun: boolean; reason?: string }
+    try {
+      shouldRunResult = await shouldRunCronJobs()
+    } catch (dbError) {
+      const msg = dbError instanceof Error ? dbError.message : String(dbError)
+      console.error(
+        `[Score:POST] Database unreachable during shouldRunCronJobs check: ${msg}`
+      )
+      return NextResponse.json(
+        { skipped: true, reason: "database_unavailable" },
+        { status: 200 }
+      )
+    }
+    const { shouldRun, reason } = shouldRunResult
     if (!shouldRun) {
       console.log(`[Score:POST] Skipping: ${reason}`)
       return NextResponse.json({ skipped: true, reason }, { status: 200 })
