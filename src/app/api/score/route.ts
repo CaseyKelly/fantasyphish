@@ -54,6 +54,14 @@ export async function POST(request: Request) {
       shouldRunResult = await shouldRunCronJobs()
     } catch (dbError) {
       const msg = dbError instanceof Error ? dbError.message : String(dbError)
+      const isConnectionError =
+        msg.includes("Can't reach database server") ||
+        msg.includes("Connection") ||
+        msg.includes("P1001") ||
+        msg.includes("ECONNREFUSED") ||
+        msg.includes("ETIMEDOUT") ||
+        msg.includes("Error in PostgreSQL connection")
+      if (!isConnectionError) throw dbError
       console.error(
         `[Score:POST] Database unreachable during shouldRunCronJobs check: ${msg}`
       )
