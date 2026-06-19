@@ -2,6 +2,7 @@
 
 @theme inline {
   --font-sans: var(--font-inter);
+  --font-display: var(--font-righteous);
 
   /* Phish Donut Color Palette */
   --color-phish-blue: #3d5a6c;
@@ -10,6 +11,10 @@
   --color-phish-red: #c23a3a;
   --color-phish-red-light: #d64545;
   --color-phish-red-dark: #a32e2e;
+}
+
+@utility font-display {
+  font-family: var(--font-display);
 }
 
 /* Custom scrollbar for dark theme */

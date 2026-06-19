@@ -272,7 +272,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Results</h1>
+        <h1 className="text-3xl font-bold font-display text-white">Results</h1>
         <p className="text-slate-400">
           {show.venue} • {show.city}
           {show.state && `, ${show.state}`} • {format(showDate, "MMMM d, yyyy")}
@@ -330,7 +330,9 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
         {/* Setlist */}
         {setlist && setlist.songs && setlist.songs.length > 0 && (
           <Card className="p-6">
-            <h2 className="text-xl font-bold text-white mb-4">Setlist</h2>
+            <h2 className="text-xl font-bold font-display text-white mb-4">
+              Setlist
+            </h2>
             <div className="space-y-4">
               {Object.entries(setlistBySets || {}).map(([setName, songs]) => (
                 <div key={setName}>
@@ -397,7 +399,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
         {/* Your Picks Summary */}
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-white">
+            <h2 className="text-xl font-bold font-display text-white">
               {data?.submission?.username && isAdmin
                 ? `${data.submission.username}'s Picks`
                 : "Your Picks"}

@@ -156,7 +156,9 @@ export default async function UserProfilePage({ params }: UserPageProps) {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">{profile.username}</h1>
+        <h1 className="text-3xl font-bold font-display text-white">
+          {profile.username}
+        </h1>
         <p className="text-slate-400 mt-1">Player stats and achievements</p>
       </div>
 

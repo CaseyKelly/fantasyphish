@@ -125,7 +125,9 @@ export default async function LeaderboardHistoryPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Leaderboard History</h1>
+          <h1 className="text-3xl font-bold font-display text-white">
+            Leaderboard History
+          </h1>
           <p className="text-slate-400 mt-2">
             Past tour results and championship winners
           </p>
