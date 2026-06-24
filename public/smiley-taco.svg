@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="360" viewBox="0 0 360 360">
+  
+<g class="float">
+    
+    <path d="M70 180 Q90 150 120 168 Q140 140 170 162 Q200 138 225 162 Q255 145 285 172 Q295 178 290 188 L70 190 Z" fill="#5fa85f"></path>
+    <path d="M95 178 a14 14 0 1 1 0.1 0" fill="#e2553f"></path>
+    <path d="M150 172 a14 14 0 1 1 0.1 0" fill="#f0b53d"></path>
+    <path d="M210 172 a14 14 0 1 1 0.1 0" fill="#e2553f"></path>
+    <path d="M258 178 a14 14 0 1 1 0.1 0" fill="#f0b53d"></path>
+    
+    <path d="M55 182 Q180 178 305 182 Q300 300 180 312 Q60 300 55 182 Z" fill="#f2c14e" stroke="#d99b2b" stroke-width="6" stroke-linejoin="round"></path>
+    
+    <path d="M55 182 Q180 178 305 182 Q303 198 290 200 Q180 196 70 200 Q57 198 55 182 Z" fill="#e3ad3a" opacity="0.6"></path>
+    
+    <circle cx="138" cy="232" r="12" fill="#e23b2e"></circle>
+    <circle cx="222" cy="232" r="12" fill="#e23b2e"></circle>
+    <circle cx="138" cy="232" r="5" fill="#3a2a14"></circle>
+    <circle cx="222" cy="232" r="5" fill="#3a2a14"></circle>
+    <circle cx="140" cy="230" r="1.8" fill="#fff"></circle>
+    <circle cx="224" cy="230" r="1.8" fill="#fff"></circle>
+    
+    <path d="M132 262 Q180 296 228 262" fill="none" stroke="#3a2a14" stroke-width="8" stroke-linecap="round"></path>
+    
+    <ellipse cx="108" cy="256" rx="13" ry="8" fill="#ee8d6f" opacity="0.55"></ellipse>
+    <ellipse cx="252" cy="256" rx="13" ry="8" fill="#ee8d6f" opacity="0.55"></ellipse>
+    
+    <g transform="rotate(24 184 284)">
+      <rect x="184" y="280" width="58" height="9" rx="2" fill="#ffffff" stroke="#cfc6b2" stroke-width="1.5"></rect>
+      <rect x="242" y="280" width="6" height="9" fill="#c43a22"></rect>
+      <circle cx="245" cy="284.5" r="4.5" fill="#ff7a2e"></circle>
+    </g>
+    
+    <g>
+      <circle class="smoke" cx="242" cy="310" r="5" fill="#cfcfcf"></circle>
+      <circle class="smoke" cx="242" cy="310" r="6" fill="#bdbdbd" style="animation-delay: 0.6s;"></circle>
+      <circle class="smoke" cx="242" cy="310" r="5" fill="#d6d6d6" style="animation-delay: 1.2s;"></circle>
+      <circle class="smoke" cx="242" cy="310" r="7" fill="#c4c4c4" style="animation-delay: 1.8s;"></circle>
+      <circle class="smoke" cx="242" cy="310" r="5.5" fill="#cfcfcf" style="animation-delay: 2.4s;"></circle>
+      <circle class="smoke" cx="242" cy="310" r="6" fill="#b5b5b5" style="animation-delay: 3s;"></circle>
+    </g>
+  </g>
+</svg>
