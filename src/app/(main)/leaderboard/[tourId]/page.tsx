@@ -5,6 +5,7 @@ import { notFound } from "next/navigation"
 import LeaderboardClient from "../LeaderboardClient"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
+import { withRetry } from "@/lib/db-retry"
 
 interface TourLeaderboardPageProps {
   params: Promise<{ tourId: string }>
@@ -14,9 +15,13 @@ export async function generateMetadata({
   params,
 }: TourLeaderboardPageProps): Promise<Metadata> {
   const { tourId } = await params
-  const tour = await prisma.tour.findUnique({
-    where: { id: tourId },
-  })
+  const tour = await withRetry(
+    () =>
+      prisma.tour.findUnique({
+        where: { id: tourId },
+      }),
+    { operationName: "find tour for metadata" }
+  )
 
   if (!tour) {
     return {
@@ -47,44 +52,48 @@ async function getLeaderboard(tourId: string) {
     ],
   }
 
-  const users = await prisma.user.findMany({
-    where: {
-      isAdmin: false,
-      submissions: {
-        some: whereClause,
-      },
-    },
-    select: {
-      id: true,
-      username: true,
-      submissions: {
-        where: whereClause,
-        select: {
-          totalPoints: true,
-          show: {
-            select: {
-              showDate: true,
-              venue: true,
-              city: true,
-              state: true,
-            },
+  const users = await withRetry(
+    () =>
+      prisma.user.findMany({
+        where: {
+          isAdmin: false,
+          submissions: {
+            some: whereClause,
           },
-          picks: {
+        },
+        select: {
+          id: true,
+          username: true,
+          submissions: {
+            where: whereClause,
             select: {
-              wasPlayed: true,
-              pointsEarned: true,
-              pickType: true,
-              song: {
+              totalPoints: true,
+              show: {
                 select: {
-                  name: true,
+                  showDate: true,
+                  venue: true,
+                  city: true,
+                  state: true,
+                },
+              },
+              picks: {
+                select: {
+                  wasPlayed: true,
+                  pointsEarned: true,
+                  pickType: true,
+                  song: {
+                    select: {
+                      name: true,
+                    },
+                  },
                 },
               },
             },
           },
         },
-      },
-    },
-  })
+      }),
+    { operationName: "find tour leaderboard users" }
+  )
 
   const sortedUsers = users
     .map((user) => {
@@ -151,15 +160,19 @@ export default async function TourLeaderboardPage({
   const { tourId } = await params
   const session = await auth()
 
-  const tour = await prisma.tour.findUnique({
-    where: { id: tourId },
-    include: {
-      shows: {
-        orderBy: { showDate: "asc" },
-        take: 1,
-      },
-    },
-  })
+  const tour = await withRetry(
+    () =>
+      prisma.tour.findUnique({
+        where: { id: tourId },
+        include: {
+          shows: {
+            orderBy: { showDate: "asc" },
+            take: 1,
+          },
+        },
+      }),
+    { operationName: "find tour" }
+  )
 
   if (!tour) {
     notFound()

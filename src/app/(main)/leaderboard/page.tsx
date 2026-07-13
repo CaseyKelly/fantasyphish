@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { Metadata } from "next"
 import LeaderboardClient from "./LeaderboardClient"
+import { withRetry } from "@/lib/db-retry"
 
 export const metadata: Metadata = {
   title: "Leaderboard",
@@ -25,28 +26,32 @@ async function getNextShow() {
   const now = new Date()
 
   // First try to find shows with lockTime set (timezone-aware)
-  const nextShow = await prisma.show.findFirst({
-    where: {
-      isComplete: false,
-      OR: [
-        {
-          lockTime: {
-            gte: now,
-          },
+  const nextShow = await withRetry(
+    () =>
+      prisma.show.findFirst({
+        where: {
+          isComplete: false,
+          OR: [
+            {
+              lockTime: {
+                gte: now,
+              },
+            },
+            {
+              lockTime: null,
+              showDate: {
+                gte: now,
+              },
+            },
+          ],
         },
-        {
-          lockTime: null,
-          showDate: {
-            gte: now,
-          },
+        orderBy: { showDate: "asc" },
+        include: {
+          tour: true,
         },
-      ],
-    },
-    orderBy: { showDate: "asc" },
-    include: {
-      tour: true,
-    },
-  })
+      }),
+    { operationName: "find next show (leaderboard)" }
+  )
 
   return nextShow
 }
@@ -61,90 +66,106 @@ async function getCurrentTour() {
   // 4. ACTIVE tours with any incomplete shows (upcoming tour)
 
   // 1. Prioritize COMPLETED tours (all shows complete, showing podium)
-  const completedTour = await prisma.tour.findFirst({
-    where: {
-      status: "COMPLETED",
-      shows: {
-        some: {}, // Has at least one show
-      },
-    },
-    orderBy: { endDate: "desc" }, // Most recent completed tour first
-    include: {
-      shows: {
-        orderBy: { showDate: "asc" },
-        take: 1,
-      },
-    },
-  })
+  const completedTour = await withRetry(
+    () =>
+      prisma.tour.findFirst({
+        where: {
+          status: "COMPLETED",
+          shows: {
+            some: {}, // Has at least one show
+          },
+        },
+        orderBy: { endDate: "desc" }, // Most recent completed tour first
+        include: {
+          shows: {
+            orderBy: { showDate: "asc" },
+            take: 1,
+          },
+        },
+      }),
+    { operationName: "find completed tour" }
+  )
 
   if (completedTour) return completedTour
 
   // 2. Check for ACTIVE tour with locked incomplete shows (tour currently happening)
-  const activeTour = await prisma.tour.findFirst({
-    where: {
-      status: "ACTIVE",
-      shows: {
-        some: {
-          isComplete: false,
-          lockTime: {
-            lte: now,
+  const activeTour = await withRetry(
+    () =>
+      prisma.tour.findFirst({
+        where: {
+          status: "ACTIVE",
+          shows: {
+            some: {
+              isComplete: false,
+              lockTime: {
+                lte: now,
+              },
+            },
           },
         },
-      },
-    },
-    orderBy: { startDate: "asc" },
-    include: {
-      shows: {
-        where: { isComplete: false },
-        orderBy: { showDate: "asc" },
-        take: 1,
-      },
-    },
-  })
+        orderBy: { startDate: "asc" },
+        include: {
+          shows: {
+            where: { isComplete: false },
+            orderBy: { showDate: "asc" },
+            take: 1,
+          },
+        },
+      }),
+    { operationName: "find active tour" }
+  )
 
   if (activeTour) return activeTour
 
   // 3. Check for ACTIVE tour where all shows are complete (needs manual COMPLETED status update)
-  const finishedActiveTour = await prisma.tour.findFirst({
-    where: {
-      status: "ACTIVE",
-      shows: {
-        every: {
-          isComplete: true,
+  const finishedActiveTour = await withRetry(
+    () =>
+      prisma.tour.findFirst({
+        where: {
+          status: "ACTIVE",
+          shows: {
+            every: {
+              isComplete: true,
+            },
+          },
         },
-      },
-    },
-    orderBy: { endDate: "desc" },
-    include: {
-      shows: {
-        orderBy: { showDate: "asc" },
-        take: 1,
-      },
-    },
-  })
+        orderBy: { endDate: "desc" },
+        include: {
+          shows: {
+            orderBy: { showDate: "asc" },
+            take: 1,
+          },
+        },
+      }),
+    { operationName: "find finished active tour" }
+  )
 
   if (finishedActiveTour) return finishedActiveTour
 
   // 4. Fall back to next upcoming ACTIVE tour with incomplete shows
   // Note: FUTURE tours are excluded - they don't show on leaderboard until activated
-  const upcomingTour = await prisma.tour.findFirst({
-    where: {
-      status: "ACTIVE",
-      shows: {
-        some: {
-          isComplete: false,
+  const upcomingTour = await withRetry(
+    () =>
+      prisma.tour.findFirst({
+        where: {
+          status: "ACTIVE",
+          shows: {
+            some: {
+              isComplete: false,
+            },
+          },
         },
-      },
-    },
-    orderBy: { startDate: "asc" },
-    include: {
-      shows: {
-        where: { isComplete: false },
-        orderBy: { showDate: "asc" },
-        take: 1,
-      },
-    },
-  })
+        orderBy: { startDate: "asc" },
+        include: {
+          shows: {
+            where: { isComplete: false },
+            orderBy: { showDate: "asc" },
+            take: 1,
+          },
+        },
+      }),
+    { operationName: "find upcoming active tour" }
+  )
 
   return upcomingTour
 }
@@ -166,44 +187,48 @@ async function getLeaderboard(tourId?: string) {
         ],
       }
 
-  const users = await prisma.user.findMany({
-    where: {
-      isAdmin: false,
-      submissions: {
-        some: whereClause,
-      },
-    },
-    select: {
-      id: true,
-      username: true,
-      submissions: {
-        where: whereClause,
-        select: {
-          totalPoints: true,
-          show: {
-            select: {
-              showDate: true,
-              venue: true,
-              city: true,
-              state: true,
-            },
+  const users = await withRetry(
+    () =>
+      prisma.user.findMany({
+        where: {
+          isAdmin: false,
+          submissions: {
+            some: whereClause,
           },
-          picks: {
+        },
+        select: {
+          id: true,
+          username: true,
+          submissions: {
+            where: whereClause,
             select: {
-              wasPlayed: true,
-              pointsEarned: true,
-              pickType: true,
-              song: {
+              totalPoints: true,
+              show: {
                 select: {
-                  name: true,
+                  showDate: true,
+                  venue: true,
+                  city: true,
+                  state: true,
+                },
+              },
+              picks: {
+                select: {
+                  wasPlayed: true,
+                  pointsEarned: true,
+                  pickType: true,
+                  song: {
+                    select: {
+                      name: true,
+                    },
+                  },
                 },
               },
             },
           },
         },
-      },
-    },
-  })
+      }),
+    { operationName: "find leaderboard users" }
+  )
 
   const sortedUsers = users
     .map((user) => {
@@ -286,15 +311,19 @@ export default async function LeaderboardPage({
     : null
 
   // Check if there are any in-progress shows for this tour
-  const hasInProgressShows = await prisma.show.findFirst({
-    where: {
-      tourId: currentTourId,
-      isComplete: false,
-      lockTime: {
-        lte: new Date(),
-      },
-    },
-  })
+  const hasInProgressShows = await withRetry(
+    () =>
+      prisma.show.findFirst({
+        where: {
+          tourId: currentTourId,
+          isComplete: false,
+          lockTime: {
+            lte: new Date(),
+          },
+        },
+      }),
+    { operationName: "find in-progress shows" }
+  )
 
   // Show the tour info from the current tour being displayed in the leaderboard
   const showForDisplay =
@@ -313,20 +342,24 @@ export default async function LeaderboardPage({
 
   // Check if there are any past tours with data to show
   const hasPastTours =
-    (await prisma.tour.count({
-      where: {
-        status: "CLOSED",
-        shows: {
-          some: {
-            submissions: {
+    (await withRetry(
+      () =>
+        prisma.tour.count({
+          where: {
+            status: "CLOSED",
+            shows: {
               some: {
-                isScored: true,
+                submissions: {
+                  some: {
+                    isScored: true,
+                  },
+                },
               },
             },
           },
-        },
-      },
-    })) > 0
+        }),
+      { operationName: "count past tours" }
+    )) > 0
 
   return (
     <LeaderboardClient

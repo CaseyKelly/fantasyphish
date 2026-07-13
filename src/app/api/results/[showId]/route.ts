@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import type { PhishNetSetlist } from "@/lib/phishnet"
+import { withRetry } from "@/lib/db-retry"
 
 export async function GET(
   request: NextRequest,
@@ -18,26 +19,30 @@ export async function GET(
     const submissionId = searchParams.get("submissionId")
 
     // Get show with submission(s)
-    const show = await prisma.show.findUnique({
-      where: { id: showId },
-      include: {
-        submissions: {
-          where: submissionId
-            ? { id: submissionId } // Admin viewing specific submission
-            : { userId: session.user.id }, // User viewing their own
+    const show = await withRetry(
+      () =>
+        prisma.show.findUnique({
+          where: { id: showId },
           include: {
-            picks: {
-              include: { song: true },
-              orderBy: [{ pickType: "asc" }, { song: { name: "asc" } }],
-            },
-            user: {
-              // Include user info for admin context
-              select: { username: true },
+            submissions: {
+              where: submissionId
+                ? { id: submissionId } // Admin viewing specific submission
+                : { userId: session.user.id }, // User viewing their own
+              include: {
+                picks: {
+                  include: { song: true },
+                  orderBy: [{ pickType: "asc" }, { song: { name: "asc" } }],
+                },
+                user: {
+                  // Include user info for admin context
+                  select: { username: true },
+                },
+              },
             },
           },
-        },
-      },
-    })
+        }),
+      { operationName: "find show results" }
+    )
 
     if (!show) {
       return NextResponse.json({ error: "Show not found" }, { status: 404 })

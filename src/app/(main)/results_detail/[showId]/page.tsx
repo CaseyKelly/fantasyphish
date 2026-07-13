@@ -3,6 +3,7 @@ import { isAdminFeaturesEnabled } from "@/lib/env"
 import { prisma } from "@/lib/prisma"
 import { Metadata } from "next"
 import ResultsClient from "./ResultsClient"
+import { withRetry } from "@/lib/db-retry"
 
 interface ResultsPageProps {
   params: Promise<{ showId: string }>
@@ -13,12 +14,16 @@ export async function generateMetadata({
 }: ResultsPageProps): Promise<Metadata> {
   const { showId } = await params
 
-  const show = await prisma.show.findUnique({
-    where: { id: showId },
-    include: {
-      tour: true,
-    },
-  })
+  const show = await withRetry(
+    () =>
+      prisma.show.findUnique({
+        where: { id: showId },
+        include: {
+          tour: true,
+        },
+      }),
+    { operationName: "find show for results metadata" }
+  )
 
   if (!show) {
     return {

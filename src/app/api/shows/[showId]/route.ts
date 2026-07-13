@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { hasShowStarted } from "@/lib/phishnet"
+import { withRetry } from "@/lib/db-retry"
 
 export async function GET(
   request: NextRequest,
@@ -9,12 +10,16 @@ export async function GET(
   try {
     const { showId } = await params
 
-    const show = await prisma.show.findUnique({
-      where: { id: showId },
-      include: {
-        tour: true,
-      },
-    })
+    const show = await withRetry(
+      () =>
+        prisma.show.findUnique({
+          where: { id: showId },
+          include: {
+            tour: true,
+          },
+        }),
+      { operationName: "find show" }
+    )
 
     if (!show) {
       return NextResponse.json({ error: "Show not found" }, { status: 404 })
