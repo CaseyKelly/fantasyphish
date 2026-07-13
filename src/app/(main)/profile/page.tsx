@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { Metadata } from "next"
+import { withRetry } from "@/lib/db-retry"
 
 export const metadata: Metadata = {
   title: "Profile",
@@ -22,10 +23,14 @@ export default async function ProfilePage() {
   }
 
   // Get user's username to redirect to their profile
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { username: true },
-  })
+  const user = await withRetry(
+    () =>
+      prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { username: true },
+      }),
+    { operationName: "find user for profile redirect" }
+  )
 
   if (!user) {
     redirect("/login")

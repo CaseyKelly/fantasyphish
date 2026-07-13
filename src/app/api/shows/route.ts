@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { getUpcomingShows } from "@/lib/phishnet"
 import { auth } from "@/lib/auth"
 import { excludeTestShows } from "@/lib/test-filters"
+import { withRetry } from "@/lib/db-retry"
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,26 +17,30 @@ export async function GET(request: NextRequest) {
       // Get the next incomplete show (regardless of lock status)
       // The lock status is used on the client to prevent editing, not to hide the show
       // We don't filter by date at all - just get the earliest incomplete show
-      const nextShow = await prisma.show.findFirst({
-        where: {
-          isComplete: false,
-          ...excludeTestShows,
-        },
-        orderBy: { showDate: "asc" },
-        include: {
-          tour: true,
-          submissions: session?.user?.id
-            ? {
-                where: { userId: session.user.id },
-                include: {
-                  picks: {
-                    include: { song: true },
-                  },
-                },
-              }
-            : false,
-        },
-      })
+      const nextShow = await withRetry(
+        () =>
+          prisma.show.findFirst({
+            where: {
+              isComplete: false,
+              ...excludeTestShows,
+            },
+            orderBy: { showDate: "asc" },
+            include: {
+              tour: true,
+              submissions: session?.user?.id
+                ? {
+                    where: { userId: session.user.id },
+                    include: {
+                      picks: {
+                        include: { song: true },
+                      },
+                    },
+                  }
+                : false,
+            },
+          }),
+        { operationName: "find next show" }
+      )
 
       if (!nextShow) {
         return NextResponse.json({ nextShow: null })
@@ -72,52 +77,60 @@ export async function GET(request: NextRequest) {
       const showDate = new Date(show.showdate)
       showDate.setUTCHours(0, 0, 0, 0)
 
-      await prisma.show.upsert({
-        where: { showDate },
-        create: {
-          showDate,
-          venue: show.venue,
-          city: show.city,
-          state: show.state,
-          country: show.country,
-        },
-        update: {
-          venue: show.venue,
-          city: show.city,
-          state: show.state,
-          country: show.country,
-        },
-      })
+      await withRetry(
+        () =>
+          prisma.show.upsert({
+            where: { showDate },
+            create: {
+              showDate,
+              venue: show.venue,
+              city: show.city,
+              state: show.state,
+              country: show.country,
+            },
+            update: {
+              venue: show.venue,
+              city: show.city,
+              state: show.state,
+              country: show.country,
+            },
+          }),
+        { operationName: "upsert show" }
+      )
     }
 
     // Get shows from database (includes upcoming and recent)
     // For admin, we want all shows; for users, we could filter differently
-    const shows = await prisma.show.findMany({
-      where: {
-        ...excludeTestShows,
-        OR: [
-          // Shows in the last 7 days
-          {
-            showDate: {
-              gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+    const shows = await withRetry(
+      () =>
+        prisma.show.findMany({
+          where: {
+            ...excludeTestShows,
+            OR: [
+              // Shows in the last 7 days
+              {
+                showDate: {
+                  gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+                },
+              },
+              // OR shows with submissions (for admin testing)
+              {
+                submissions: {
+                  some: {},
+                },
+              },
+            ],
+          },
+          orderBy: { showDate: "asc" },
+          include: {
+            tour: true,
+            _count: {
+              select: { submissions: true },
             },
           },
-          // OR shows with submissions (for admin testing)
-          {
-            submissions: {
-              some: {},
-            },
-          },
-        ],
-      },
-      orderBy: { showDate: "asc" },
-      include: {
-        tour: true,
-        _count: {
-          select: { submissions: true },
-        },
-      },
-    })
+        }),
+      { operationName: "find shows" }
+    )
 
     // Format response with submission counts
     const formattedShows = shows.map((show) => ({

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { AchievementBadge } from "@/components/AchievementBadge"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
+import { withRetry } from "@/lib/db-retry"
 
 interface UserPageProps {
   params: Promise<{ username: string }>
@@ -15,10 +16,14 @@ export async function generateMetadata({
 }: UserPageProps): Promise<Metadata> {
   const { username } = await params
 
-  const user = await prisma.user.findUnique({
-    where: { username },
-    select: { username: true },
-  })
+  const user = await withRetry(
+    () =>
+      prisma.user.findUnique({
+        where: { username },
+        select: { username: true },
+      }),
+    { operationName: "find user for metadata" }
+  )
 
   if (!user) {
     return {
@@ -42,36 +47,40 @@ export async function generateMetadata({
 async function getUserProfile(username: string) {
   const now = new Date()
 
-  const user = await prisma.user.findUnique({
-    where: { username },
-    include: {
-      submissions: {
+  const user = await withRetry(
+    () =>
+      prisma.user.findUnique({
+        where: { username },
         include: {
-          picks: {
+          submissions: {
             include: {
-              song: true,
+              picks: {
+                include: {
+                  song: true,
+                },
+              },
+              show: {
+                select: {
+                  lockTime: true,
+                  isComplete: true,
+                  venue: true,
+                  showDate: true,
+                },
+              },
             },
           },
-          show: {
-            select: {
-              lockTime: true,
-              isComplete: true,
-              venue: true,
-              showDate: true,
+          achievements: {
+            include: {
+              achievement: true,
+            },
+            orderBy: {
+              earnedAt: "desc",
             },
           },
         },
-      },
-      achievements: {
-        include: {
-          achievement: true,
-        },
-        orderBy: {
-          earnedAt: "desc",
-        },
-      },
-    },
-  })
+      }),
+    { operationName: "find user profile" }
+  )
 
   if (!user) return null
 

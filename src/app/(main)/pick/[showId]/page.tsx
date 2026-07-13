@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation"
 import { hasShowStarted } from "@/lib/phishnet"
 import { SongPicker } from "@/components/SongPicker"
 import { Metadata } from "next"
+import { withRetry } from "@/lib/db-retry"
 
 interface PickPageProps {
   params: Promise<{ showId: string }>
@@ -14,10 +15,14 @@ export async function generateMetadata({
 }: PickPageProps): Promise<Metadata> {
   const { showId } = await params
 
-  const show = await prisma.show.findUnique({
-    where: { id: showId },
-    include: { tour: true },
-  })
+  const show = await withRetry(
+    () =>
+      prisma.show.findUnique({
+        where: { id: showId },
+        include: { tour: true },
+      }),
+    { operationName: "find show for pick metadata" }
+  )
 
   if (!show) {
     return {
@@ -49,19 +54,23 @@ export async function generateMetadata({
 }
 
 async function getShowData(showId: string, userId: string) {
-  const show = await prisma.show.findUnique({
-    where: { id: showId },
-    include: {
-      submissions: {
-        where: { userId },
+  const show = await withRetry(
+    () =>
+      prisma.show.findUnique({
+        where: { id: showId },
         include: {
-          picks: {
-            include: { song: true },
+          submissions: {
+            where: { userId },
+            include: {
+              picks: {
+                include: { song: true },
+              },
+            },
           },
         },
-      },
-    },
-  })
+      }),
+    { operationName: "find show for picks" }
+  )
 
   if (!show) return null
 
@@ -74,18 +83,22 @@ async function getShowData(showId: string, userId: string) {
 }
 
 async function getAllSongs() {
-  return prisma.song.findMany({
-    orderBy: { name: "asc" },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      artist: true,
-      timesPlayed: true,
-      gap: true,
-      lastPlayed: true,
-    },
-  })
+  return withRetry(
+    () =>
+      prisma.song.findMany({
+        orderBy: { name: "asc" },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          artist: true,
+          timesPlayed: true,
+          gap: true,
+          lastPlayed: true,
+        },
+      }),
+    { operationName: "find all songs for picks" }
+  )
 }
 
 export default async function PickPage({ params }: PickPageProps) {

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { isAdminFeaturesEnabled } from "@/lib/env"
 import { Metadata } from "next"
 import ResultsClient from "./ResultsClient"
+import { withRetry } from "@/lib/db-retry"
 
 export const metadata: Metadata = {
   title: "Results",
@@ -20,21 +21,25 @@ export const metadata: Metadata = {
 }
 
 async function getResults(userId: string) {
-  const submissions = await prisma.submission.findMany({
-    where: { userId },
-    include: {
-      show: {
-        include: { tour: true },
-      },
-      picks: {
-        include: { song: true },
-        orderBy: { pickType: "asc" },
-      },
-    },
-    orderBy: {
-      show: { showDate: "desc" },
-    },
-  })
+  const submissions = await withRetry(
+    () =>
+      prisma.submission.findMany({
+        where: { userId },
+        include: {
+          show: {
+            include: { tour: true },
+          },
+          picks: {
+            include: { song: true },
+            orderBy: { pickType: "asc" },
+          },
+        },
+        orderBy: {
+          show: { showDate: "desc" },
+        },
+      }),
+    { operationName: "find user results" }
+  )
 
   // Include submissions that are either scored OR locked (show has started)
   const now = new Date()

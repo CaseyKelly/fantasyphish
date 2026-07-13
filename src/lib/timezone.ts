@@ -87,6 +87,12 @@ const TIMEZONE_MAP: Record<string, string> = {
   Japan: "Asia/Tokyo",
 }
 
+// Case-insensitive lookup derived from TIMEZONE_MAP. Built once so entries
+// like "England" or "United Kingdom" match regardless of the input's casing.
+const TIMEZONE_MAP_UPPER: Record<string, string> = Object.fromEntries(
+  Object.entries(TIMEZONE_MAP).map(([key, value]) => [key.toUpperCase(), value])
+)
+
 /**
  * Get IANA timezone identifier for a location
  * Defaults to America/New_York if not found
@@ -96,7 +102,7 @@ export function getTimezoneForLocation(state?: string | null): string {
     return "America/New_York" // Default to Eastern
   }
 
-  const tz = TIMEZONE_MAP[state.toUpperCase()]
+  const tz = TIMEZONE_MAP_UPPER[state.toUpperCase()]
   return tz || "America/New_York"
 }
 

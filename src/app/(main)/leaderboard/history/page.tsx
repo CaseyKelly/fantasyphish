@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Trophy, Calendar, ArrowRight } from "lucide-react"
 import { parseUTCDate } from "@/lib/date-utils"
+import { withRetry } from "@/lib/db-retry"
 
 export const metadata: Metadata = {
   title: "Leaderboard History",
@@ -34,41 +35,49 @@ interface TourWithWinners {
 }
 
 async function getPastTours(): Promise<TourWithWinners[]> {
-  const closedTours = await prisma.tour.findMany({
-    where: {
-      status: "CLOSED",
-    },
-    orderBy: { endDate: "desc" },
-    include: {
-      shows: {
-        select: {
-          id: true,
+  const closedTours = await withRetry(
+    () =>
+      prisma.tour.findMany({
+        where: {
+          status: "CLOSED",
         },
-      },
-    },
-  })
+        orderBy: { endDate: "desc" },
+        include: {
+          shows: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      }),
+    { operationName: "find closed tours" }
+  )
 
   const toursWithWinners: TourWithWinners[] = []
 
   for (const tour of closedTours) {
     // Get all scored submissions for this tour
-    const submissions = await prisma.submission.findMany({
-      where: {
-        show: {
-          tourId: tour.id,
-        },
-        isScored: true,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            isAdmin: true,
+    const submissions = await withRetry(
+      () =>
+        prisma.submission.findMany({
+          where: {
+            show: {
+              tourId: tour.id,
+            },
+            isScored: true,
           },
-        },
-      },
-    })
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                isAdmin: true,
+              },
+            },
+          },
+        }),
+      { operationName: `find scored submissions for tour ${tour.id}` }
+    )
 
     // Calculate standings
     const userScores = new Map<

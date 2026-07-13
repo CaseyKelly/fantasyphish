@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { hasShowStarted } from "@/lib/phishnet"
 import { z } from "zod"
 import { PickType } from "@prisma/client"
+import { withRetry } from "@/lib/db-retry"
 
 const submitPicksSchema = z.object({
   showId: z.string(),
@@ -30,22 +31,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "showId is required" }, { status: 400 })
     }
 
-    const submission = await prisma.submission.findUnique({
-      where: {
-        userId_showId: {
-          userId: session.user.id,
-          showId,
-        },
-      },
-      include: {
-        picks: {
-          include: {
-            song: true,
+    const submission = await withRetry(
+      () =>
+        prisma.submission.findUnique({
+          where: {
+            userId_showId: {
+              userId: session.user.id,
+              showId,
+            },
           },
-        },
-        show: true,
-      },
-    })
+          include: {
+            picks: {
+              include: {
+                song: true,
+              },
+            },
+            show: true,
+          },
+        }),
+      { operationName: "find submission" }
+    )
 
     return NextResponse.json({ submission })
   } catch (error) {
@@ -104,10 +109,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the show with tour information
-    const show = await prisma.show.findUnique({
-      where: { id: showId },
-      include: { tour: true },
-    })
+    const show = await withRetry(
+      () =>
+        prisma.show.findUnique({
+          where: { id: showId },
+          include: { tour: true },
+        }),
+      { operationName: "find show for picks" }
+    )
 
     if (!show) {
       return NextResponse.json({ error: "Show not found" }, { status: 404 })
@@ -136,45 +145,65 @@ export async function POST(request: NextRequest) {
       const tz = show.timezone || getTimezoneForLocation(show.state)
       const lockTime = getShowLockTime(show.showDate, tz)
 
-      await prisma.show.update({
-        where: { id: show.id },
-        data: { lockTime, timezone: tz },
-      })
+      await withRetry(
+        () =>
+          prisma.show.update({
+            where: { id: show.id },
+            data: { lockTime, timezone: tz },
+          }),
+        { operationName: "update show lock time" }
+      )
     }
 
     // Check if user already has a submission for this show
-    const existingSubmission = await prisma.submission.findUnique({
-      where: {
-        userId_showId: {
-          userId: session.user.id,
-          showId,
-        },
-      },
-    })
+    const existingSubmission = await withRetry(
+      () =>
+        prisma.submission.findUnique({
+          where: {
+            userId_showId: {
+              userId: session.user.id,
+              showId,
+            },
+          },
+        }),
+      { operationName: "find existing submission" }
+    )
 
     if (existingSubmission) {
       // Update existing submission
-      await prisma.pick.deleteMany({
-        where: { submissionId: existingSubmission.id },
-      })
+      await withRetry(
+        () =>
+          prisma.pick.deleteMany({
+            where: { submissionId: existingSubmission.id },
+          }),
+        { operationName: "delete existing picks" }
+      )
 
-      await prisma.pick.createMany({
-        data: picks.map((pick) => ({
-          submissionId: existingSubmission.id,
-          songId: pick.songId,
-          pickType: pick.pickType as PickType,
-        })),
-      })
+      await withRetry(
+        () =>
+          prisma.pick.createMany({
+            data: picks.map((pick) => ({
+              submissionId: existingSubmission.id,
+              songId: pick.songId,
+              pickType: pick.pickType as PickType,
+            })),
+          }),
+        { operationName: "create picks" }
+      )
 
-      const updatedSubmission = await prisma.submission.findUnique({
-        where: { id: existingSubmission.id },
-        include: {
-          picks: {
-            include: { song: true },
-          },
-          show: true,
-        },
-      })
+      const updatedSubmission = await withRetry(
+        () =>
+          prisma.submission.findUnique({
+            where: { id: existingSubmission.id },
+            include: {
+              picks: {
+                include: { song: true },
+              },
+              show: true,
+            },
+          }),
+        { operationName: "find updated submission" }
+      )
 
       return NextResponse.json({
         success: true,
@@ -184,24 +213,28 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new submission
-    const submission = await prisma.submission.create({
-      data: {
-        userId: session.user.id,
-        showId,
-        picks: {
-          create: picks.map((pick) => ({
-            songId: pick.songId,
-            pickType: pick.pickType as PickType,
-          })),
-        },
-      },
-      include: {
-        picks: {
-          include: { song: true },
-        },
-        show: true,
-      },
-    })
+    const submission = await withRetry(
+      () =>
+        prisma.submission.create({
+          data: {
+            userId: session.user.id,
+            showId,
+            picks: {
+              create: picks.map((pick) => ({
+                songId: pick.songId,
+                pickType: pick.pickType as PickType,
+              })),
+            },
+          },
+          include: {
+            picks: {
+              include: { song: true },
+            },
+            show: true,
+          },
+        }),
+      { operationName: "create submission" }
+    )
 
     return NextResponse.json({
       success: true,
