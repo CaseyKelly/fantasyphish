@@ -519,7 +519,7 @@ export default function LeaderboardClient({
   currentUserId,
   hasPastTours,
 }: LeaderboardClientProps) {
-  const [view, setView] = useState<View>("tour")
+  const [view, setView] = useState<View>("show")
   const [expandedShow, setExpandedShow] = useState<Set<string>>(new Set())
   const [expandedTour, setExpandedTour] = useState<Set<string>>(new Set())
 
