@@ -519,7 +519,8 @@ export default function LeaderboardClient({
   currentUserId,
   hasPastTours,
 }: LeaderboardClientProps) {
-  const [view, setView] = useState<View>("show")
+  const isActiveTour = nextShow?.tour?.status === "ACTIVE"
+  const [view, setView] = useState<View>(isActiveTour ? "show" : "tour")
   const [expandedShow, setExpandedShow] = useState<Set<string>>(new Set())
   const [expandedTour, setExpandedTour] = useState<Set<string>>(new Set())
 
@@ -571,33 +572,35 @@ export default function LeaderboardClient({
         </h1>
 
         {/* View toggle */}
-        <div className="inline-flex self-start rounded-lg border-2 border-[#4a6b7d]/60 bg-[#1e3340]/60 p-1">
-          <button
-            type="button"
-            onClick={() => setView("show")}
-            className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors ${
-              view === "show"
-                ? "bg-orange-500 text-white shadow"
-                : "text-slate-300 hover:text-white"
-            }`}
-          >
-            This Show
-          </button>
-          <button
-            type="button"
-            onClick={() => setView("tour")}
-            className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors ${
-              view === "tour"
-                ? "bg-orange-500 text-white shadow"
-                : "text-slate-300 hover:text-white"
-            }`}
-          >
-            Tour Standings
-          </button>
-        </div>
+        {isActiveTour && (
+          <div className="inline-flex self-start rounded-lg border-2 border-[#4a6b7d]/60 bg-[#1e3340]/60 p-1">
+            <button
+              type="button"
+              onClick={() => setView("show")}
+              className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors ${
+                view === "show"
+                  ? "bg-orange-500 text-white shadow"
+                  : "text-slate-300 hover:text-white"
+              }`}
+            >
+              This Show
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("tour")}
+              className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors ${
+                view === "tour"
+                  ? "bg-orange-500 text-white shadow"
+                  : "text-slate-300 hover:text-white"
+              }`}
+            >
+              Tour Standings
+            </button>
+          </div>
+        )}
       </div>
 
-      {view === "show" ? (
+      {isActiveTour && view === "show" ? (
         <>
           {/* This Show banner */}
           {currentShow ? (
