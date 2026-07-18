@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Sparkles } from "lucide-react"
+import Link from "next/link"
+import { Sparkles, Trophy } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { DonutLogo } from "@/components/DonutLogo"
 import { SongPicker } from "@/components/SongPicker"
@@ -168,7 +169,18 @@ export default function PicksPage() {
         <h1 className="text-3xl font-bold font-display text-white mb-2">
           {isLocked ? "Show In Progress" : "Make Your Picks"}
         </h1>
-        {isLocked && <LiveBadge />}
+        {isLocked && (
+          <div className="flex flex-col items-center gap-2">
+            <LiveBadge />
+            <Link
+              href="/leaderboard"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#c23a3a] hover:bg-[#d64545] text-white font-semibold rounded-lg shadow-lg shadow-[#c23a3a]/20 transition-colors"
+            >
+              <Trophy className="h-4 w-4" />
+              View Leaderboard
+            </Link>
+          </div>
+        )}
         {nextShow.tour && (
           <p className="text-slate-400 mb-2">{nextShow.tour.name}</p>
         )}
