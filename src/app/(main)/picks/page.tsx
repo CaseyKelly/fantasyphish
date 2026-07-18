@@ -174,7 +174,7 @@ export default function PicksPage() {
             <LiveBadge />
             <Link
               href="/leaderboard"
-              className="inline-flex items-center gap-2 text-sm text-[#c23a3a] hover:text-[#d64545] transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#c23a3a] hover:bg-[#d64545] text-white font-semibold rounded-lg shadow-lg shadow-[#c23a3a]/20 transition-colors"
             >
               <Trophy className="h-4 w-4" />
               View Leaderboard
