@@ -9,6 +9,10 @@ import {
   tourSubmissionWhere,
   showSubmissionWhere,
 } from "@/lib/leaderboard"
+import {
+  applyShowDemoOverride,
+  isDemoOverrideEnabled,
+} from "@/lib/demo-leaderboard-override"
 
 export const metadata: Metadata = {
   title: "Leaderboard",
@@ -194,12 +198,16 @@ export default async function LeaderboardPage({
   )
 
   const currentShow = await getCurrentOrLastShow(currentTourId)
-  const showLeaderboard = currentShow
+  let showLeaderboard = currentShow
     ? await getLeaderboard(
         showSubmissionWhere(currentShow.id),
         "find show leaderboard users"
       )
     : []
+  // DEMO ONLY (preview/leaderboard-demo-donotmerge): no-op in production.
+  if (isDemoOverrideEnabled()) {
+    showLeaderboard = applyShowDemoOverride(showLeaderboard)
+  }
 
   // Check if there are any in-progress shows for this tour
   const hasInProgressShows = await withRetry(
