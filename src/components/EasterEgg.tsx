@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react"
 import { X } from "lucide-react"
 import { DonutCatchGame } from "./DonutCatchGame"
 
-// Same secret sequence in two alphabets: arrow keys + b/a on desktop,
-// swipes + two taps on touch devices ("b" and "a" both satisfied by a tap).
+// Desktop: the classic Konami code. Mobile (no arrow keys): long-press
+// the navbar logo instead — see the pointer handlers wired up in Navbar.tsx,
+// which dispatch OPEN_EVENT on a long press.
 const KONAMI_CODE = [
   "up",
   "up",
@@ -19,8 +20,7 @@ const KONAMI_CODE = [
   "a",
 ]
 
-const SWIPE_THRESHOLD = 40
-const TAP_THRESHOLD = 15
+export const EASTER_EGG_OPEN_EVENT = "fantasyphish:open-easter-egg"
 
 const KEY_TO_TOKEN: Record<string, string> = {
   ArrowUp: "up",
@@ -77,42 +77,15 @@ export function EasterEgg() {
       if (token) processToken(token)
     }
 
-    let touchStartX = 0
-    let touchStartY = 0
-
-    const handleTouchStart = (e: TouchEvent) => {
-      const touch = e.touches[0]
-      touchStartX = touch.clientX
-      touchStartY = touch.clientY
-    }
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (isTypingTarget(e.target)) return
-      const touch = e.changedTouches[0]
-      const dx = touch.clientX - touchStartX
-      const dy = touch.clientY - touchStartY
-      const absX = Math.abs(dx)
-      const absY = Math.abs(dy)
-
-      if (absX < TAP_THRESHOLD && absY < TAP_THRESHOLD) {
-        processToken("tap")
-        return
-      }
-
-      if (Math.max(absX, absY) < SWIPE_THRESHOLD) return
-
-      const token =
-        absX > absY ? (dx > 0 ? "right" : "left") : dy > 0 ? "down" : "up"
-      processToken(token)
+    const handleOpenEvent = () => {
+      if (!openRef.current) setOpen(true)
     }
 
     window.addEventListener("keydown", handleKeyDown)
-    window.addEventListener("touchstart", handleTouchStart, { passive: true })
-    window.addEventListener("touchend", handleTouchEnd, { passive: true })
+    window.addEventListener(EASTER_EGG_OPEN_EVENT, handleOpenEvent)
     return () => {
       window.removeEventListener("keydown", handleKeyDown)
-      window.removeEventListener("touchstart", handleTouchStart)
-      window.removeEventListener("touchend", handleTouchEnd)
+      window.removeEventListener(EASTER_EGG_OPEN_EVENT, handleOpenEvent)
     }
   }, [])
 
