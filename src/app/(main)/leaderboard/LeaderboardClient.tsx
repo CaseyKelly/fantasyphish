@@ -104,72 +104,90 @@ function locationLabel(place: {
   }`
 }
 
+const PODIUM_SPOT_STYLES = {
+  2: {
+    place: "2nd",
+    rankLabel: "Silver",
+    rankNum: 2,
+    wrapClass: "flex-col items-center flex-1",
+    avatarClass:
+      "w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-gray-300 to-gray-500 flex items-center justify-center shadow-lg",
+    badgeClass:
+      "absolute -top-1 -right-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-700 border-2 border-gray-400 flex items-center justify-center",
+    badgeTextClass: "text-xs sm:text-sm font-bold text-gray-300",
+    nameClass:
+      "font-semibold text-sm sm:text-base text-white hover:text-gray-300 transition-colors text-center mb-1 line-clamp-1 max-w-full",
+    pointsClass: "text-xl sm:text-2xl font-bold text-gray-300 mb-2",
+    podiumBarClass:
+      "w-full bg-gradient-to-t from-gray-400/30 to-gray-300/30 rounded-t-lg border-2 border-gray-400/50 px-3 py-3 sm:py-4 flex flex-col items-center",
+    rankLabelClass: "text-xs text-gray-300 font-medium",
+    rankNumClass:
+      "text-2xl sm:text-3xl font-bold font-display text-gray-200 mt-1",
+    icon: <Medal className="h-8 w-8 sm:h-10 sm:w-10 text-white" />,
+  },
+  1: {
+    place: "1st",
+    rankLabel: "Gold",
+    rankNum: 1,
+    wrapClass: "flex-col items-center flex-1",
+    avatarClass:
+      "w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600 flex items-center justify-center shadow-2xl shadow-yellow-500/50 animate-pulse",
+    badgeClass:
+      "absolute -top-1 -right-1 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-700 border-2 border-yellow-400 flex items-center justify-center",
+    badgeTextClass: "text-sm sm:text-base font-bold text-yellow-400",
+    nameClass:
+      "font-bold text-base sm:text-lg text-yellow-400 hover:text-yellow-300 transition-colors text-center mb-1 line-clamp-1 max-w-full",
+    pointsClass: "text-2xl sm:text-3xl font-bold text-yellow-400 mb-2",
+    podiumBarClass:
+      "w-full bg-gradient-to-t from-yellow-600/30 to-yellow-400/30 rounded-t-lg border-2 border-yellow-400/50 px-3 py-5 sm:py-6 flex flex-col items-center",
+    rankLabelClass: "text-xs text-yellow-300 font-medium",
+    rankNumClass:
+      "text-3xl sm:text-4xl font-bold font-display text-yellow-400 mt-1",
+    icon: <Trophy className="h-10 w-10 sm:h-12 sm:w-12 text-yellow-900" />,
+  },
+  3: {
+    place: "3rd",
+    rankLabel: "Bronze",
+    rankNum: 3,
+    wrapClass: "flex-col items-center flex-1",
+    avatarClass:
+      "w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-amber-600 to-amber-800 flex items-center justify-center shadow-lg",
+    badgeClass:
+      "absolute -top-1 -right-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-700 border-2 border-amber-600 flex items-center justify-center",
+    badgeTextClass: "text-xs sm:text-sm font-bold text-amber-400",
+    nameClass:
+      "font-semibold text-sm sm:text-base text-white hover:text-amber-300 transition-colors text-center mb-1 line-clamp-1 max-w-full",
+    pointsClass: "text-xl sm:text-2xl font-bold text-amber-500 mb-2",
+    podiumBarClass:
+      "w-full bg-gradient-to-t from-amber-700/30 to-amber-600/30 rounded-t-lg border-2 border-amber-600/50 px-3 py-2 sm:py-3 flex flex-col items-center",
+    rankLabelClass: "text-xs text-amber-400 font-medium",
+    rankNumClass:
+      "text-2xl sm:text-3xl font-bold font-display text-amber-500 mt-1",
+    icon: <Medal className="h-8 w-8 sm:h-10 sm:w-10 text-amber-200" />,
+  },
+} as const
+
 function Podium({ entries }: { entries: LeaderboardEntry[] }) {
-  const podiumSpots = [
-    {
-      entry: entries[1],
-      place: "2nd",
-      rankLabel: "Silver",
-      rankNum: 2,
-      wrapClass: "flex-col items-center flex-1",
-      avatarClass:
-        "w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-gray-300 to-gray-500 flex items-center justify-center shadow-lg",
-      badgeClass:
-        "absolute -top-1 -right-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-700 border-2 border-gray-400 flex items-center justify-center",
-      badgeTextClass: "text-xs sm:text-sm font-bold text-gray-300",
-      nameClass:
-        "font-semibold text-sm sm:text-base text-white hover:text-gray-300 transition-colors text-center mb-1 line-clamp-1 max-w-full",
-      pointsClass: "text-xl sm:text-2xl font-bold text-gray-300 mb-2",
-      podiumBarClass:
-        "w-full bg-gradient-to-t from-gray-400/30 to-gray-300/30 rounded-t-lg border-2 border-gray-400/50 px-3 py-3 sm:py-4 flex flex-col items-center",
-      rankLabelClass: "text-xs text-gray-300 font-medium",
-      rankNumClass:
-        "text-2xl sm:text-3xl font-bold font-display text-gray-200 mt-1",
-      icon: <Medal className="h-8 w-8 sm:h-10 sm:w-10 text-white" />,
-    },
-    {
-      entry: entries[0],
-      place: "1st",
-      rankLabel: "Gold",
-      rankNum: 1,
-      wrapClass: "flex-col items-center flex-1",
-      avatarClass:
-        "w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600 flex items-center justify-center shadow-2xl shadow-yellow-500/50 animate-pulse",
-      badgeClass:
-        "absolute -top-1 -right-1 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-700 border-2 border-yellow-400 flex items-center justify-center",
-      badgeTextClass: "text-sm sm:text-base font-bold text-yellow-400",
-      nameClass:
-        "font-bold text-base sm:text-lg text-yellow-400 hover:text-yellow-300 transition-colors text-center mb-1 line-clamp-1 max-w-full",
-      pointsClass: "text-2xl sm:text-3xl font-bold text-yellow-400 mb-2",
-      podiumBarClass:
-        "w-full bg-gradient-to-t from-yellow-600/30 to-yellow-400/30 rounded-t-lg border-2 border-yellow-400/50 px-3 py-5 sm:py-6 flex flex-col items-center",
-      rankLabelClass: "text-xs text-yellow-300 font-medium",
-      rankNumClass:
-        "text-3xl sm:text-4xl font-bold font-display text-yellow-400 mt-1",
-      icon: <Trophy className="h-10 w-10 sm:h-12 sm:w-12 text-yellow-900" />,
-    },
-    {
-      entry: entries[2],
-      place: "3rd",
-      rankLabel: "Bronze",
-      rankNum: 3,
-      wrapClass: "flex-col items-center flex-1",
-      avatarClass:
-        "w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-amber-600 to-amber-800 flex items-center justify-center shadow-lg",
-      badgeClass:
-        "absolute -top-1 -right-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-700 border-2 border-amber-600 flex items-center justify-center",
-      badgeTextClass: "text-xs sm:text-sm font-bold text-amber-400",
-      nameClass:
-        "font-semibold text-sm sm:text-base text-white hover:text-amber-300 transition-colors text-center mb-1 line-clamp-1 max-w-full",
-      pointsClass: "text-xl sm:text-2xl font-bold text-amber-500 mb-2",
-      podiumBarClass:
-        "w-full bg-gradient-to-t from-amber-700/30 to-amber-600/30 rounded-t-lg border-2 border-amber-600/50 px-3 py-2 sm:py-3 flex flex-col items-center",
-      rankLabelClass: "text-xs text-amber-400 font-medium",
-      rankNumClass:
-        "text-2xl sm:text-3xl font-bold font-display text-amber-500 mt-1",
-      icon: <Medal className="h-8 w-8 sm:h-10 sm:w-10 text-amber-200" />,
-    },
-  ]
+  // Group entries by their actual competition rank (1, 2, 3) so ties land in
+  // the same podium spot instead of being spread across positions 0/1/2.
+  const groupedByRank = new Map<number, LeaderboardEntry[]>()
+  for (const entry of entries) {
+    if (entry.rank > 3) continue
+    const group = groupedByRank.get(entry.rank)
+    if (group) {
+      group.push(entry)
+    } else {
+      groupedByRank.set(entry.rank, [entry])
+    }
+  }
+
+  const podiumSpots = ([2, 1, 3] as const)
+    .map((rankNum) => {
+      const group = groupedByRank.get(rankNum)
+      if (!group || group.length === 0) return null
+      return { ...PODIUM_SPOT_STYLES[rankNum], tiedEntries: group }
+    })
+    .filter((spot): spot is NonNullable<typeof spot> => spot !== null)
 
   return (
     <Card className="bg-gradient-to-b from-[#233d4d]/80 to-[#1e3340]/80 border-2 border-[#4a6b7d]/60">
@@ -179,28 +197,39 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
           role="region"
           aria-label="Leaderboard podium"
         >
-          {podiumSpots.map((spot) => (
-            <div key={spot.place} className={`flex ${spot.wrapClass}`}>
-              <div className="mb-3 relative">
-                <div className={spot.avatarClass}>{spot.icon}</div>
-                <div className={spot.badgeClass}>
-                  <span className={spot.badgeTextClass}>{spot.rankNum}</span>
+          {podiumSpots.map((spot) => {
+            const isTie = spot.tiedEntries.length > 1
+            const displayPlace = isTie ? `T-${spot.place}` : spot.place
+            return (
+              <div key={spot.place} className={`flex ${spot.wrapClass}`}>
+                <div className="mb-3 relative">
+                  <div className={spot.avatarClass}>{spot.icon}</div>
+                  <div className={spot.badgeClass}>
+                    <span className={spot.badgeTextClass}>{spot.rankNum}</span>
+                  </div>
+                </div>
+                <div className="flex flex-col items-center max-w-full">
+                  {spot.tiedEntries.map((entry) => (
+                    <Link
+                      key={entry.userId}
+                      href={`/user/${entry.username}`}
+                      className={spot.nameClass}
+                      aria-label={`${isTie ? `Tied for ${spot.place}` : `${spot.place} place`}: ${entry.username}`}
+                    >
+                      {entry.username}
+                    </Link>
+                  ))}
+                </div>
+                <div className={spot.pointsClass}>
+                  {spot.tiedEntries[0].totalPoints}
+                </div>
+                <div className={spot.podiumBarClass}>
+                  <div className={spot.rankLabelClass}>{spot.rankLabel}</div>
+                  <div className={spot.rankNumClass}>{displayPlace}</div>
                 </div>
               </div>
-              <Link
-                href={`/user/${spot.entry.username}`}
-                className={spot.nameClass}
-                aria-label={`${spot.place} place: ${spot.entry.username}`}
-              >
-                {spot.entry.username}
-              </Link>
-              <div className={spot.pointsClass}>{spot.entry.totalPoints}</div>
-              <div className={spot.podiumBarClass}>
-                <div className={spot.rankLabelClass}>{spot.rankLabel}</div>
-                <div className={spot.rankNumClass}>{spot.place}</div>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </CardContent>
     </Card>
