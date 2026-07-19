@@ -3,6 +3,7 @@
 import { SessionProvider } from "next-auth/react"
 import { Toaster } from "sonner"
 import { ReactNode } from "react"
+import { EasterEgg } from "@/components/EasterEgg"
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
@@ -18,6 +19,7 @@ export function Providers({ children }: { children: ReactNode }) {
           },
         }}
       />
+      <EasterEgg />
     </SessionProvider>
   )
 }
