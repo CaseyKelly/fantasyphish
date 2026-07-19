@@ -3,7 +3,6 @@ import { format } from "date-fns"
 import { User, Calendar, Trophy, Target, TrendingUp, Star } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { AchievementBadge } from "@/components/AchievementBadge"
-import { FeedbackPanel } from "@/components/FeedbackPanel"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import { withRetry } from "@/lib/db-retry"
@@ -310,8 +309,6 @@ export default async function UserProfilePage({ params }: UserPageProps) {
           </CardContent>
         </Card>
       )}
-
-      <FeedbackPanel />
     </div>
   )
 }
