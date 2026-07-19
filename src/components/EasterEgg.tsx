@@ -102,7 +102,7 @@ export function EasterEgg() {
 
   return (
     <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4">
-      <div className="bg-[#2d4654] rounded-xl shadow-xl p-4 sm:p-6 relative">
+      <div className="bg-[#2d4654] rounded-xl shadow-xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
         <button
           onClick={() => setOpen(false)}
           className="absolute -top-3 -right-3 bg-[#c23a3a] hover:bg-[#d64545] text-white rounded-full p-1.5 shadow-lg transition-colors"

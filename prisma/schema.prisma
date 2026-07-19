@@ -26,6 +26,7 @@ model User {
   updatedAt             DateTime  @updatedAt
   submissions           Submission[]
   achievements          UserAchievement[]
+  easterEggScore        EasterEggScore?
 }
 
 model Tour {
@@ -145,6 +146,18 @@ model UserAchievement {
   @@unique([userId, achievementId])
   @@index([userId])
   @@index([achievementId])
+}
+
+// Personal best for the hidden Donut Catch mini-game (one row per user)
+model EasterEggScore {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([score])
 }
 
 enum AchievementCategory {

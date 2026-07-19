@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, useCallback } from "react"
+import { useSession } from "next-auth/react"
 
 const CANVAS_WIDTH = 360
 const CANVAS_HEIGHT = 480
@@ -19,7 +20,13 @@ interface Donut {
   spin: number
 }
 
+interface LeaderboardEntry {
+  username: string
+  score: number
+}
+
 export function DonutCatchGame() {
+  const { data: session, status } = useSession()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number | null>(null)
 
@@ -35,6 +42,7 @@ export function DonutCatchGame() {
     left: false,
     right: false,
   })
+  const sessionStatusRef = useRef(status)
 
   const [gameState, setGameState] = useState<GameState>("idle")
   const [score, setScore] = useState(0)
@@ -43,6 +51,33 @@ export function DonutCatchGame() {
     if (typeof window === "undefined") return 0
     return parseInt(window.localStorage.getItem(BEST_SCORE_KEY) || "0", 10) || 0
   })
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [justBeatBest, setJustBeatBest] = useState(false)
+
+  useEffect(() => {
+    sessionStatusRef.current = status
+  }, [status])
+
+  const refreshLeaderboard = async () => {
+    try {
+      const res = await fetch("/api/easter-egg/score")
+      if (!res.ok) return
+      const data = await res.json()
+      setLeaderboard(Array.isArray(data.leaderboard) ? data.leaderboard : [])
+      if (typeof data.yourBest === "number") {
+        setBest((prev) => Math.max(prev, data.yourBest))
+      }
+    } catch {
+      // The leaderboard is a nice-to-have; ignore network errors.
+    }
+  }
+
+  useEffect(() => {
+    async function load() {
+      await refreshLeaderboard()
+    }
+    load()
+  }, [])
 
   const startGame = useCallback(() => {
     donutsRef.current = []
@@ -54,6 +89,7 @@ export function DonutCatchGame() {
     targetXRef.current = basketXRef.current
     setScore(0)
     setLives(STARTING_LIVES)
+    setJustBeatBest(false)
     gameStateRef.current = "playing"
     setGameState("playing")
   }, [])
@@ -61,14 +97,30 @@ export function DonutCatchGame() {
   const endGame = useCallback(() => {
     gameStateRef.current = "gameover"
     setGameState("gameover")
+    const finalScore = scoreRef.current
+
     setBest((prevBest) => {
-      const finalScore = scoreRef.current
       if (finalScore > prevBest) {
         window.localStorage.setItem(BEST_SCORE_KEY, String(finalScore))
         return finalScore
       }
       return prevBest
     })
+
+    if (sessionStatusRef.current === "authenticated" && finalScore > 0) {
+      fetch("/api/easter-egg/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ score: finalScore }),
+      })
+        .then(async (res) => {
+          if (!res.ok) return
+          const data = await res.json()
+          if (data.isNewBest) setJustBeatBest(true)
+          await refreshLeaderboard()
+        })
+        .catch(() => {})
+    }
   }, [])
 
   // Keyboard controls
@@ -258,6 +310,11 @@ export function DonutCatchGame() {
                 <p className="text-gray-300 text-sm">
                   You caught {score} donut{score === 1 ? "" : "s"}
                 </p>
+                {justBeatBest && (
+                  <p className="text-sm font-semibold text-[#f4c542]">
+                    🎉 New high score!
+                  </p>
+                )}
               </>
             ) : (
               <>
@@ -275,6 +332,39 @@ export function DonutCatchGame() {
               {gameState === "gameover" ? "Play Again" : "Start"}
             </button>
           </div>
+        )}
+      </div>
+
+      <div className="w-full max-w-[360px] bg-[#1e3340] border border-[#3d5a6c]/50 rounded-lg p-3">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-semibold text-white">🏆 High Scores</h3>
+          {status === "unauthenticated" && (
+            <span className="text-xs text-gray-400">
+              Log in to save your score
+            </span>
+          )}
+        </div>
+        {leaderboard.length === 0 ? (
+          <p className="text-xs text-gray-400">No scores yet — be the first!</p>
+        ) : (
+          <ol className="space-y-1 text-sm max-h-32 overflow-y-auto">
+            {leaderboard.map((entry, i) => (
+              <li
+                key={`${entry.username}-${i}`}
+                className={`flex items-center justify-between px-2 py-1 rounded ${
+                  session?.user?.username === entry.username
+                    ? "bg-[#c23a3a]/20 text-white"
+                    : "text-gray-300"
+                }`}
+              >
+                <span>
+                  <span className="text-gray-500 mr-2">{i + 1}.</span>
+                  {entry.username}
+                </span>
+                <span className="font-semibold">{entry.score}</span>
+              </li>
+            ))}
+          </ol>
         )}
       </div>
     </div>
