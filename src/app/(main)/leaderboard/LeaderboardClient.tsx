@@ -6,6 +6,7 @@ import {
   Trophy,
   Medal,
   User,
+  Users,
   TrendingUp,
   Calendar,
   MapPin,
@@ -117,6 +118,8 @@ const PODIUM_SPOT_STYLES = {
     badgeTextClass: "text-xs sm:text-sm font-bold text-gray-300",
     nameClass:
       "font-semibold text-sm sm:text-base text-white hover:text-gray-300 transition-colors text-center mb-1 line-clamp-1 max-w-full",
+    chipClass:
+      "px-2.5 py-1 rounded-full bg-gray-300/10 border border-gray-400/40 text-white font-semibold text-xs sm:text-sm hover:bg-gray-300/20 hover:text-gray-300 transition-colors line-clamp-1 max-w-[9rem]",
     pointsClass: "text-xl sm:text-2xl font-bold text-gray-300 mb-2",
     podiumBarClass:
       "w-full bg-gradient-to-t from-gray-400/30 to-gray-300/30 rounded-t-lg border-2 border-gray-400/50 px-3 py-3 sm:py-4 flex flex-col items-center",
@@ -137,6 +140,8 @@ const PODIUM_SPOT_STYLES = {
     badgeTextClass: "text-sm sm:text-base font-bold text-yellow-400",
     nameClass:
       "font-bold text-base sm:text-lg text-yellow-400 hover:text-yellow-300 transition-colors text-center mb-1 line-clamp-1 max-w-full",
+    chipClass:
+      "px-2.5 py-1 rounded-full bg-yellow-400/10 border border-yellow-400/40 text-yellow-400 font-bold text-sm sm:text-base hover:bg-yellow-400/20 hover:text-yellow-300 transition-colors line-clamp-1 max-w-[9rem]",
     pointsClass: "text-2xl sm:text-3xl font-bold text-yellow-400 mb-2",
     podiumBarClass:
       "w-full bg-gradient-to-t from-yellow-600/30 to-yellow-400/30 rounded-t-lg border-2 border-yellow-400/50 px-3 py-5 sm:py-6 flex flex-col items-center",
@@ -157,6 +162,8 @@ const PODIUM_SPOT_STYLES = {
     badgeTextClass: "text-xs sm:text-sm font-bold text-amber-400",
     nameClass:
       "font-semibold text-sm sm:text-base text-white hover:text-amber-300 transition-colors text-center mb-1 line-clamp-1 max-w-full",
+    chipClass:
+      "px-2.5 py-1 rounded-full bg-amber-600/10 border border-amber-600/40 text-white font-semibold text-xs sm:text-sm hover:bg-amber-600/20 hover:text-amber-300 transition-colors line-clamp-1 max-w-[9rem]",
     pointsClass: "text-xl sm:text-2xl font-bold text-amber-500 mb-2",
     podiumBarClass:
       "w-full bg-gradient-to-t from-amber-700/30 to-amber-600/30 rounded-t-lg border-2 border-amber-600/50 px-3 py-2 sm:py-3 flex flex-col items-center",
@@ -199,7 +206,6 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
         >
           {podiumSpots.map((spot) => {
             const isTie = spot.tiedEntries.length > 1
-            const displayPlace = isTie ? `T-${spot.place}` : spot.place
             return (
               <div key={spot.place} className={`flex ${spot.wrapClass}`}>
                 <div className="mb-3 relative">
@@ -208,24 +214,44 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
                     <span className={spot.badgeTextClass}>{spot.rankNum}</span>
                   </div>
                 </div>
-                <div className="flex flex-col items-center max-w-full">
-                  {spot.tiedEntries.map((entry) => (
-                    <Link
-                      key={entry.userId}
-                      href={`/user/${entry.username}`}
-                      className={spot.nameClass}
-                      aria-label={`${isTie ? `Tied for ${spot.place}` : `${spot.place} place`}: ${entry.username}`}
-                    >
-                      {entry.username}
-                    </Link>
-                  ))}
-                </div>
+                {isTie ? (
+                  <div className="flex flex-wrap justify-center gap-1.5 mb-1 max-w-[10rem] sm:max-w-[13rem]">
+                    {spot.tiedEntries.map((entry) => (
+                      <Link
+                        key={entry.userId}
+                        href={`/user/${entry.username}`}
+                        className={spot.chipClass}
+                        aria-label={`Tied for ${spot.place} place: ${entry.username}`}
+                      >
+                        {entry.username}
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <Link
+                    href={`/user/${spot.tiedEntries[0].username}`}
+                    className={spot.nameClass}
+                    aria-label={`${spot.place} place: ${spot.tiedEntries[0].username}`}
+                  >
+                    {spot.tiedEntries[0].username}
+                  </Link>
+                )}
                 <div className={spot.pointsClass}>
                   {spot.tiedEntries[0].totalPoints}
                 </div>
                 <div className={spot.podiumBarClass}>
-                  <div className={spot.rankLabelClass}>{spot.rankLabel}</div>
-                  <div className={spot.rankNumClass}>{displayPlace}</div>
+                  <div className="flex items-center gap-1.5">
+                    <span className={spot.rankLabelClass}>
+                      {spot.rankLabel}
+                    </span>
+                    {isTie && (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-orange-500/15 border border-orange-400/40 text-orange-300 text-[10px] font-semibold uppercase tracking-wide">
+                        <Users className="h-2.5 w-2.5" />
+                        Tie
+                      </span>
+                    )}
+                  </div>
+                  <div className={spot.rankNumClass}>{spot.place}</div>
                 </div>
               </div>
             )
