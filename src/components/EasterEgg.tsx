@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react"
 import { X } from "lucide-react"
 import { DonutCatchGame } from "./DonutCatchGame"
 
-// Desktop: the classic Konami code. Mobile (no arrow keys): long-press
-// the donut logo instead — see the pointer handlers in DonutLogo.tsx,
-// which dispatch EASTER_EGG_OPEN_EVENT on a long press.
+// Desktop: the classic Konami code (needs arrow keys). Mobile: tap the
+// hidden dot in the corner 5 times fast — long-press on a link runs into
+// the OS's own "peek this link" gesture, which we can't reliably beat.
 const KONAMI_CODE = [
   "up",
   "up",
@@ -20,7 +20,8 @@ const KONAMI_CODE = [
   "a",
 ]
 
-export const EASTER_EGG_OPEN_EVENT = "fantasyphish:open-easter-egg"
+const TAP_TRIGGER_COUNT = 5
+const TAP_TRIGGER_WINDOW_MS = 1800
 
 const KEY_TO_TOKEN: Record<string, string> = {
   ArrowUp: "up",
@@ -34,6 +35,8 @@ const KEY_TO_TOKEN: Record<string, string> = {
 export function EasterEgg() {
   const [open, setOpen] = useState(false)
   const openRef = useRef(false)
+  const tapCountRef = useRef(0)
+  const lastTapRef = useRef(0)
 
   useEffect(() => {
     openRef.current = open
@@ -77,16 +80,8 @@ export function EasterEgg() {
       if (token) processToken(token)
     }
 
-    const handleOpenEvent = () => {
-      if (!openRef.current) setOpen(true)
-    }
-
     window.addEventListener("keydown", handleKeyDown)
-    window.addEventListener(EASTER_EGG_OPEN_EVENT, handleOpenEvent)
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-      window.removeEventListener(EASTER_EGG_OPEN_EVENT, handleOpenEvent)
-    }
+    return () => window.removeEventListener("keydown", handleKeyDown)
   }, [])
 
   useEffect(() => {
@@ -98,20 +93,47 @@ export function EasterEgg() {
     return () => window.removeEventListener("keydown", handleEscape)
   }, [open])
 
-  if (!open) return null
+  const handleSecretTap = () => {
+    const now = Date.now()
+    if (now - lastTapRef.current > TAP_TRIGGER_WINDOW_MS) {
+      tapCountRef.current = 0
+    }
+    lastTapRef.current = now
+    tapCountRef.current += 1
+    if (tapCountRef.current >= TAP_TRIGGER_COUNT) {
+      tapCountRef.current = 0
+      setOpen(true)
+    }
+  }
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4">
-      <div className="bg-[#2d4654] rounded-xl shadow-xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+    <>
+      {!open && (
         <button
-          onClick={() => setOpen(false)}
-          className="absolute -top-3 -right-3 bg-[#c23a3a] hover:bg-[#d64545] text-white rounded-full p-1.5 shadow-lg transition-colors"
-          aria-label="Close game"
+          type="button"
+          onClick={handleSecretTap}
+          tabIndex={-1}
+          aria-hidden="true"
+          className="fixed bottom-0 right-0 z-[150] flex h-11 w-11 items-center justify-center"
         >
-          <X className="h-4 w-4" />
+          <span className="h-2 w-2 rounded-full bg-[#c23a3a]/15" />
         </button>
-        <DonutCatchGame />
-      </div>
-    </div>
+      )}
+
+      {open && (
+        <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4">
+          <div className="bg-[#2d4654] rounded-xl shadow-xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setOpen(false)}
+              className="absolute -top-3 -right-3 bg-[#c23a3a] hover:bg-[#d64545] text-white rounded-full p-1.5 shadow-lg transition-colors"
+              aria-label="Close game"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <DonutCatchGame />
+          </div>
+        </div>
+      )}
+    </>
   )
 }
