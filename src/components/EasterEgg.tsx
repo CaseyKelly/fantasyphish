@@ -5,8 +5,8 @@ import { X } from "lucide-react"
 import { DonutCatchGame } from "./DonutCatchGame"
 
 // Desktop: the classic Konami code. Mobile (no arrow keys): long-press
-// the navbar logo instead — see the pointer handlers wired up in Navbar.tsx,
-// which dispatch OPEN_EVENT on a long press.
+// the donut logo instead — see the pointer handlers in DonutLogo.tsx,
+// which dispatch EASTER_EGG_OPEN_EVENT on a long press.
 const KONAMI_CODE = [
   "up",
   "up",
