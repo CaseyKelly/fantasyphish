@@ -5,6 +5,10 @@ import { isAdminFeaturesEnabled } from "@/lib/env"
 import { Metadata } from "next"
 import ResultsClient from "./ResultsClient"
 import { withRetry } from "@/lib/db-retry"
+import {
+  applyFunkyResultsDemoOverride,
+  isDemoOverrideEnabled,
+} from "@/lib/demo-leaderboard-override"
 
 export const metadata: Metadata = {
   title: "Results",
@@ -20,7 +24,7 @@ export const metadata: Metadata = {
   },
 }
 
-async function getResults(userId: string) {
+async function getResults(userId: string, username?: string | null) {
   const submissions = await withRetry(
     () =>
       prisma.submission.findMany({
@@ -40,6 +44,11 @@ async function getResults(userId: string) {
       }),
     { operationName: "find user results" }
   )
+
+  // DEMO ONLY (preview/leaderboard-demo-donotmerge): no-op in production.
+  if (isDemoOverrideEnabled()) {
+    await applyFunkyResultsDemoOverride(submissions, username)
+  }
 
   // Include submissions that are either scored OR locked (show has started)
   const now = new Date()
@@ -80,7 +89,10 @@ export default async function ResultsPage() {
     redirect("/login")
   }
 
-  const { submissions, stats } = await getResults(session.user.id)
+  const { submissions, stats } = await getResults(
+    session.user.id,
+    session.user.username
+  )
 
   const showAdminControls =
     (session.user.isAdmin || false) && isAdminFeaturesEnabled()

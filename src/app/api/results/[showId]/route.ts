@@ -3,6 +3,10 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import type { PhishNetSetlist } from "@/lib/phishnet"
 import { withRetry } from "@/lib/db-retry"
+import {
+  applyFunkyResultsDemoOverride,
+  isDemoOverrideEnabled,
+} from "@/lib/demo-leaderboard-override"
 
 export async function GET(
   request: NextRequest,
@@ -55,6 +59,14 @@ export async function GET(
     }
 
     const submission = show.submissions[0]
+
+    // DEMO ONLY (preview/leaderboard-demo-donotmerge): no-op in production.
+    if (submission && isDemoOverrideEnabled()) {
+      await applyFunkyResultsDemoOverride(
+        [submission],
+        submission.user.username
+      )
+    }
 
     if (!submission) {
       return NextResponse.json(

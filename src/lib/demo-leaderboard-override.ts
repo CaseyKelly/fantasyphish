@@ -3,6 +3,8 @@
 // Funky20 sits two points ahead of the real current leaders and PiperMaMa takes
 // second. Disabled on production deployments via VERCEL_ENV.
 import type { LeaderboardEntry, LeaderboardPick } from "@/lib/leaderboard"
+import { prisma } from "@/lib/prisma"
+import { withRetry } from "@/lib/db-retry"
 
 const FIRST_PLACE_USER = "funky20"
 const SECOND_PLACE_USER = "pipermama"
@@ -99,6 +101,106 @@ function rebuildFunkyPicks(
       pointsEarned: 3,
     },
   ]
+}
+
+interface DemoResultsPick {
+  pickType: string
+  wasPlayed: boolean | null
+  pointsEarned: number | null
+  song: { name: string }
+}
+
+interface DemoResultsSubmission {
+  showId: string
+  totalPoints: number | null
+  isScored: boolean
+  picks: DemoResultsPick[]
+  show?: { lockTime: Date | null }
+}
+
+/** Best real score for the show among non-demo, non-admin players. */
+async function getDemoFieldBest(showId: string): Promise<number> {
+  const best = await withRetry(
+    () =>
+      prisma.submission.findFirst({
+        where: {
+          showId,
+          user: {
+            isAdmin: false,
+            AND: [
+              { username: { not: "Funky20", mode: "insensitive" } },
+              { username: { not: "PiperMaMa", mode: "insensitive" } },
+            ],
+          },
+        },
+        orderBy: { totalPoints: "desc" },
+        select: { totalPoints: true },
+      }),
+    { operationName: "demo field best" }
+  )
+  return best?.totalPoints ?? 3
+}
+
+/** Mutates a Prisma-shaped submission so Funky20's picks and points match the demo leaderboard. */
+function overrideFunkySubmission(
+  submission: DemoResultsSubmission,
+  targetPoints: number
+): void {
+  const encore = submission.picks.find((p) => p.pickType === "ENCORE")
+  const opener = submission.picks.find((p) => p.pickType === "OPENER")
+  const regulars = submission.picks.filter((p) => p.pickType === "REGULAR")
+
+  if (opener) {
+    opener.wasPlayed = false
+    opener.pointsEarned = 0
+  }
+  if (encore) {
+    encore.song.name = ENCORE_HIT
+    encore.wasPlayed = true
+    encore.pointsEarned = 3
+  }
+
+  const regularHitsNeeded = Math.min(
+    Math.max(targetPoints - (encore ? 3 : 0), 0),
+    regulars.length
+  )
+  const reserved = new Set([ENCORE_HIT, ...REGULAR_HITS])
+  const spareNames = regulars
+    .map((p) => p.song.name)
+    .filter((name) => !reserved.has(name))
+  regulars.forEach((pick, i) => {
+    if (i < REGULAR_HITS.length) {
+      pick.song.name = REGULAR_HITS[i]
+    } else if (spareNames.length > 0) {
+      pick.song.name = spareNames.shift() as string
+    }
+    pick.wasPlayed = i < regularHitsNeeded
+    pick.pointsEarned = i < regularHitsNeeded ? 1 : 0
+  })
+
+  submission.totalPoints = submission.picks.reduce(
+    (sum, p) => sum + (p.pointsEarned || 0),
+    0
+  )
+  submission.isScored = true
+}
+
+/**
+ * DEMO ONLY: if this user is Funky20, mutate his most recent locked
+ * submission so the results pages agree with the demo leaderboard.
+ */
+export async function applyFunkyResultsDemoOverride(
+  submissions: DemoResultsSubmission[],
+  username: string | null | undefined
+): Promise<void> {
+  if (!username || username.toLowerCase() !== FIRST_PLACE_USER) return
+  const now = new Date()
+  const latest = submissions.find(
+    (s) => s.isScored || (s.show?.lockTime && s.show.lockTime <= now)
+  )
+  if (!latest) return
+  const fieldBest = await getDemoFieldBest(latest.showId)
+  overrideFunkySubmission(latest, fieldBest + 2)
 }
 
 export function applyShowDemoOverride(
