@@ -79,6 +79,27 @@ export function DonutCatchGame() {
     load()
   }, [])
 
+  // If we have a locally-stored best score that was never attributed to this
+  // account (e.g. earned before logging in, or while the session was still
+  // resolving), push it to the server now that we know who's playing.
+  useEffect(() => {
+    if (status !== "authenticated") return
+    const localBest =
+      parseInt(window.localStorage.getItem(BEST_SCORE_KEY) || "0", 10) || 0
+    if (localBest <= 0) return
+
+    fetch("/api/easter-egg/score", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ score: localBest }),
+    })
+      .then(async (res) => {
+        if (!res.ok) return
+        await refreshLeaderboard()
+      })
+      .catch(() => {})
+  }, [status])
+
   const startGame = useCallback(() => {
     donutsRef.current = []
     scoreRef.current = 0
