@@ -188,7 +188,14 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
     }
   }
 
-  const podiumSpots = ([1, 2, 3] as const)
+  // With all three spots filled, use the classic 2-1-3 podium arrangement.
+  // Otherwise (e.g. only 1st and 2nd), fall back to rank order so 1st place
+  // is always on the left.
+  const spotOrder = groupedByRank.has(3)
+    ? ([2, 1, 3] as const)
+    : ([1, 2, 3] as const)
+
+  const podiumSpots = spotOrder
     .map((rankNum) => {
       const group = groupedByRank.get(rankNum)
       if (!group || group.length === 0) return null
