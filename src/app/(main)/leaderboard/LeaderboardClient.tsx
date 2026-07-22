@@ -188,7 +188,7 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
     }
   }
 
-  const podiumSpots = ([2, 1, 3] as const)
+  const podiumSpots = ([1, 2, 3] as const)
     .map((rankNum) => {
       const group = groupedByRank.get(rankNum)
       if (!group || group.length === 0) return null
