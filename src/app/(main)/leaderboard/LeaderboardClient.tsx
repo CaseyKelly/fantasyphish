@@ -532,6 +532,22 @@ function LeaderboardTable({
   )
 }
 
+function WaitingForScores() {
+  return (
+    <Card className="bg-[#233d4d]/60 border-2 border-[#4a6b7d]/40">
+      <CardContent className="py-10 text-center">
+        <Radio className="h-8 w-8 text-orange-400 mx-auto mb-3 animate-pulse" />
+        <p className="text-white font-semibold mb-1">
+          Waiting for the first song
+        </p>
+        <p className="text-sm text-slate-400">
+          Standings will appear here once songs start being played.
+        </p>
+      </CardContent>
+    </Card>
+  )
+}
+
 function EmptyState({ message }: { message: string }) {
   return (
     <Card>
@@ -616,6 +632,10 @@ export default function LeaderboardClient({
         ? showLeaderboard.find((u) => u.userId === currentUserId) || null
         : null,
     [showLeaderboard, currentUserId]
+  )
+  const hasShowScores = useMemo(
+    () => showLeaderboard.some((entry) => entry.totalPoints > 0),
+    [showLeaderboard]
   )
   const currentUserTourEntry = useMemo(
     () =>
@@ -721,9 +741,12 @@ export default function LeaderboardClient({
             <EmptyState message="No show has locked yet. Check back after the next show's picks lock!" />
           )}
 
-          {currentShow && showLeaderboard.length >= 3 && (
-            <Podium entries={showLeaderboard} />
-          )}
+          {currentShow &&
+            (hasShowScores
+              ? showLeaderboard.length >= 3 && (
+                  <Podium entries={showLeaderboard} />
+                )
+              : !currentShow.isComplete && <WaitingForScores />)}
 
           {currentUserShowEntry && (
             <YourRankCard
