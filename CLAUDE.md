@@ -279,6 +279,7 @@ Required for development:
 - `RESEND_API_KEY` - Email service API key
 - `NEXT_PUBLIC_APP_URL` - Public app URL
 - `CRON_SECRET` - Cron job authentication (optional locally)
+- `PRIVATE_VIEWER_EMAIL` - Email of the sole account allowed to view owner-only pages (e.g. `/submissions`); no hardcoded fallback, so this must be set in every environment where those pages should work
 
 ## Common Pitfalls
 

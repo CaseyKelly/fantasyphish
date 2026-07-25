@@ -3,6 +3,14 @@ import { test, expect } from "./helpers/fixtures"
 import { PRIVATE_VIEWER_EMAIL } from "@/lib/private-access"
 import { excludeTestShows } from "@/lib/test-filters"
 
+if (!PRIVATE_VIEWER_EMAIL) {
+  throw new Error(
+    "PRIVATE_VIEWER_EMAIL must be set for tests — playwright.config.ts should have set it"
+  )
+}
+// Re-bind with a plain `string` type so it stays narrowed inside test closures.
+const OWNER_EMAIL: string = PRIVATE_VIEWER_EMAIL
+
 test.describe.configure({ mode: "serial" })
 
 test.describe("Private submissions viewer", () => {
@@ -77,12 +85,12 @@ test.describe("Private submissions viewer", () => {
   }) => {
     // playwright.config.ts points PRIVATE_VIEWER_EMAIL at a disposable test
     // fixture address for all test runs, so it's always safe to create.
-    await prisma.user.deleteMany({ where: { email: PRIVATE_VIEWER_EMAIL } })
+    await prisma.user.deleteMany({ where: { email: OWNER_EMAIL } })
 
     const password = "OwnerTestPassword123!"
     await prisma.user.create({
       data: {
-        email: PRIVATE_VIEWER_EMAIL,
+        email: OWNER_EMAIL,
         username: `owner${Date.now()}`,
         passwordHash: await hash(password, 12),
         emailVerified: new Date(),
@@ -91,7 +99,7 @@ test.describe("Private submissions viewer", () => {
 
     try {
       await page.goto("/login")
-      await page.getByPlaceholder("Email address").fill(PRIVATE_VIEWER_EMAIL)
+      await page.getByPlaceholder("Email address").fill(OWNER_EMAIL)
       await page.getByPlaceholder("Password").fill(password)
       await page.click('button[type="submit"]')
       await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
@@ -106,7 +114,7 @@ test.describe("Private submissions viewer", () => {
         page.getByRole("heading", { name: "Submissions" })
       ).toBeVisible()
     } finally {
-      await prisma.user.delete({ where: { email: PRIVATE_VIEWER_EMAIL } })
+      await prisma.user.delete({ where: { email: OWNER_EMAIL } })
     }
   })
 })
@@ -120,13 +128,13 @@ test.describe("Submission timestamp formatting", () => {
   }) => {
     // playwright.config.ts points PRIVATE_VIEWER_EMAIL at a disposable test
     // fixture address for all test runs, so it's always safe to create.
-    await prisma.user.deleteMany({ where: { email: PRIVATE_VIEWER_EMAIL } })
+    await prisma.user.deleteMany({ where: { email: OWNER_EMAIL } })
 
     const password = "OwnerTestPassword123!"
     const ownerUsername = `owner${Date.now()}`
     await prisma.user.create({
       data: {
-        email: PRIVATE_VIEWER_EMAIL,
+        email: OWNER_EMAIL,
         username: ownerUsername,
         passwordHash: await hash(password, 12),
         emailVerified: new Date(),
@@ -156,7 +164,7 @@ test.describe("Submission timestamp formatting", () => {
     })
 
     const owner = await prisma.user.findUniqueOrThrow({
-      where: { email: PRIVATE_VIEWER_EMAIL },
+      where: { email: OWNER_EMAIL },
     })
     // 18:30 UTC on Jan 1 is 10:30 AM in America/Los_Angeles (PST, UTC-8;
     // no DST ambiguity in January).
@@ -170,7 +178,7 @@ test.describe("Submission timestamp formatting", () => {
 
     try {
       await page.goto("/login")
-      await page.getByPlaceholder("Email address").fill(PRIVATE_VIEWER_EMAIL)
+      await page.getByPlaceholder("Email address").fill(OWNER_EMAIL)
       await page.getByPlaceholder("Password").fill(password)
       await page.click('button[type="submit"]')
       await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
@@ -184,7 +192,7 @@ test.describe("Submission timestamp formatting", () => {
     } finally {
       await prisma.submission.delete({ where: { id: submission.id } })
       await prisma.show.delete({ where: { id: show.id } })
-      await prisma.user.delete({ where: { email: PRIVATE_VIEWER_EMAIL } })
+      await prisma.user.delete({ where: { email: OWNER_EMAIL } })
     }
   })
 })
