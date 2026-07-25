@@ -34,6 +34,8 @@ test.describe("Private submissions viewer", () => {
     await page.click('button[type="submit"]')
     await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
 
+    await expect(page.getByRole("link", { name: "Submissions" })).toHaveCount(0)
+
     const response = await page.request.get("/submissions")
     expect(response.status()).toBe(404)
   })
@@ -60,7 +62,10 @@ test.describe("Private submissions viewer", () => {
     await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
 
     // Visibility is gated by email, not isAdmin, so an admin account
-    // that isn't the designated owner must still be denied.
+    // that isn't the designated owner must still be denied, and must
+    // not see the nav link either.
+    await expect(page.getByRole("link", { name: "Submissions" })).toHaveCount(0)
+
     const response = await page.request.get("/submissions")
     expect(response.status()).toBe(404)
   })
@@ -97,7 +102,9 @@ test.describe("Private submissions viewer", () => {
       const response = await page.request.get("/submissions")
       expect(response.status()).toBe(200)
 
-      await page.goto("/submissions")
+      // Only the owner should see the nav link, and it should lead here.
+      await page.getByRole("link", { name: "Submissions" }).first().click()
+      await expect(page).toHaveURL(/\/submissions/, { timeout: 10000 })
       await expect(
         page.getByRole("heading", { name: "Submissions" })
       ).toBeVisible()

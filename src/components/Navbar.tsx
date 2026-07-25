@@ -13,9 +13,11 @@ import {
   LogOut,
   User,
   Users,
+  Eye,
 } from "lucide-react"
 import { toast } from "sonner"
 import { DonutLogo } from "./DonutLogo"
+import { isPrivateViewerOwner } from "@/lib/private-access"
 
 type UserForImpersonation = {
   id: string
@@ -42,6 +44,9 @@ export function Navbar() {
     { href: "/picks", label: "My Picks", icon: Music },
     { href: "/results", label: "Results", icon: ClipboardList },
     { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+    ...(isPrivateViewerOwner(session?.user?.email)
+      ? [{ href: "/submissions", label: "Submissions", icon: Eye }]
+      : []),
   ]
 
   const isActive = (href: string) => pathname === href
