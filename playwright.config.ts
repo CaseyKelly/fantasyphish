@@ -15,6 +15,12 @@ if (process.env.TEST_DATABASE_URL) {
   throw new Error(message)
 }
 
+// Tests need to log in as the private-viewer "owner" account, but that
+// identity is a real person's email in production. Always point it at a
+// disposable test fixture address here so no test run — local or CI —
+// ever writes the real owner's email into any database.
+process.env.PRIVATE_VIEWER_EMAIL = "owner-test-fixture@example.com"
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: false, // Run tests sequentially to avoid rate limiting

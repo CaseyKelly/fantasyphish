@@ -7,6 +7,7 @@ declare module "next-auth" {
       email: string
       username: string
       isAdmin: boolean
+      isPrivateViewer: boolean
     }
     impersonating?: {
       originalUserId: string
@@ -20,6 +21,7 @@ declare module "next-auth" {
     email: string
     username: string
     isAdmin: boolean
+    isPrivateViewer: boolean
   }
 }
 
@@ -28,6 +30,7 @@ declare module "next-auth/jwt" {
     id: string
     username: string
     isAdmin: boolean
+    isPrivateViewer: boolean
     impersonating?: {
       originalUserId: string
       originalUsername: string

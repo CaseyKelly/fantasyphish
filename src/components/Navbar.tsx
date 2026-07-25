@@ -13,6 +13,7 @@ import {
   LogOut,
   User,
   Users,
+  Eye,
 } from "lucide-react"
 import { toast } from "sonner"
 import { DonutLogo } from "./DonutLogo"
@@ -42,6 +43,9 @@ export function Navbar() {
     { href: "/picks", label: "My Picks", icon: Music },
     { href: "/results", label: "Results", icon: ClipboardList },
     { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+    ...(session?.user?.isPrivateViewer
+      ? [{ href: "/submissions", label: "Submissions", icon: Eye }]
+      : []),
   ]
 
   const isActive = (href: string) => pathname === href
