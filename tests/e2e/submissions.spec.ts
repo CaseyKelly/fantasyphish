@@ -113,3 +113,75 @@ test.describe("Private submissions viewer", () => {
     }
   })
 })
+
+test.describe("Submission timestamp formatting", () => {
+  test.use({ timezoneId: "America/Los_Angeles" })
+
+  test("should render the submission time in the viewer's browser timezone", async ({
+    page,
+    prisma,
+  }) => {
+    const existingOwner = await prisma.user.findUnique({
+      where: { email: PRIVATE_VIEWER_EMAIL },
+    })
+    test.skip(
+      !!existingOwner,
+      "Owner account already exists in this database; skipping rather than mutating it"
+    )
+
+    const password = "OwnerTestPassword123!"
+    const ownerUsername = `owner${Date.now()}`
+    await prisma.user.create({
+      data: {
+        email: PRIVATE_VIEWER_EMAIL,
+        username: ownerUsername,
+        passwordHash: await hash(password, 12),
+        emailVerified: new Date(),
+      },
+    })
+
+    const testDate = new Date()
+    testDate.setFullYear(2033)
+    const show = await prisma.show.create({
+      data: {
+        venue: "Timestamp Venue",
+        city: "Anytown",
+        state: "NY",
+        showDate: testDate,
+        isComplete: false,
+      },
+    })
+
+    const owner = await prisma.user.findUniqueOrThrow({
+      where: { email: PRIVATE_VIEWER_EMAIL },
+    })
+    // 18:30 UTC on Jan 1 is 10:30 AM in America/Los_Angeles (PST, UTC-8;
+    // no DST ambiguity in January).
+    const submission = await prisma.submission.create({
+      data: {
+        userId: owner.id,
+        showId: show.id,
+        createdAt: new Date("2026-01-01T18:30:00.000Z"),
+      },
+    })
+
+    try {
+      await page.goto("/login")
+      await page.getByPlaceholder("Email address").fill(PRIVATE_VIEWER_EMAIL)
+      await page.getByPlaceholder("Password").fill(password)
+      await page.click('button[type="submit"]')
+      await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
+
+      await page.goto("/submissions")
+
+      const timestamp = page
+        .getByText(ownerUsername, { exact: true })
+        .locator("xpath=following-sibling::*[1]")
+      await expect(timestamp).toHaveText("Jan 1, 10:30 AM")
+    } finally {
+      await prisma.submission.delete({ where: { id: submission.id } })
+      await prisma.show.delete({ where: { id: show.id } })
+      await prisma.user.delete({ where: { email: PRIVATE_VIEWER_EMAIL } })
+    }
+  })
+})

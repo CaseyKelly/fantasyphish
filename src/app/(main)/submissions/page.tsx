@@ -7,6 +7,7 @@ import { excludeTestShows } from "@/lib/test-filters"
 import { isPrivateViewerOwner } from "@/lib/private-access"
 import { parseUTCDate } from "@/lib/date-utils"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { LocalDateTime } from "@/components/LocalDateTime"
 
 export const metadata: Metadata = {
   title: "Submissions",
@@ -93,14 +94,10 @@ export default async function SubmissionsPage() {
                   <span className="font-semibold text-white">
                     {submission.user.username}
                   </span>
-                  <span className="text-xs text-gray-500">
-                    {submission.createdAt.toLocaleString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
-                  </span>
+                  <LocalDateTime
+                    iso={submission.createdAt.toISOString()}
+                    className="text-xs text-gray-500"
+                  />
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
                   <p className="text-gray-300">
