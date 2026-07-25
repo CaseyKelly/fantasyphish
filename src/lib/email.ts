@@ -152,3 +152,92 @@ export async function sendPasswordResetEmail(
     return { success: false, error: "Failed to send password reset email" }
   }
 }
+
+export async function sendShowReminderEmail(
+  email: string,
+  show: {
+    venue: string
+    city: string | null
+    state: string | null
+    showDate: Date
+    lockTime: Date
+    timezone: string | null
+  }
+): Promise<{ success: boolean; error?: string }> {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+  const picksUrl = `${appUrl}/picks`
+  const location = [show.city, show.state].filter(Boolean).join(", ")
+  const lockTimeStr = show.timezone
+    ? new Intl.DateTimeFormat("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        timeZoneName: "short",
+        timeZone: show.timezone,
+      }).format(show.lockTime)
+    : show.lockTime.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        timeZoneName: "short",
+      })
+
+  try {
+    const resend = getResendClient()
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: email,
+      subject: `Reminder: Submit your picks for tonight's show at ${show.venue}`,
+      tags: [
+        {
+          name: "category",
+          value: "pick-reminder",
+        },
+      ],
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+          <div style="background: #2d4654; padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #c23a3a; margin: 0; font-size: 28px;">FantasyPhish</h1>
+            <p style="color: #94a3b8; margin: 10px 0 0 0;">Predict the setlist. Score the points.</p>
+          </div>
+
+          <div style="background: white; padding: 30px; border-radius: 12px;">
+            <h2 style="color: #2d4654; margin-top: 0;">Don't forget to make your picks!</h2>
+
+            <p style="color: #333;">Phish plays tonight at <strong>${show.venue}</strong>${location ? ` in ${location}` : ""}, and you haven't submitted your picks yet.</p>
+
+            <p style="color: #333;">Picks lock tonight at <strong>${lockTimeStr}</strong> &mdash; get them in before then to compete for points.</p>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${picksUrl}" style="background: #c23a3a; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">Make Your Picks</a>
+            </div>
+
+            <p style="color: #666; font-size: 14px;">Or copy and paste this link into your browser:</p>
+            <p style="color: #666; font-size: 14px; word-break: break-all;">${picksUrl}</p>
+
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+
+            <p style="color: #999; font-size: 12px; text-align: center;">
+              You're receiving this because you opted in to show-day pick reminders. You can turn this off from your profile.
+            </p>
+          </div>
+        </body>
+        </html>
+      `,
+    })
+
+    if (error) {
+      console.error("Error sending show reminder email:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error sending show reminder email:", error)
+    return { success: false, error: "Failed to send show reminder email" }
+  }
+}
