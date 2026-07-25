@@ -3,7 +3,7 @@
  * submissions viewer). Unrelated to `User.isAdmin`, which controls admin
  * tooling and leaderboard eligibility.
  */
-const PRIVATE_VIEWER_EMAIL = "casey.kelly819@gmail.com"
+export const PRIVATE_VIEWER_EMAIL = "casey.kelly819@gmail.com"
 
 export function isPrivateViewerOwner(
   email: string | null | undefined
