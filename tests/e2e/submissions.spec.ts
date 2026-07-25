@@ -74,13 +74,9 @@ test.describe("Private submissions viewer", () => {
     page,
     prisma,
   }) => {
-    const existingOwner = await prisma.user.findUnique({
-      where: { email: PRIVATE_VIEWER_EMAIL },
-    })
-    test.skip(
-      !!existingOwner,
-      "Owner account already exists in this database; skipping rather than mutating it"
-    )
+    // playwright.config.ts points PRIVATE_VIEWER_EMAIL at a disposable test
+    // fixture address for all test runs, so it's always safe to create.
+    await prisma.user.deleteMany({ where: { email: PRIVATE_VIEWER_EMAIL } })
 
     const password = "OwnerTestPassword123!"
     await prisma.user.create({
@@ -121,13 +117,9 @@ test.describe("Submission timestamp formatting", () => {
     page,
     prisma,
   }) => {
-    const existingOwner = await prisma.user.findUnique({
-      where: { email: PRIVATE_VIEWER_EMAIL },
-    })
-    test.skip(
-      !!existingOwner,
-      "Owner account already exists in this database; skipping rather than mutating it"
-    )
+    // playwright.config.ts points PRIVATE_VIEWER_EMAIL at a disposable test
+    // fixture address for all test runs, so it's always safe to create.
+    await prisma.user.deleteMany({ where: { email: PRIVATE_VIEWER_EMAIL } })
 
     const password = "OwnerTestPassword123!"
     const ownerUsername = `owner${Date.now()}`

@@ -2,6 +2,7 @@ import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import { compare } from "bcryptjs"
 import { prisma } from "./prisma"
+import { isPrivateViewerOwner } from "./private-access"
 
 const authSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET
 
@@ -49,6 +50,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           email: user.email,
           username: user.username,
           isAdmin: user.isAdmin,
+          isPrivateViewer: isPrivateViewerOwner(user.email),
         }
       },
     }),
@@ -59,6 +61,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id
         token.username = user.username
         token.isAdmin = user.isAdmin
+        token.isPrivateViewer = user.isPrivateViewer
       }
 
       // Handle impersonation updates from session update
@@ -112,6 +115,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.id as string
         session.user.username = token.username as string
         session.user.isAdmin = token.isAdmin as boolean
+        session.user.isPrivateViewer = token.isPrivateViewer as boolean
 
         const impersonation = token.impersonating as
           | {
