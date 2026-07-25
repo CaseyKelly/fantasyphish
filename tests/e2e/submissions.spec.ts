@@ -1,6 +1,7 @@
 import { hash } from "bcryptjs"
 import { test, expect } from "./helpers/fixtures"
 import { PRIVATE_VIEWER_EMAIL } from "@/lib/private-access"
+import { excludeTestShows } from "@/lib/test-filters"
 
 test.describe.configure({ mode: "serial" })
 
@@ -132,8 +133,18 @@ test.describe("Submission timestamp formatting", () => {
       },
     })
 
-    const testDate = new Date()
-    testDate.setFullYear(2033)
+    // The submissions page always picks the earliest incomplete show with no
+    // date bound of its own, and CI runs against a persistent, shared test
+    // database — so a leftover incomplete show from an unrelated past run
+    // could otherwise outrank a hardcoded future date. Undercut whatever
+    // currently exists to guarantee this show is the one the page picks.
+    const earliestExisting = await prisma.show.findFirst({
+      where: { isComplete: false, ...excludeTestShows },
+      orderBy: { showDate: "asc" },
+    })
+    const testDate = earliestExisting
+      ? new Date(earliestExisting.showDate.getTime() - 24 * 60 * 60 * 1000)
+      : new Date("2000-01-01T00:00:00.000Z")
     const show = await prisma.show.create({
       data: {
         venue: "Timestamp Venue",
