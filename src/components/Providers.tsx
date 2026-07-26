@@ -4,10 +4,12 @@ import { SessionProvider } from "next-auth/react"
 import { Toaster } from "sonner"
 import { ReactNode } from "react"
 import { EasterEgg } from "@/components/EasterEgg"
+import { ScrollToTop } from "@/components/ScrollToTop"
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <SessionProvider>
+      <ScrollToTop />
       {children}
       <Toaster
         position="top-center"
