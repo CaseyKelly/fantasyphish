@@ -3,6 +3,10 @@ import { prisma } from "@/lib/prisma"
 import { shouldRunCronJobs } from "@/lib/cron-helpers"
 import { sendPickReminders } from "@/lib/reminders"
 
+// Force dynamic rendering and disable caching
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+
 export async function POST(request: Request) {
   const startTime = Date.now()
 
@@ -12,18 +16,21 @@ export async function POST(request: Request) {
     )
 
     // Verify authorization
+    // Vercel cron jobs send "Vercel-Cron" as user-agent and are allowed without CRON_SECRET
     const authHeader = request.headers.get("authorization")
+    const userAgent = request.headers.get("user-agent")
+    const token = authHeader?.replace("Bearer ", "")
     const cronSecret = process.env.CRON_SECRET
+    const isVercelCron = userAgent === "Vercel-Cron"
 
-    if (!cronSecret) {
-      console.error("[Send Reminders] ✗ CRON_SECRET not configured")
-      return NextResponse.json(
-        { error: "CRON_SECRET not configured" },
-        { status: 500 }
-      )
-    }
+    console.log(
+      `[Send Reminders] Auth check: cronSecret=${cronSecret ? "SET" : "NOT_SET"}, authHeader=${authHeader ? "PROVIDED" : "MISSING"}, isVercelCron=${isVercelCron}`
+    )
 
-    if (authHeader !== `Bearer ${cronSecret}`) {
+    // Allow requests from:
+    // 1. Vercel cron (user-agent: "Vercel-Cron")
+    // 2. Manual triggers with correct CRON_SECRET
+    if (!isVercelCron && cronSecret && token !== cronSecret) {
       console.error("[Send Reminders] ✗ Unauthorized request")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }

@@ -20,18 +20,22 @@ export interface ReminderRunResult {
 export async function sendPickReminders(options?: {
   dryRunUserId?: string
 }): Promise<ReminderRunResult> {
-  const todayStr = new Date().toISOString().split("T")[0]
+  const now = new Date()
+  const todayStart = new Date(now)
+  todayStart.setUTCHours(0, 0, 0, 0)
+  const tomorrowStart = new Date(todayStart)
+  tomorrowStart.setUTCDate(tomorrowStart.getUTCDate() + 1)
 
-  const shows = await withRetry(
+  const todaysShows = await withRetry(
     () =>
       prisma.show.findMany({
-        where: { isComplete: false },
+        where: {
+          isComplete: false,
+          showDate: { gte: todayStart, lt: tomorrowStart },
+          OR: [{ lockTime: null }, { lockTime: { gt: now } }],
+        },
       }),
-    { operationName: "find shows for reminders" }
-  )
-
-  const todaysShows = shows.filter(
-    (show) => show.showDate.toISOString().split("T")[0] === todayStr
+    { operationName: "find todays shows for reminders" }
   )
 
   const result: ReminderRunResult = {
@@ -53,6 +57,7 @@ export async function sendPickReminders(options?: {
             submissions: { none: { showId: show.id } },
             ...(options?.dryRunUserId ? { id: options.dryRunUserId } : {}),
           },
+          select: { id: true, email: true },
         }),
       { operationName: `find eligible reminder users for show ${show.id}` }
     )
