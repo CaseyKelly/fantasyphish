@@ -31,6 +31,10 @@ export interface LeaderboardEntry {
   picksByShow: LeaderboardShowPicks[]
 }
 
+const NOT_TEST_VENUE: Prisma.SubmissionWhereInput = {
+  NOT: { show: { venue: { contains: "Test Venue" } } },
+}
+
 export function tourSubmissionWhere(
   tourId?: string
 ): Prisma.SubmissionWhereInput {
@@ -41,12 +45,14 @@ export function tourSubmissionWhere(
           { isScored: true, show: { tourId } },
           { isScored: false, show: { lockTime: { lte: now }, tourId } },
         ],
+        ...NOT_TEST_VENUE,
       }
     : {
         OR: [
           { isScored: true },
           { isScored: false, show: { lockTime: { lte: now } } },
         ],
+        ...NOT_TEST_VENUE,
       }
 }
 
@@ -60,6 +66,7 @@ export function showSubmissionWhere(
       { isScored: true },
       { isScored: false, show: { lockTime: { lte: now } } },
     ],
+    ...NOT_TEST_VENUE,
   }
 }
 
@@ -71,7 +78,6 @@ export async function getLeaderboard(
     () =>
       prisma.user.findMany({
         where: {
-          isAdmin: false,
           submissions: { some: whereClause },
         },
         select: {
