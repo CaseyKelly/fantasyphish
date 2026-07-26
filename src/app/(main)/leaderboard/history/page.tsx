@@ -71,7 +71,6 @@ async function getPastTours(): Promise<TourWithWinners[]> {
               select: {
                 id: true,
                 username: true,
-                isAdmin: true,
               },
             },
           },
@@ -86,9 +85,6 @@ async function getPastTours(): Promise<TourWithWinners[]> {
     >()
 
     for (const submission of submissions) {
-      // Skip admin users
-      if (submission.user.isAdmin) continue
-
       const existing = userScores.get(submission.userId)
       if (existing) {
         existing.totalPoints += submission.totalPoints || 0
