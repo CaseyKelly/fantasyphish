@@ -47,11 +47,6 @@
   outline-offset: 2px;
 }
 
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
 /* Body background */
 body {
   background: var(--color-phish-blue-darker);
