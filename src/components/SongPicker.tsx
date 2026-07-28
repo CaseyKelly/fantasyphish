@@ -39,6 +39,8 @@ interface Pick {
   songId: string
   songName: string
   pickType: "OPENER" | "ENCORE" | "REGULAR"
+  wasPlayed?: boolean | null
+  pointsEarned?: number | null
 }
 
 interface Show {
@@ -47,12 +49,14 @@ interface Show {
   city: string
   state: string
   showDate: string
+  isComplete?: boolean
 }
 
 interface SongPickerProps {
   show: Show
   songs: Song[]
   existingPicks?: Pick[]
+  totalPoints?: number | null
   isLocked: boolean
   isTestMode?: boolean
   guestMode?: boolean
@@ -65,6 +69,7 @@ export function SongPicker({
   show,
   songs,
   existingPicks,
+  totalPoints,
   isLocked,
   isTestMode = false,
   guestMode = false,
@@ -83,6 +88,72 @@ export function SongPicker({
     "OPENER" | "ENCORE" | "REGULAR" | null
   >(null)
   const [justSaved, setJustSaved] = useState(false)
+
+  // Live scoring state for the locked panel - seeded from server props,
+  // refreshed periodically once the show has started
+  const [livePicks, setLivePicks] = useState<Pick[] | undefined>(existingPicks)
+  const [liveIsComplete, setLiveIsComplete] = useState(show.isComplete ?? false)
+  const [liveTotalPoints, setLiveTotalPoints] = useState<
+    number | null | undefined
+  >(totalPoints)
+
+  // Refresh live scoring for the locked panel. Data only changes as often as
+  // the /api/score cron runs (every 10 minutes), so there's no benefit to
+  // polling more often - and this endpoint reads from Postgres, not
+  // phish.net, so it carries no phish.net rate-limit risk either way.
+  useEffect(() => {
+    if (
+      !isLocked ||
+      guestMode ||
+      !existingPicks ||
+      existingPicks.length === 0 ||
+      liveIsComplete
+    ) {
+      return
+    }
+
+    const interval = setInterval(
+      async () => {
+        try {
+          const res = await fetch(`/api/results/${show.id}`)
+          if (!res.ok) return
+          const data = await res.json()
+
+          const scoredByKey = new Map<
+            string,
+            { wasPlayed: boolean | null; pointsEarned: number | null }
+          >()
+          for (const p of data.submission.picks as Array<{
+            song: string
+            pickType: string
+            wasPlayed: boolean | null
+            pointsEarned: number | null
+          }>) {
+            scoredByKey.set(`${p.pickType}:${p.song.toLowerCase().trim()}`, {
+              wasPlayed: p.wasPlayed,
+              pointsEarned: p.pointsEarned,
+            })
+          }
+
+          setLivePicks(
+            existingPicks.map((pick) => {
+              const scored = scoredByKey.get(
+                `${pick.pickType}:${pick.songName.toLowerCase().trim()}`
+              )
+              return scored ? { ...pick, ...scored } : pick
+            })
+          )
+          setLiveTotalPoints(data.submission.totalPoints)
+          setLiveIsComplete(Boolean(data.show.isComplete))
+        } catch (err) {
+          console.error("Error refreshing live scoring:", err)
+        }
+      },
+      10 * 60 * 1000
+    )
+
+    return () => clearInterval(interval)
+  }, [isLocked, guestMode, existingPicks, liveIsComplete, show.id])
 
   // Detect mobile viewport
   useEffect(() => {
@@ -450,10 +521,99 @@ export function SongPicker({
   }
 
   const renderLockedPanel = () => {
-    const opener = existingPicks?.find((p) => p.pickType === "OPENER")
-    const encore = existingPicks?.find((p) => p.pickType === "ENCORE")
-    const regulars =
-      existingPicks?.filter((p) => p.pickType === "REGULAR") ?? []
+    const picks = livePicks ?? existingPicks
+
+    if (!picks || picks.length === 0) {
+      return (
+        <Card className="max-w-md mx-4 sm:mx-0 text-center shadow-2xl">
+          <CardContent>
+            <div className="mb-6 flex justify-center">
+              <div className="relative">
+                <div className="absolute inset-0 bg-[#c23a3a]/30 blur-3xl rounded-full animate-pulse" />
+                <div className="relative bg-gradient-to-br from-[#c23a3a] to-[#d64545] p-6 rounded-full">
+                  <Music className="h-16 w-16 text-white" />
+                </div>
+              </div>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+              {liveIsComplete ? "That One's In The Books" : "Picks Are Closed"}
+            </h2>
+            <p className="text-gray-400 mb-6">
+              {liveIsComplete
+                ? "This show has wrapped up. Check the results, then make sure you're picked in before the next one!"
+                : "This show has started, so picks are closed for everyone. Check back after the show for results, and don't miss your chance to pick next time!"}
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              {guestMode && (
+                <Link
+                  href="/register"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-[#c23a3a] hover:bg-[#d64545] text-white font-semibold rounded-lg shadow-lg shadow-[#c23a3a]/20 transition-colors"
+                >
+                  Sign Up To Play
+                </Link>
+              )}
+              <Link
+                href="/leaderboard"
+                className={
+                  guestMode
+                    ? "inline-flex items-center gap-2 px-4 py-2 bg-[#3d5a6c]/50 hover:bg-[#3d5a6c]/70 text-white font-semibold rounded-lg border border-[#3d5a6c]/70 transition-colors"
+                    : "inline-flex items-center gap-2 px-4 py-2 bg-[#c23a3a] hover:bg-[#d64545] text-white font-semibold rounded-lg shadow-lg shadow-[#c23a3a]/20 transition-colors"
+                }
+              >
+                <Trophy className="h-4 w-4" />
+                View Leaderboard
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )
+    }
+
+    const opener = picks.find((p) => p.pickType === "OPENER")
+    const encore = picks.find((p) => p.pickType === "ENCORE")
+    const regulars = picks.filter((p) => p.pickType === "REGULAR")
+    const hasScoringStarted = picks.some(
+      (p) => p.wasPlayed !== null && p.wasPlayed !== undefined
+    )
+
+    const specialPickClasses = (pick?: Pick) => {
+      if (!pick || pick.wasPlayed === null || pick.wasPlayed === undefined) {
+        return "bg-[#3d5a6c]/30 border border-[#3d5a6c]/50"
+      }
+      return pick.wasPlayed
+        ? "bg-green-500/10 border border-green-500/30"
+        : "bg-red-500/10 border border-red-500/30"
+    }
+
+    const regularPickClasses = (pick: Pick) => {
+      if (pick.wasPlayed === null || pick.wasPlayed === undefined) {
+        return "bg-[#4a6b7d]/40 text-gray-200"
+      }
+      return pick.wasPlayed
+        ? "bg-green-500/20 text-green-400"
+        : "bg-slate-700 text-slate-400"
+    }
+
+    const renderSpecialPick = (label: string, pick: Pick) => (
+      <div
+        className={`flex items-center gap-2 px-3 py-2 rounded-lg ${specialPickClasses(pick)}`}
+      >
+        <Star className="h-4 w-4 text-[#c23a3a] flex-shrink-0" />
+        <span className="text-xs text-gray-400 flex-shrink-0">{label}</span>
+        <span className="text-sm text-white truncate flex-1 text-left">
+          {pick.songName}
+        </span>
+        {pick.wasPlayed !== null && pick.wasPlayed !== undefined && (
+          <span
+            className={`text-xs font-semibold flex-shrink-0 ${
+              pick.wasPlayed ? "text-green-400" : "text-red-400"
+            }`}
+          >
+            {pick.wasPlayed ? "+3" : "0"}
+          </span>
+        )}
+      </div>
+    )
 
     return (
       <Card className="max-w-md mx-4 sm:mx-0 text-center shadow-2xl">
@@ -470,56 +630,45 @@ export function SongPicker({
             Your Picks Are Locked In
           </h2>
           <p className="text-gray-400 mb-6">
-            The show has started and picks can no longer be changed. Check back
-            after the show for results and scoring!
+            {liveIsComplete
+              ? "The show is over — here's how you did!"
+              : "The show has started and picks can no longer be changed. Scores update live as songs are played."}
           </p>
 
-          {existingPicks && existingPicks.length > 0 && (
-            <>
-              <div className="text-left mb-6 space-y-2">
-                {opener && (
-                  <div className="flex items-center gap-2 px-3 py-2 bg-[#3d5a6c]/30 rounded-lg border border-[#3d5a6c]/50">
-                    <Star className="h-4 w-4 text-[#c23a3a] flex-shrink-0" />
-                    <span className="text-xs text-gray-400 flex-shrink-0">
-                      Opener
-                    </span>
-                    <span className="text-sm text-white truncate">
-                      {opener.songName}
-                    </span>
-                  </div>
-                )}
-                {encore && (
-                  <div className="flex items-center gap-2 px-3 py-2 bg-[#3d5a6c]/30 rounded-lg border border-[#3d5a6c]/50">
-                    <Star className="h-4 w-4 text-[#c23a3a] flex-shrink-0" />
-                    <span className="text-xs text-gray-400 flex-shrink-0">
-                      Encore
-                    </span>
-                    <span className="text-sm text-white truncate">
-                      {encore.songName}
-                    </span>
-                  </div>
-                )}
-                {regulars.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {regulars.map((pick) => (
-                      <span
-                        key={pick.songId}
-                        className="px-3 py-1 bg-[#4a6b7d]/40 rounded-full text-xs text-gray-200"
-                      >
-                        {pick.songName}
-                      </span>
-                    ))}
-                  </div>
-                )}
+          <div className="text-left mb-6 space-y-2">
+            {opener && renderSpecialPick("Opener", opener)}
+            {encore && renderSpecialPick("Encore", encore)}
+            {regulars.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {regulars.map((pick) => (
+                  <span
+                    key={pick.songId}
+                    className={`px-3 py-1 rounded-full text-xs flex items-center gap-1 ${regularPickClasses(pick)}`}
+                  >
+                    <span>{pick.songName}</span>
+                    {pick.wasPlayed && <Check className="h-3 w-3" />}
+                  </span>
+                ))}
               </div>
+            )}
+          </div>
 
-              <div className="inline-flex items-center space-x-3 px-6 py-3 bg-[#3d5a6c]/50 rounded-xl border border-[#3d5a6c]/70 mb-6">
-                <CheckCircle className="h-5 w-5 text-green-400" />
-                <span className="text-gray-300 font-medium">
-                  Your picks are saved
-                </span>
-              </div>
-            </>
+          {hasScoringStarted ? (
+            <div className="inline-flex items-center space-x-2 px-6 py-3 bg-[#3d5a6c]/50 rounded-xl border border-[#3d5a6c]/70 mb-6">
+              <span className="text-gray-300 font-medium">
+                {liveIsComplete ? "Final score:" : "Score so far:"}
+              </span>
+              <span className="text-white font-bold text-lg">
+                {liveTotalPoints ?? 0} pts
+              </span>
+            </div>
+          ) : (
+            <div className="inline-flex items-center space-x-3 px-6 py-3 bg-[#3d5a6c]/50 rounded-xl border border-[#3d5a6c]/70 mb-6">
+              <CheckCircle className="h-5 w-5 text-green-400" />
+              <span className="text-gray-300 font-medium">
+                Your picks are saved
+              </span>
+            </div>
           )}
 
           <div>
