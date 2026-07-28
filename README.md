@@ -154,7 +154,6 @@ src/
 
 ### Admin Endpoints (Require admin user)
 
-- `POST /api/admin/test-scoring` - Test scoring with random setlist
 - `POST /api/admin/reset-show` - Reset show scores and setlist
 
 ## Documentation

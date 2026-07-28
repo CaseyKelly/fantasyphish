@@ -14,9 +14,7 @@ import {
   X,
   Clock,
   Eye,
-  Plus,
   RefreshCw,
-  AlertCircle,
   Trash2,
 } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -115,7 +113,6 @@ export default function ResultsClient({
   isAdmin,
 }: ResultsClientProps) {
   const router = useRouter()
-  const [adminLoading, setAdminLoading] = useState<string | null>(null)
   const [deletingSubmission, setDeletingSubmission] = useState<string | null>(
     null
   )
@@ -175,33 +172,6 @@ export default function ResultsClient({
     }
   }
 
-  const handleCreateTestSubmission = async () => {
-    setAdminLoading("creating")
-
-    try {
-      const response = await fetch("/api/admin/test-submission", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to create test submission")
-      }
-
-      // Refresh the results page to show the new test submission
-      router.refresh()
-    } catch (err) {
-      console.error("Test submission error:", err)
-      alert(
-        err instanceof Error ? err.message : "Failed to create test submission"
-      )
-    } finally {
-      setAdminLoading(null)
-    }
-  }
-
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -211,53 +181,6 @@ export default function ResultsClient({
           View your past submissions and scores
         </p>
       </div>
-
-      {/* Admin Testing Controls */}
-      {isAdmin && (
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5 text-orange-500" />
-                  Admin Testing Controls
-                </h3>
-                <p className="text-sm text-slate-400 mt-1">
-                  Create test submissions from historical shows to test the
-                  scoring system
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={handleCreateTestSubmission}
-                  disabled={!!adminLoading}
-                  className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded-lg border-2 border-purple-500/30 hover:border-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {adminLoading === "creating" ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="h-4 w-4" />
-                      Create Random Test Submission
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={() => (window.location.href = "/pick/test")}
-                  disabled={!!adminLoading}
-                  className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg border-2 border-blue-500/30 hover:border-blue-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Create Test Submission
-                </button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
