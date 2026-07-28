@@ -24,6 +24,8 @@ interface Pick {
   songId: string
   songName: string
   pickType: "OPENER" | "ENCORE" | "REGULAR"
+  wasPlayed?: boolean | null
+  pointsEarned?: number | null
 }
 
 interface Tour {
@@ -46,11 +48,14 @@ interface Show {
   tour: Tour | null
   userSubmission?: {
     id: string
+    totalPoints: number | null
     picks: Array<{
       id: string
       songId: string
       pickType: "OPENER" | "ENCORE" | "REGULAR"
       song: Song
+      wasPlayed: boolean | null
+      pointsEarned: number | null
     }>
   } | null
 }
@@ -158,6 +163,8 @@ export default function PicksPage() {
       songId: pick.songId,
       songName: pick.song.name,
       pickType: pick.pickType,
+      wasPlayed: pick.wasPlayed,
+      pointsEarned: pick.pointsEarned,
     })
   )
 
@@ -198,9 +205,11 @@ export default function PicksPage() {
           city: nextShow.city || "",
           state: nextShow.state || "",
           showDate: nextShow.showDate,
+          isComplete: nextShow.isComplete,
         }}
         songs={songs}
         existingPicks={existingPicks}
+        totalPoints={nextShow.userSubmission?.totalPoints}
         isLocked={isLocked}
         hideHeader={true}
         onSubmitSuccess={fetchData}
