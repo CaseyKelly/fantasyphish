@@ -149,7 +149,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <LoadingDonut size="xl" />
+        <LoadingDonut size="xl" label="Loading results…" />
       </div>
     )
   }

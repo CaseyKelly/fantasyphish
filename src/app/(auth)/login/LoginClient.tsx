@@ -206,7 +206,7 @@ function LoadingCard() {
     <Card>
       <CardContent className="py-12">
         <div className="flex items-center justify-center">
-          <LoadingDonut size="sm" />
+          <LoadingDonut size="sm" label="Loading…" />
         </div>
       </CardContent>
     </Card>

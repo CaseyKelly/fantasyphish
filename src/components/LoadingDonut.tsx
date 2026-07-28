@@ -6,6 +6,8 @@ interface LoadingDonutProps {
   size?: "xs" | "sm" | "md" | "lg" | "xl"
   color?: string
   className?: string
+  // Screen-reader-only status text; omit when adjacent visible text already announces it
+  label?: string
 }
 
 const sizes: Record<NonNullable<LoadingDonutProps["size"]>, number> = {
@@ -20,6 +22,7 @@ export function LoadingDonut({
   size = "lg",
   color = "#c23a3a",
   className = "",
+  label,
 }: LoadingDonutProps) {
   const dimension = sizes[size]
 
@@ -34,7 +37,10 @@ export function LoadingDonut({
           "--fp-size": `${dimension}px`,
         } as CSSProperties
       }
+      role={label ? "status" : undefined}
+      aria-hidden={label ? undefined : true}
     >
+      {label && <span className="sr-only">{label}</span>}
       <span className="fp-orbit fp-orbit-a">
         <span className="fp-track">
           <svg viewBox="0 0 120 120" fill="none">
