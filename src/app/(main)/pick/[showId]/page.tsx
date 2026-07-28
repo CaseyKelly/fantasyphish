@@ -125,6 +125,8 @@ export default async function PickPage({ params }: PickPageProps) {
     songId: pick.songId,
     songName: pick.song.name,
     pickType: pick.pickType,
+    wasPlayed: pick.wasPlayed,
+    pointsEarned: pick.pointsEarned,
   }))
 
   return (
@@ -136,9 +138,11 @@ export default async function PickPage({ params }: PickPageProps) {
           city: show.city || "",
           state: show.state || "",
           showDate: show.showDate.toISOString(),
+          isComplete: show.isComplete,
         }}
         songs={songs}
         existingPicks={existingPicks}
+        totalPoints={existingSubmission?.totalPoints}
         isLocked={isLocked}
       />
     </div>

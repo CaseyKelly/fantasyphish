@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import type { PhishNetSetlist } from "@/lib/phishnet"
+import { stripSetlistHtml } from "@/lib/phishnet"
 import { withRetry } from "@/lib/db-retry"
 
 export async function GET(
@@ -69,10 +70,12 @@ export async function GET(
       const rawSetlist = show.setlistJson as unknown as PhishNetSetlist
       // Convert to format expected by React component
       setlistData = {
+        setlistNotes: stripSetlistHtml(rawSetlist.setlistnotes),
         songs: rawSetlist.songs.map((song) => ({
           song: song.song,
           set: song.set,
           position: song.position,
+          footnote: stripSetlistHtml(song.footnote),
         })),
       }
     }
