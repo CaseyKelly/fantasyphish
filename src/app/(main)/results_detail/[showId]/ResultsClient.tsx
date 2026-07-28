@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { format, parseISO } from "date-fns"
-import { RefreshCw, Trash2 } from "lucide-react"
+import { RefreshCw, Trash2, ScrollText, ChevronDown } from "lucide-react"
 
 interface Pick {
   id: string
@@ -36,10 +36,12 @@ interface SetlistSong {
   song: string
   set: string
   position: number
+  footnote: string
 }
 
 interface Setlist {
   songs: SetlistSong[]
+  setlistNotes: string
 }
 
 interface ResultsData {
@@ -59,6 +61,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
   const [loading, setLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const [deletingSubmission, setDeletingSubmission] = useState(false)
+  const [showNotesOpen, setShowNotesOpen] = useState(false)
 
   const handleDeleteSubmission = async () => {
     if (!data?.submission?.id) {
@@ -325,6 +328,35 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
         </div>
       </Card>
 
+      {/* Show Notes - collapsible, only when phish.net has notes for this show */}
+      {setlist?.setlistNotes && setlist.setlistNotes.length > 0 && (
+        <Card className="border-l-4 border-l-cyan-500 border-2 border-[#4a6b7d]/60">
+          <button
+            onClick={() => setShowNotesOpen((open) => !open)}
+            className="w-full flex items-center justify-between p-4 sm:p-6 text-left"
+          >
+            <div className="flex items-center gap-2">
+              <ScrollText className="h-5 w-5 text-cyan-400" />
+              <h2 className="text-lg font-bold font-display text-white">
+                Show Notes
+              </h2>
+            </div>
+            <ChevronDown
+              className={`h-5 w-5 text-slate-400 transition-transform ${
+                showNotesOpen ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+          {showNotesOpen && (
+            <div className="px-4 pb-4 sm:px-6 sm:pb-6 -mt-2">
+              <p className="text-sm text-slate-300 whitespace-pre-line leading-relaxed">
+                {setlist.setlistNotes}
+              </p>
+            </div>
+          )}
+        </Card>
+      )}
+
       {/* Setlist and Picks - Side by side on wide screens */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Setlist */}
@@ -368,6 +400,14 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
                           >
                             {song.song}
                           </span>
+                          {song.footnote && song.footnote.length > 0 && (
+                            <span
+                              className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-cyan-500/20 text-cyan-400 text-[10px] font-bold cursor-help shrink-0 -translate-y-1"
+                              title={song.footnote}
+                            >
+                              *
+                            </span>
+                          )}
                           {pickInfo && (
                             <>
                               <span

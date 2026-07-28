@@ -283,4 +283,47 @@ export function extractTimezone(show: PhishNetShow): string {
   return getTimezoneForLocation(show.state)
 }
 
+// Minimal entity map covers what phish.net setlist notes actually use;
+// extend only if real-world data shows gaps.
+const HTML_ENTITY_MAP: Record<string, string> = {
+  "&amp;": "&",
+  "&lt;": "<",
+  "&gt;": ">",
+  "&quot;": '"',
+  "&#39;": "'",
+  "&apos;": "'",
+  "&nbsp;": " ",
+}
+
+// Converts phish.net's raw HTML setlist/footnote strings into clean,
+// readable plain text without a DOM/sanitizer dependency. Used instead of
+// dangerouslySetInnerHTML so we never render untrusted HTML directly.
+export function stripSetlistHtml(html: string | null | undefined): string {
+  if (!html) return ""
+
+  let text = html
+    .replace(/<\/p>\s*<p[^>]*>/gi, "\n\n")
+    .replace(/<p[^>]*>/gi, "")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    // Footnote reference markers -> "[1]" instead of a bare superscript digit
+    .replace(/<sup[^>]*>(.*?)<\/sup>/gi, " [$1]")
+    // Drop links, keep their text (avoid rendering unsanitized hrefs)
+    .replace(/<a[^>]*>(.*?)<\/a>/gi, "$1")
+    // Strip anything else
+    .replace(/<[^>]+>/g, "")
+
+  text = text.replace(
+    /&amp;|&lt;|&gt;|&quot;|&#39;|&apos;|&nbsp;/g,
+    (entity) => HTML_ENTITY_MAP[entity] ?? entity
+  )
+
+  return text
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+/g, " ").trim())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+}
+
 export type { PhishNetShow, PhishNetSetlist, PhishNetSetlistSong, PhishNetSong }
