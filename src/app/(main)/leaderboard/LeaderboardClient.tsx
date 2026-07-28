@@ -13,6 +13,7 @@ import {
   Check,
   ChevronDown,
   Radio,
+  ScrollText,
 } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { parseUTCDate } from "@/lib/date-utils"
@@ -67,10 +68,23 @@ interface CurrentShowInfo {
   isComplete: boolean
 }
 
+interface SetlistSong {
+  song: string
+  set: string
+  position: number
+  footnote: string
+}
+
+interface CurrentShowSetlist {
+  songs: SetlistSong[]
+  setlistNotes: string
+}
+
 interface LeaderboardClientProps {
   tourLeaderboard: LeaderboardEntry[]
   showLeaderboard: LeaderboardEntry[]
   currentShow: CurrentShowInfo | null
+  currentShowSetlist: CurrentShowSetlist | null
   nextShow: Show | null
   currentUserId: string | null
   hasPastTours: boolean
@@ -371,6 +385,85 @@ function ShowPickDetail({ picksByShow }: { picksByShow: ShowPicks[] }) {
   )
 }
 
+function SetlistSection({ setlist }: { setlist: CurrentShowSetlist }) {
+  const [isOpen, setIsOpen] = useState(false)
+
+  const setlistBySets = setlist.songs.reduce(
+    (acc, song) => {
+      if (!acc[song.set]) {
+        acc[song.set] = []
+      }
+      acc[song.set].push(song)
+      return acc
+    },
+    {} as Record<string, SetlistSong[]>
+  )
+
+  return (
+    <Card className="border-2 border-[#4a6b7d]/60">
+      <button
+        type="button"
+        onClick={() => setIsOpen((open) => !open)}
+        className="w-full flex items-center justify-between p-4 sm:p-6 text-left"
+        aria-expanded={isOpen}
+      >
+        <div className="flex items-center gap-2">
+          <ScrollText className="h-5 w-5 text-cyan-400" />
+          <h2 className="text-lg font-bold font-display text-white">Setlist</h2>
+        </div>
+        <ChevronDown
+          className={`h-5 w-5 text-slate-400 transition-transform ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+      <div
+        className={`grid transition-all duration-300 ease-in-out ${
+          isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="px-4 pb-4 sm:px-6 sm:pb-6 -mt-2 space-y-4">
+            {setlist.setlistNotes && setlist.setlistNotes.length > 0 && (
+              <p className="text-sm text-slate-300 whitespace-pre-line leading-relaxed">
+                {setlist.setlistNotes}
+              </p>
+            )}
+            {Object.entries(setlistBySets).map(([setName, songs]) => (
+              <div key={setName}>
+                <h3 className="text-sm font-semibold text-slate-400 uppercase mb-2">
+                  {setName}
+                </h3>
+                <div className="space-y-1">
+                  {songs.map((song, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-3 py-1.5 border-b-2 border-[#4a6b7d]/40"
+                    >
+                      <span className="text-slate-500 w-6 text-right text-sm">
+                        {song.position}
+                      </span>
+                      <span className="text-slate-200">{song.song}</span>
+                      {song.footnote && song.footnote.length > 0 && (
+                        <span
+                          className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-cyan-500/20 text-cyan-400 text-[10px] font-bold cursor-help shrink-0"
+                          title={song.footnote}
+                        >
+                          *
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
 function LeaderboardTable({
   entries,
   currentUserId,
@@ -593,6 +686,7 @@ export default function LeaderboardClient({
   tourLeaderboard,
   showLeaderboard,
   currentShow,
+  currentShowSetlist,
   nextShow,
   currentUserId,
   hasPastTours,
@@ -740,6 +834,12 @@ export default function LeaderboardClient({
           ) : (
             <EmptyState message="No show has locked yet. Check back after the next show's picks lock!" />
           )}
+
+          {currentShow &&
+            currentShowSetlist &&
+            currentShowSetlist.songs.length > 0 && (
+              <SetlistSection setlist={currentShowSetlist} />
+            )}
 
           {currentShow &&
             (hasShowScores

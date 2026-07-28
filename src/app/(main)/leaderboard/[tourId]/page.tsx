@@ -12,6 +12,8 @@ import {
   tourSubmissionWhere,
   showSubmissionWhere,
 } from "@/lib/leaderboard"
+import type { PhishNetSetlist } from "@/lib/phishnet"
+import { stripSetlistHtml } from "@/lib/phishnet"
 
 interface TourLeaderboardPageProps {
   params: Promise<{ tourId: string }>
@@ -78,6 +80,20 @@ export default async function TourLeaderboardPage({
   )
 
   const currentShow = await getCurrentOrLastShow(tourId)
+  const currentShowSetlist = currentShow?.setlistJson
+    ? (() => {
+        const rawSetlist = currentShow.setlistJson as unknown as PhishNetSetlist
+        return {
+          setlistNotes: stripSetlistHtml(rawSetlist.setlistnotes),
+          songs: rawSetlist.songs.map((song) => ({
+            song: song.song,
+            set: song.set,
+            position: song.position,
+            footnote: stripSetlistHtml(song.footnote),
+          })),
+        }
+      })()
+    : null
   const showLeaderboard = currentShow
     ? await getLeaderboard(
         showSubmissionWhere(currentShow.id),
@@ -114,7 +130,18 @@ export default async function TourLeaderboardPage({
       <LeaderboardClient
         tourLeaderboard={tourLeaderboard}
         showLeaderboard={showLeaderboard}
-        currentShow={currentShow}
+        currentShow={
+          currentShow
+            ? {
+                showDate: currentShow.showDate,
+                venue: currentShow.venue,
+                city: currentShow.city,
+                state: currentShow.state,
+                isComplete: currentShow.isComplete,
+              }
+            : null
+        }
+        currentShowSetlist={currentShowSetlist}
         nextShow={showForDisplay}
         currentUserId={session?.user?.id || null}
         hasPastTours={false}

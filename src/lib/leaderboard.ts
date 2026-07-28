@@ -174,6 +174,7 @@ export interface CurrentShowSummary {
   city: string | null
   state: string | null
   isComplete: boolean
+  setlistJson: Prisma.JsonValue
 }
 
 /** Most recent show whose picks have locked, within an optional tour. Used for the "This Show" leaderboard tab. */
@@ -196,6 +197,7 @@ export async function getCurrentOrLastShow(
           city: true,
           state: true,
           isComplete: true,
+          setlistJson: true,
         },
       }),
     { operationName: "find current or last show" }
