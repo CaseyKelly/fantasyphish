@@ -1,10 +1,14 @@
 import { FeedbackPanel } from "@/components/FeedbackPanel"
 
-export function Footer() {
+interface FooterProps {
+  showFeedback?: boolean
+}
+
+export function Footer({ showFeedback = false }: FooterProps) {
   return (
     <footer className="border-t border-[#3d5a6c]/50 py-8 bg-[#1e3340] relative z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3">
-        <FeedbackPanel />
+        {showFeedback && <FeedbackPanel />}
         <p className="text-center text-sm text-gray-400 sm:text-left">
           Setlist data provided by{" "}
           <a
