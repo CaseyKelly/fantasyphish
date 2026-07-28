@@ -431,7 +431,7 @@ function SetlistSection({ setlist }: { setlist: CurrentShowSetlist }) {
         }`}
       >
         <div className="overflow-hidden">
-          <div className="px-4 pb-4 sm:px-6 sm:pb-6 -mt-2 space-y-4">
+          <div className="px-4 pb-4 sm:px-6 sm:pb-6 space-y-4">
             {setlist.setlistNotes && setlist.setlistNotes.length > 0 && (
               <p className="text-sm text-slate-300 whitespace-pre-line leading-relaxed">
                 {setlist.setlistNotes}
