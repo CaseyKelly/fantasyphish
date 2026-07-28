@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { format } from "date-fns"
 import { toast } from "sonner"
 import {
@@ -17,8 +18,7 @@ import {
   Calendar,
   AlertCircle,
   CheckCircle,
-  Music2,
-  Sparkles,
+  Trophy,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -449,6 +449,93 @@ export function SongPicker({
     )
   }
 
+  const renderLockedPanel = () => {
+    const opener = existingPicks?.find((p) => p.pickType === "OPENER")
+    const encore = existingPicks?.find((p) => p.pickType === "ENCORE")
+    const regulars =
+      existingPicks?.filter((p) => p.pickType === "REGULAR") ?? []
+
+    return (
+      <Card className="max-w-md mx-4 sm:mx-0 text-center shadow-2xl">
+        <CardContent>
+          <div className="mb-6 flex justify-center">
+            <div className="relative">
+              <div className="absolute inset-0 bg-[#c23a3a]/30 blur-3xl rounded-full animate-pulse" />
+              <div className="relative bg-gradient-to-br from-[#c23a3a] to-[#d64545] p-6 rounded-full">
+                <Lock className="h-16 w-16 text-white" />
+              </div>
+            </div>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+            Your Picks Are Locked In
+          </h2>
+          <p className="text-gray-400 mb-6">
+            The show has started and picks can no longer be changed. Check back
+            after the show for results and scoring!
+          </p>
+
+          {existingPicks && existingPicks.length > 0 && (
+            <>
+              <div className="text-left mb-6 space-y-2">
+                {opener && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-[#3d5a6c]/30 rounded-lg border border-[#3d5a6c]/50">
+                    <Star className="h-4 w-4 text-[#c23a3a] flex-shrink-0" />
+                    <span className="text-xs text-gray-400 flex-shrink-0">
+                      Opener
+                    </span>
+                    <span className="text-sm text-white truncate">
+                      {opener.songName}
+                    </span>
+                  </div>
+                )}
+                {encore && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-[#3d5a6c]/30 rounded-lg border border-[#3d5a6c]/50">
+                    <Star className="h-4 w-4 text-[#c23a3a] flex-shrink-0" />
+                    <span className="text-xs text-gray-400 flex-shrink-0">
+                      Encore
+                    </span>
+                    <span className="text-sm text-white truncate">
+                      {encore.songName}
+                    </span>
+                  </div>
+                )}
+                {regulars.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {regulars.map((pick) => (
+                      <span
+                        key={pick.songId}
+                        className="px-3 py-1 bg-[#4a6b7d]/40 rounded-full text-xs text-gray-200"
+                      >
+                        {pick.songName}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="inline-flex items-center space-x-3 px-6 py-3 bg-[#3d5a6c]/50 rounded-xl border border-[#3d5a6c]/70 mb-6">
+                <CheckCircle className="h-5 w-5 text-green-400" />
+                <span className="text-gray-300 font-medium">
+                  Your picks are saved
+                </span>
+              </div>
+            </>
+          )}
+
+          <div>
+            <Link
+              href="/leaderboard"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#c23a3a] hover:bg-[#d64545] text-white font-semibold rounded-lg shadow-lg shadow-[#c23a3a]/20 transition-colors"
+            >
+              <Trophy className="h-4 w-4" />
+              View Leaderboard
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   const renderPickCard = (
     pickType: "OPENER" | "ENCORE" | "REGULAR",
     title: string,
@@ -605,41 +692,8 @@ export function SongPicker({
       <div className="relative">
         {/* Mobile: Replace picker with locked message when locked */}
         {isLocked && isMobile ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="max-w-md mx-4 text-center">
-              <div className="mb-6 flex justify-center">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-[#c23a3a]/30 blur-3xl rounded-full animate-pulse" />
-                  <div className="relative bg-gradient-to-br from-[#c23a3a] to-[#d64545] p-6 rounded-full">
-                    <Lock className="h-16 w-16 text-white" />
-                  </div>
-                </div>
-              </div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-                Show In Progress!
-              </h2>
-              {existingPicks && existingPicks.length > 0 && (
-                <div className="flex items-center justify-center gap-2 mb-4">
-                  <Music2 className="h-5 w-5 text-[#c23a3a] animate-pulse" />
-                  <p className="text-lg text-gray-300">
-                    Your picks are locked in
-                  </p>
-                  <Sparkles className="h-5 w-5 text-[#c23a3a] animate-pulse" />
-                </div>
-              )}
-              <p className="text-gray-400 mb-8">
-                The show has started and picks can no longer be changed. Check
-                back after the show for results and scoring!
-              </p>
-              {existingPicks && existingPicks.length > 0 && (
-                <div className="inline-flex items-center space-x-3 px-6 py-3 bg-[#4a6b7d]/40 rounded-xl border-2 border-[#4a6b7d]/60">
-                  <CheckCircle className="h-5 w-5 text-green-400" />
-                  <span className="text-gray-300 font-medium">
-                    Your picks are saved
-                  </span>
-                </div>
-              )}
-            </div>
+          <div className="flex items-center justify-center py-8">
+            {renderLockedPanel()}
           </div>
         ) : (
           <>
@@ -695,40 +749,7 @@ export function SongPicker({
             {/* Desktop: Overlay on top of picker content */}
             {isLocked && !isMobile && (
               <div className="absolute inset-0 z-40 flex items-center justify-center">
-                <div className="max-w-md mx-4 text-center bg-[#233d4d]/95 backdrop-blur-sm p-8 rounded-2xl border-2 border-[#4a6b7d]/70 shadow-2xl">
-                  <div className="mb-6 flex justify-center">
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-[#c23a3a]/30 blur-3xl rounded-full animate-pulse" />
-                      <div className="relative bg-gradient-to-br from-[#c23a3a] to-[#d64545] p-6 rounded-full">
-                        <Lock className="h-16 w-16 text-white" />
-                      </div>
-                    </div>
-                  </div>
-                  <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-                    Show In Progress!
-                  </h2>
-                  {existingPicks && existingPicks.length > 0 && (
-                    <div className="flex items-center justify-center gap-2 mb-4">
-                      <Music2 className="h-5 w-5 text-[#c23a3a] animate-pulse" />
-                      <p className="text-lg text-gray-300">
-                        Your picks are locked in
-                      </p>
-                      <Sparkles className="h-5 w-5 text-[#c23a3a] animate-pulse" />
-                    </div>
-                  )}
-                  <p className="text-gray-400 mb-8">
-                    The show has started and picks can no longer be changed.
-                    Check back after the show for results and scoring!
-                  </p>
-                  {existingPicks && existingPicks.length > 0 && (
-                    <div className="inline-flex items-center space-x-3 px-6 py-3 bg-[#3d5a6c]/50 rounded-xl border border-[#3d5a6c]/70">
-                      <CheckCircle className="h-5 w-5 text-green-400" />
-                      <span className="text-gray-300 font-medium">
-                        Your picks are saved
-                      </span>
-                    </div>
-                  )}
-                </div>
+                {renderLockedPanel()}
               </div>
             )}
           </>
