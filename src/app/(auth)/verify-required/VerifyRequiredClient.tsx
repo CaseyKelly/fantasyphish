@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { Mail, AlertCircle, CheckCircle, Loader2 } from "lucide-react"
+import { Mail, AlertCircle, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { DonutLogo } from "@/components/DonutLogo"
+import { LoadingDonut } from "@/components/LoadingDonut"
 
 const COOLDOWN_SECONDS = 60
 
@@ -136,7 +137,11 @@ export default function VerifyRequiredClient() {
               >
                 {isResending ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <LoadingDonut
+                      size="xs"
+                      color="currentColor"
+                      className="mr-2"
+                    />
                     Sending...
                   </>
                 ) : cooldownRemaining > 0 ? (

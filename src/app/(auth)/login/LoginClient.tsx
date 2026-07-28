@@ -4,11 +4,12 @@ import { useState, useEffect, Suspense } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { Mail, Lock, AlertCircle, Loader2 } from "lucide-react"
+import { Mail, Lock, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { DonutLogo } from "@/components/DonutLogo"
+import { LoadingDonut } from "@/components/LoadingDonut"
 
 function LoginForm() {
   const router = useRouter()
@@ -205,7 +206,7 @@ function LoadingCard() {
     <Card>
       <CardContent className="py-12">
         <div className="flex items-center justify-center">
-          <Loader2 className="h-8 w-8 text-[#c23a3a] animate-spin" />
+          <LoadingDonut size="sm" />
         </div>
       </CardContent>
     </Card>

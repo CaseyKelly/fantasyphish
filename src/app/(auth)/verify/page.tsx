@@ -4,10 +4,11 @@ import { useEffect, useState, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 
 import Link from "next/link"
-import { CheckCircle, XCircle, Loader2 } from "lucide-react"
+import { CheckCircle, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DonutLogo } from "@/components/DonutLogo"
+import { LoadingDonut } from "@/components/LoadingDonut"
 
 function VerifyContent() {
   const searchParams = useSearchParams()
@@ -68,7 +69,7 @@ function VerifyContent() {
           {status === "loading" && (
             <>
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#3d5a6c] mb-6">
-                <Loader2 className="h-8 w-8 text-[#c23a3a] animate-spin" />
+                <LoadingDonut size="sm" />
               </div>
               <h1 className="text-2xl font-bold font-display text-white mb-4">
                 Verifying your email...
@@ -89,7 +90,7 @@ function VerifyContent() {
                 Your account is now active. Redirecting you to login...
               </p>
               <div className="inline-flex items-center justify-center">
-                <Loader2 className="h-5 w-5 text-[#c23a3a] animate-spin" />
+                <LoadingDonut size="xs" />
               </div>
             </>
           )}
@@ -132,7 +133,7 @@ export default function VerifyPage() {
               <CardContent className="pt-6">
                 <div className="text-center">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#3d5a6c] mb-6">
-                    <Loader2 className="h-8 w-8 text-[#c23a3a] animate-spin" />
+                    <LoadingDonut size="sm" />
                   </div>
                   <h1 className="text-2xl font-bold font-display text-white mb-4">
                     Loading...

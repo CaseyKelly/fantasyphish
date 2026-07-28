@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { DonutLogo } from "./DonutLogo"
+import { LoadingDonut } from "./LoadingDonut"
 
 type UserForImpersonation = {
   id: string
@@ -291,7 +292,9 @@ export function Navbar() {
             </div>
             <div className="overflow-y-auto flex-1 p-6">
               {loadingUsers ? (
-                <p className="text-gray-400 text-center">Loading users...</p>
+                <div className="flex justify-center py-8">
+                  <LoadingDonut size="sm" />
+                </div>
               ) : users.length === 0 ? (
                 <p className="text-gray-400 text-center">No users found</p>
               ) : (

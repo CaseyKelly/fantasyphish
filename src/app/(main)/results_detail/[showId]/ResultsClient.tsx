@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
+import { LoadingDonut } from "@/components/LoadingDonut"
 import { format, parseISO } from "date-fns"
-import { RefreshCw, Trash2, ScrollText, ChevronDown } from "lucide-react"
+import { Trash2, ScrollText, ChevronDown } from "lucide-react"
 
 interface Pick {
   id: string
@@ -147,8 +148,8 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="text-center text-slate-400">Loading results...</div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <LoadingDonut size="xl" />
       </div>
     )
   }
@@ -453,7 +454,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
               >
                 {deletingSubmission ? (
                   <>
-                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <LoadingDonut size="xs" color="currentColor" />
                     Deleting...
                   </>
                 ) : (

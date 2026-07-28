@@ -3,11 +3,12 @@
 import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { Lock, AlertCircle, CheckCircle, Loader2 } from "lucide-react"
+import { Lock, AlertCircle, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { DonutLogo } from "@/components/DonutLogo"
+import { LoadingDonut } from "@/components/LoadingDonut"
 
 // Delay before redirecting to login after successful password reset
 const REDIRECT_DELAY_MS = 2000
@@ -188,7 +189,7 @@ function LoadingCard() {
     <Card>
       <CardContent className="py-12">
         <div className="flex items-center justify-center">
-          <Loader2 className="h-8 w-8 text-[#c23a3a] animate-spin" />
+          <LoadingDonut size="sm" />
         </div>
       </CardContent>
     </Card>
