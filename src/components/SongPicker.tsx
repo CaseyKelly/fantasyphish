@@ -58,7 +58,6 @@ interface SongPickerProps {
   existingPicks?: Pick[]
   totalPoints?: number | null
   isLocked: boolean
-  isTestMode?: boolean
   guestMode?: boolean
   hideHeader?: boolean
   onGuestSubmit?: (picks: Pick[]) => void
@@ -71,7 +70,6 @@ export function SongPicker({
   existingPicks,
   totalPoints,
   isLocked,
-  isTestMode = false,
   guestMode = false,
   hideHeader = false,
   onGuestSubmit,
@@ -326,12 +324,7 @@ export function SongPicker({
         ...regularPicks.map((p) => ({ songId: p.songId, pickType: "REGULAR" })),
       ]
 
-      // Use different endpoint for test mode
-      const endpoint = isTestMode
-        ? "/api/admin/create-test-submission"
-        : "/api/picks"
-
-      const response = await fetch(endpoint, {
+      const response = await fetch("/api/picks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ showId: show.id, picks }),
@@ -345,17 +338,13 @@ export function SongPicker({
         // Set justSaved state to show success feedback
         setJustSaved(true)
 
-        toast.success(
-          isTestMode
-            ? "Test submission created successfully!"
-            : data.message || "Picks submitted successfully!"
-        )
+        toast.success(data.message || "Picks submitted successfully!")
 
         // If onSubmitSuccess callback is provided, call it instead of redirecting
         if (onSubmitSuccess) {
           onSubmitSuccess()
         } else {
-          router.push(isTestMode ? "/results" : "/picks")
+          router.push("/picks")
           router.refresh()
         }
       }
@@ -760,19 +749,8 @@ export function SongPicker({
       {!guestMode && !hideHeader && (
         <div className="text-center">
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-            {isTestMode
-              ? "Create Test Submission"
-              : isLocked
-                ? "Show In Progress"
-                : "Make Your Picks"}
+            {isLocked ? "Show In Progress" : "Make Your Picks"}
           </h1>
-          {isTestMode && (
-            <div className="mb-2">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                Test Mode
-              </span>
-            </div>
-          )}
           {isLocked && <LiveBadge />}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-gray-400">
             <span className="flex items-center">

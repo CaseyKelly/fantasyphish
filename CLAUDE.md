@@ -195,7 +195,7 @@ src/app/
 │   ├── shows            # Upcoming/recent shows
 │   ├── songs            # All songs with stats
 │   ├── leaderboard      # Tour leaderboard
-│   └── admin/           # Admin endpoints (test-scoring, reset-show, impersonate)
+│   └── admin/           # Admin endpoints (reset-show, impersonate)
 └── page.tsx             # Public landing page
 ```
 
