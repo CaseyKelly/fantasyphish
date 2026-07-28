@@ -14,11 +14,11 @@ import {
   X,
   Clock,
   Eye,
-  RefreshCw,
   Trash2,
 } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { LiveBadge } from "@/components/LiveBadge"
+import { LoadingDonut } from "@/components/LoadingDonut"
 
 // Helper to format show dates consistently without timezone issues
 function formatShowDate(showDate: Date | string, formatStr: string): string {
@@ -332,7 +332,7 @@ export default function ResultsClient({
                           title="Delete submission"
                         >
                           {deletingSubmission === submission.id ? (
-                            <RefreshCw className="h-4 w-4 animate-spin" />
+                            <LoadingDonut size="xs" color="currentColor" />
                           ) : (
                             <Trash2 className="h-4 w-4" />
                           )}

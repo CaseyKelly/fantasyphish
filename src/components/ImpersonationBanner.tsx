@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react"
 import { AlertCircle, X } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
+import { LoadingDonut } from "@/components/LoadingDonut"
 
 export function ImpersonationBanner() {
   const { data: session, update } = useSession()
@@ -55,7 +56,11 @@ export function ImpersonationBanner() {
         disabled={isLoading}
         className="flex items-center gap-2 px-3 py-1 bg-amber-950 text-amber-100 rounded hover:bg-amber-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
       >
-        <X className="h-4 w-4" />
+        {isLoading ? (
+          <LoadingDonut size="xs" color="currentColor" />
+        ) : (
+          <X className="h-4 w-4" />
+        )}
         <span>{isLoading ? "Stopping..." : "Stop Impersonating"}</span>
       </button>
     </div>

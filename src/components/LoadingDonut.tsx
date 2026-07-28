@@ -1,78 +1,179 @@
+"use client"
+
+import type { CSSProperties } from "react"
+
 interface LoadingDonutProps {
-  size?: "sm" | "md" | "lg" | "xl"
+  size?: "xs" | "sm" | "md" | "lg" | "xl"
+  color?: string
+  className?: string
+  // Screen-reader-only status text; omit when adjacent visible text already announces it
+  label?: string
 }
 
-export function LoadingDonut({ size = "lg" }: LoadingDonutProps) {
-  const dimensions = {
-    sm: { outer: 32, stroke: 4 },
-    md: { outer: 48, stroke: 6 },
-    lg: { outer: 64, stroke: 8 },
-    xl: { outer: 96, stroke: 12 },
-  }
+const sizes: Record<NonNullable<LoadingDonutProps["size"]>, number> = {
+  xs: 16,
+  sm: 32,
+  md: 48,
+  lg: 64,
+  xl: 96,
+}
 
-  const { outer, stroke } = dimensions[size]
-  const radius = (outer - stroke) / 2
-  const circumference = 2 * Math.PI * radius
+export function LoadingDonut({
+  size = "lg",
+  color = "#c23a3a",
+  className = "",
+  label,
+}: LoadingDonutProps) {
+  const dimension = sizes[size]
 
   return (
-    <div className="flex items-center justify-center">
-      <svg
-        width={outer}
-        height={outer}
-        viewBox={`0 0 ${outer} ${outer}`}
-        className="animate-spin"
-        style={{
-          animation: "spin 2s linear infinite",
-        }}
-      >
-        {/* Background ring */}
-        <circle
-          cx={outer / 2}
-          cy={outer / 2}
-          r={radius}
-          stroke="#c23a3a"
-          strokeWidth={stroke}
-          fill="none"
-          className="opacity-20"
-        />
-
-        {/* Animated ring segment with opacity pulse */}
-        <circle
-          cx={outer / 2}
-          cy={outer / 2}
-          r={radius}
-          stroke="#c23a3a"
-          strokeWidth={stroke}
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray={`${circumference * 0.75} ${circumference * 0.25}`}
-          className="opacity-100"
-          style={{
-            animation: "pulse-opacity 1.5s ease-in-out infinite",
-          }}
-        />
-      </svg>
+    <span
+      className={`fp-spinner ${className}`}
+      style={
+        {
+          width: dimension,
+          height: dimension,
+          color,
+          "--fp-size": `${dimension}px`,
+        } as CSSProperties
+      }
+      role={label ? "status" : undefined}
+      aria-hidden={label ? undefined : true}
+    >
+      {label && <span className="sr-only">{label}</span>}
+      <span className="fp-orbit fp-orbit-a">
+        <span className="fp-track">
+          <svg viewBox="0 0 120 120" fill="none">
+            <circle
+              cx="60"
+              cy="60"
+              r="40"
+              stroke="currentColor"
+              strokeWidth="24"
+            />
+          </svg>
+        </span>
+      </span>
+      <span className="fp-orbit fp-orbit-b">
+        <span className="fp-track">
+          <svg viewBox="0 0 120 120" fill="none">
+            <circle
+              cx="60"
+              cy="60"
+              r="40"
+              stroke="currentColor"
+              strokeWidth="24"
+            />
+          </svg>
+        </span>
+      </span>
 
       <style jsx>{`
-        @keyframes spin {
-          from {
-            transform: rotate(0deg);
+        .fp-spinner {
+          position: relative;
+          display: inline-block;
+        }
+
+        .fp-orbit {
+          position: absolute;
+          inset: 0;
+          animation: fp-weave-a 1.6s linear infinite;
+        }
+
+        .fp-orbit-b {
+          animation-name: fp-weave-b;
+        }
+
+        /* z-index swap right where the two tracks cross in the middle
+           (25% / 75%) so the rings pass over/under each other */
+        @keyframes fp-weave-a {
+          0%,
+          24.9% {
+            z-index: 2;
           }
-          to {
-            transform: rotate(360deg);
+          25%,
+          74.9% {
+            z-index: 1;
+          }
+          75%,
+          100% {
+            z-index: 2;
           }
         }
 
-        @keyframes pulse-opacity {
+        @keyframes fp-weave-b {
           0%,
+          24.9% {
+            z-index: 1;
+          }
+          25%,
+          74.9% {
+            z-index: 2;
+          }
+          75%,
           100% {
-            opacity: 1;
+            z-index: 1;
+          }
+        }
+
+        .fp-track {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: calc(var(--fp-size) * 0.6);
+          height: calc(var(--fp-size) * 0.6);
+          margin: calc(var(--fp-size) * -0.3) 0 0 calc(var(--fp-size) * -0.3);
+          animation: fp-slide-a 1.6s linear infinite;
+        }
+
+        .fp-orbit-b .fp-track {
+          animation-name: fp-slide-b;
+        }
+
+        .fp-track svg {
+          display: block;
+          width: 100%;
+          height: 100%;
+        }
+
+        /* pure left-right travel, no vertical component */
+        @keyframes fp-slide-a {
+          0% {
+            transform: translateX(calc(var(--fp-size) * -0.22));
           }
           50% {
-            opacity: 0.4;
+            transform: translateX(calc(var(--fp-size) * 0.22));
+          }
+          100% {
+            transform: translateX(calc(var(--fp-size) * -0.22));
+          }
+        }
+
+        @keyframes fp-slide-b {
+          0% {
+            transform: translateX(calc(var(--fp-size) * 0.22));
+          }
+          50% {
+            transform: translateX(calc(var(--fp-size) * -0.22));
+          }
+          100% {
+            transform: translateX(calc(var(--fp-size) * 0.22));
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .fp-orbit,
+          .fp-track {
+            animation: none !important;
+          }
+          .fp-orbit-a .fp-track {
+            transform: translateX(calc(var(--fp-size) * -0.22));
+          }
+          .fp-orbit-b .fp-track {
+            transform: translateX(calc(var(--fp-size) * 0.22));
           }
         }
       `}</style>
-    </div>
+    </span>
   )
 }

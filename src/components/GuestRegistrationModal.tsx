@@ -4,10 +4,11 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { toast } from "sonner"
-import { X, Loader2 } from "lucide-react"
+import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { LoadingDonut } from "@/components/LoadingDonut"
 
 interface Pick {
   songId: string
@@ -281,7 +282,11 @@ export function GuestRegistrationModal({
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      <LoadingDonut
+                        size="xs"
+                        color="currentColor"
+                        className="mr-2"
+                      />
                       Creating Account...
                     </>
                   ) : (
@@ -349,7 +354,11 @@ export function GuestRegistrationModal({
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      <LoadingDonut
+                        size="xs"
+                        color="currentColor"
+                        className="mr-2"
+                      />
                       Signing In...
                     </>
                   ) : (
