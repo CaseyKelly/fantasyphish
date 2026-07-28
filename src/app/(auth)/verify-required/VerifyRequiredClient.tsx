@@ -132,7 +132,6 @@ export default function VerifyRequiredClient() {
                 onClick={handleResendEmail}
                 className="w-full"
                 size="lg"
-                isLoading={isResending}
                 disabled={isResending || cooldownRemaining > 0}
               >
                 {isResending ? (
