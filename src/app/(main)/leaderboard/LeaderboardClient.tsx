@@ -452,14 +452,6 @@ function SetlistSection({ setlist }: { setlist: CurrentShowSetlist }) {
                         {song.position}
                       </span>
                       <span className="text-slate-200">{song.song}</span>
-                      {song.footnote && song.footnote.length > 0 && (
-                        <span
-                          className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-cyan-500/20 text-cyan-400 text-[10px] font-bold cursor-help shrink-0"
-                          title={song.footnote}
-                        >
-                          *
-                        </span>
-                      )}
                     </div>
                   ))}
                 </div>
