@@ -522,12 +522,59 @@ export function SongPicker({
 
   const renderLockedPanel = () => {
     const picks = livePicks ?? existingPicks
-    const opener = picks?.find((p) => p.pickType === "OPENER")
-    const encore = picks?.find((p) => p.pickType === "ENCORE")
-    const regulars = picks?.filter((p) => p.pickType === "REGULAR") ?? []
-    const hasScoringStarted =
-      picks?.some((p) => p.wasPlayed !== null && p.wasPlayed !== undefined) ??
-      false
+
+    if (!picks || picks.length === 0) {
+      return (
+        <Card className="max-w-md mx-4 sm:mx-0 text-center shadow-2xl">
+          <CardContent>
+            <div className="mb-6 flex justify-center">
+              <div className="relative">
+                <div className="absolute inset-0 bg-[#c23a3a]/30 blur-3xl rounded-full animate-pulse" />
+                <div className="relative bg-gradient-to-br from-[#c23a3a] to-[#d64545] p-6 rounded-full">
+                  <Music className="h-16 w-16 text-white" />
+                </div>
+              </div>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+              {liveIsComplete ? "That One's In The Books" : "Picks Are Closed"}
+            </h2>
+            <p className="text-gray-400 mb-6">
+              {liveIsComplete
+                ? "This show has wrapped up. Check the results, then make sure you're picked in before the next one!"
+                : "This show has started, so picks are closed for everyone. Check back after the show for results, and don't miss your chance to pick next time!"}
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              {guestMode && (
+                <Link
+                  href="/register"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-[#c23a3a] hover:bg-[#d64545] text-white font-semibold rounded-lg shadow-lg shadow-[#c23a3a]/20 transition-colors"
+                >
+                  Sign Up To Play
+                </Link>
+              )}
+              <Link
+                href="/leaderboard"
+                className={
+                  guestMode
+                    ? "inline-flex items-center gap-2 px-4 py-2 bg-[#3d5a6c]/50 hover:bg-[#3d5a6c]/70 text-white font-semibold rounded-lg border border-[#3d5a6c]/70 transition-colors"
+                    : "inline-flex items-center gap-2 px-4 py-2 bg-[#c23a3a] hover:bg-[#d64545] text-white font-semibold rounded-lg shadow-lg shadow-[#c23a3a]/20 transition-colors"
+                }
+              >
+                <Trophy className="h-4 w-4" />
+                View Leaderboard
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )
+    }
+
+    const opener = picks.find((p) => p.pickType === "OPENER")
+    const encore = picks.find((p) => p.pickType === "ENCORE")
+    const regulars = picks.filter((p) => p.pickType === "REGULAR")
+    const hasScoringStarted = picks.some(
+      (p) => p.wasPlayed !== null && p.wasPlayed !== undefined
+    )
 
     const specialPickClasses = (pick?: Pick) => {
       if (!pick || pick.wasPlayed === null || pick.wasPlayed === undefined) {
@@ -588,44 +635,40 @@ export function SongPicker({
               : "The show has started and picks can no longer be changed. Scores update live as songs are played."}
           </p>
 
-          {picks && picks.length > 0 && (
-            <>
-              <div className="text-left mb-6 space-y-2">
-                {opener && renderSpecialPick("Opener", opener)}
-                {encore && renderSpecialPick("Encore", encore)}
-                {regulars.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {regulars.map((pick) => (
-                      <span
-                        key={pick.songId}
-                        className={`px-3 py-1 rounded-full text-xs flex items-center gap-1 ${regularPickClasses(pick)}`}
-                      >
-                        <span>{pick.songName}</span>
-                        {pick.wasPlayed && <Check className="h-3 w-3" />}
-                      </span>
-                    ))}
-                  </div>
-                )}
+          <div className="text-left mb-6 space-y-2">
+            {opener && renderSpecialPick("Opener", opener)}
+            {encore && renderSpecialPick("Encore", encore)}
+            {regulars.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {regulars.map((pick) => (
+                  <span
+                    key={pick.songId}
+                    className={`px-3 py-1 rounded-full text-xs flex items-center gap-1 ${regularPickClasses(pick)}`}
+                  >
+                    <span>{pick.songName}</span>
+                    {pick.wasPlayed && <Check className="h-3 w-3" />}
+                  </span>
+                ))}
               </div>
+            )}
+          </div>
 
-              {hasScoringStarted ? (
-                <div className="inline-flex items-center space-x-2 px-6 py-3 bg-[#3d5a6c]/50 rounded-xl border border-[#3d5a6c]/70 mb-6">
-                  <span className="text-gray-300 font-medium">
-                    {liveIsComplete ? "Final score:" : "Score so far:"}
-                  </span>
-                  <span className="text-white font-bold text-lg">
-                    {liveTotalPoints ?? 0} pts
-                  </span>
-                </div>
-              ) : (
-                <div className="inline-flex items-center space-x-3 px-6 py-3 bg-[#3d5a6c]/50 rounded-xl border border-[#3d5a6c]/70 mb-6">
-                  <CheckCircle className="h-5 w-5 text-green-400" />
-                  <span className="text-gray-300 font-medium">
-                    Your picks are saved
-                  </span>
-                </div>
-              )}
-            </>
+          {hasScoringStarted ? (
+            <div className="inline-flex items-center space-x-2 px-6 py-3 bg-[#3d5a6c]/50 rounded-xl border border-[#3d5a6c]/70 mb-6">
+              <span className="text-gray-300 font-medium">
+                {liveIsComplete ? "Final score:" : "Score so far:"}
+              </span>
+              <span className="text-white font-bold text-lg">
+                {liveTotalPoints ?? 0} pts
+              </span>
+            </div>
+          ) : (
+            <div className="inline-flex items-center space-x-3 px-6 py-3 bg-[#3d5a6c]/50 rounded-xl border border-[#3d5a6c]/70 mb-6">
+              <CheckCircle className="h-5 w-5 text-green-400" />
+              <span className="text-gray-300 font-medium">
+                Your picks are saved
+              </span>
+            </div>
           )}
 
           <div>
