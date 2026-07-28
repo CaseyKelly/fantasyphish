@@ -385,6 +385,14 @@ function ShowPickDetail({ picksByShow }: { picksByShow: ShowPicks[] }) {
   )
 }
 
+function formatSetName(set: string): string {
+  const lower = set.toLowerCase()
+  if (lower === "e") return "Encore"
+  const encoreMatch = lower.match(/^e(\d+)$/)
+  if (encoreMatch) return `Encore ${encoreMatch[1]}`
+  return `Set ${set}`
+}
+
 function SetlistSection({ setlist }: { setlist: CurrentShowSetlist }) {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -432,7 +440,7 @@ function SetlistSection({ setlist }: { setlist: CurrentShowSetlist }) {
             {Object.entries(setlistBySets).map(([setName, songs]) => (
               <div key={setName}>
                 <h3 className="text-sm font-semibold text-slate-400 uppercase mb-2">
-                  {setName}
+                  {formatSetName(setName)}
                 </h3>
                 <div className="space-y-1">
                   {songs.map((song, idx) => (
