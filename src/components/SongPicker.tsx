@@ -687,7 +687,7 @@ export function SongPicker({
     return (
       <Card>
         <CardHeader
-          className="cursor-pointer overflow-hidden"
+          className="cursor-pointer"
           onClick={() => {
             if (isMobile && !isLocked) {
               setMobileModalOpen(pickType)
@@ -696,8 +696,8 @@ export function SongPicker({
             }
           }}
         >
-          <div className="flex items-center justify-between gap-3 overflow-hidden">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 overflow-hidden">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
               <div
                 className={`p-2 rounded-lg flex-shrink-0 ${
                   pickType === "REGULAR"
