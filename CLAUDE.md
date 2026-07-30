@@ -296,3 +296,4 @@ Required for development:
 6. **Database retries:** Wrap all cron job Prisma calls in `withRetry()`
 7. **Grace period:** Don't mark shows complete until grace period expires
 8. **Active tours check:** Cron jobs should check `shouldRunCronJobs()` first
+9. **Manual Prisma migrate commands need the direct (non-pooled) connection string:** Running `prisma migrate resolve` or `migrate deploy` by hand against a Neon branch's pooled URL can leave an idle backend holding Prisma's advisory lock forever, since pgbouncer's transaction-pooling mode doesn't release session-level locks cleanly — this hangs every future migration on that database until the stuck backend is found (`pg_locks` joined to `pg_stat_activity` where `locktype = 'advisory'`) and terminated with `pg_terminate_backend()`. Always use the direct URL (`neonctl connection-string <branch>`, no `--pooled`) for these commands
