@@ -28,8 +28,8 @@ FantasyPhish is a fantasy game for Phish fans. Users pick 13 songs before each s
 
 ### Database
 
-- `npm run db:push` - Sync Prisma schema to database (development)
-- `npm run db:migrate` - Create and apply migrations (production)
+- `npm run db:migrate` - Create a migration from schema changes and apply it locally (use this for any schema change you intend to merge)
+- `npm run db:push` - Sync Prisma schema to database without a migration file (quick local prototyping only; never use for changes headed to main)
 - `npm run db:seed` - Seed songs from phish.net API
 - `npm run db:sync-tours [year]` - Sync tour/show data for specific year
 - `npm run db:sync-recent-songs` - Update song gap/lastPlayed stats
@@ -267,6 +267,11 @@ Handles transient connection errors (exponential backoff, 3 retries).
    - Playwright config uses `workers: 1` to avoid Resend API rate limits
    - Tests run sequentially, not in parallel
 
+9. **Schema changes go through migrations, not `db:push`**
+   - Run `npm run db:migrate` locally to generate a migration file under `prisma/migrations/`, commit it with your PR
+   - The `build` script runs `prisma migrate deploy` before `next build`, so Vercel applies pending migrations automatically on every deploy — no manual `db:push` against prod needed
+   - `db:push` is fine for quick local prototyping, but any change that merges to `main` needs a real migration file
+
 ## Environment Variables
 
 Required for development:
@@ -291,3 +296,4 @@ Required for development:
 6. **Database retries:** Wrap all cron job Prisma calls in `withRetry()`
 7. **Grace period:** Don't mark shows complete until grace period expires
 8. **Active tours check:** Cron jobs should check `shouldRunCronJobs()` first
+9. **Manual Prisma migrate commands need the direct (non-pooled) connection string:** Running `prisma migrate resolve` or `migrate deploy` by hand against a Neon branch's pooled URL can leave an idle backend holding Prisma's advisory lock forever, since pgbouncer's transaction-pooling mode doesn't release session-level locks cleanly — this hangs every future migration on that database until the stuck backend is found (`pg_locks` joined to `pg_stat_activity` where `locktype = 'advisory'`) and terminated with `pg_terminate_backend()`. Always use the direct URL (`neonctl connection-string <branch>`, no `--pooled`) for these commands
