@@ -3,9 +3,11 @@ import { format } from "date-fns"
 import { User, Calendar, Trophy, Target, TrendingUp, Star } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { AchievementBadge } from "@/components/AchievementBadge"
+import { PickReminderToggle } from "@/components/PickReminderToggle"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import { withRetry } from "@/lib/db-retry"
+import { auth } from "@/lib/auth"
 
 interface UserPageProps {
   params: Promise<{ username: string }>
@@ -84,6 +86,8 @@ async function getUserProfile(username: string) {
 
   if (!user) return null
 
+  const emailPickReminders = user.emailPickReminders
+
   // Include submissions that are either scored OR locked (show has started)
   const scoredOrLockedSubmissions = user.submissions.filter(
     (s) => s.isScored || (s.show.lockTime && s.show.lockTime <= now)
@@ -113,6 +117,7 @@ async function getUserProfile(username: string) {
   return {
     username: user.username,
     createdAt: user.createdAt,
+    emailPickReminders,
     stats: {
       totalShows: scoredOrLockedSubmissions.length,
       scoredShows: scoredSubmissions.length,
@@ -155,11 +160,16 @@ async function getUserProfile(username: string) {
 
 export default async function UserProfilePage({ params }: UserPageProps) {
   const { username } = await params
-  const profile = await getUserProfile(username)
+  const [profile, session] = await Promise.all([
+    getUserProfile(username),
+    auth(),
+  ])
 
   if (!profile) {
     notFound()
   }
+
+  const isOwnProfile = session?.user?.username === username
 
   return (
     <div className="space-y-8">
@@ -308,6 +318,11 @@ export default async function UserProfilePage({ params }: UserPageProps) {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Notification Preferences - admin-only during initial rollout */}
+      {isOwnProfile && session?.user?.isAdmin && (
+        <PickReminderToggle initialEnabled={profile.emailPickReminders} />
       )}
     </div>
   )
