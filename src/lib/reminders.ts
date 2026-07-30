@@ -1,12 +1,15 @@
 import { prisma } from "@/lib/prisma"
 import { withRetry } from "@/lib/db-retry"
 import { sendShowReminderEmail } from "@/lib/email"
+import { sendPushNotification } from "@/lib/push"
 
 export interface ReminderRunResult {
   showsChecked: number
   eligibleUsers: number
   sent: number
   failed: number
+  pushSent: number
+  pushFailed: number
   errors: string[]
 }
 
@@ -43,6 +46,8 @@ export async function sendPickReminders(options?: {
     eligibleUsers: 0,
     sent: 0,
     failed: 0,
+    pushSent: 0,
+    pushFailed: 0,
     errors: [],
   }
 
@@ -57,7 +62,7 @@ export async function sendPickReminders(options?: {
             submissions: { none: { showId: show.id } },
             ...(options?.dryRunUserId ? { id: options.dryRunUserId } : {}),
           },
-          select: { id: true, email: true },
+          select: { id: true, email: true, pushSubscriptions: true },
         }),
       { operationName: `find eligible reminder users for show ${show.id}` }
     )
@@ -79,6 +84,30 @@ export async function sendPickReminders(options?: {
       } else {
         result.failed++
         result.errors.push(`${user.email}: ${error}`)
+      }
+
+      for (const subscription of user.pushSubscriptions) {
+        const pushResult = await sendPushNotification(subscription, {
+          title: "Show tonight — pick your setlist",
+          body: `You haven't submitted picks for ${show.venue} yet.`,
+          url: `/pick/${show.id}`,
+        })
+
+        if (pushResult.success) {
+          result.pushSent++
+        } else {
+          result.pushFailed++
+          result.errors.push(`${user.email} (push): ${pushResult.error}`)
+          if (pushResult.expired) {
+            await withRetry(
+              () =>
+                prisma.pushSubscription.delete({
+                  where: { id: subscription.id },
+                }),
+              { operationName: "delete expired push subscription" }
+            )
+          }
+        }
       }
     }
   }

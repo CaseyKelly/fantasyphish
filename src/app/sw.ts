@@ -23,3 +23,27 @@ const serwist = new Serwist({
 })
 
 serwist.addEventListeners()
+
+self.addEventListener("push", (event) => {
+  const data = event.data?.json() ?? {}
+  event.waitUntil(
+    self.registration.showNotification(data.title ?? "FantasyPhish", {
+      body: data.body,
+      icon: "/android-chrome-192x192.png",
+      badge: "/android-chrome-192x192.png",
+      data: { url: data.url ?? "/" },
+    })
+  )
+})
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close()
+  const url = event.notification.data?.url ?? "/"
+  event.waitUntil(
+    self.clients.matchAll({ type: "window" }).then((clients) => {
+      const existing = clients.find((client) => client.url.includes(url))
+      if (existing) return existing.focus()
+      return self.clients.openWindow(url)
+    })
+  )
+})
