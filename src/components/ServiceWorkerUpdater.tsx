@@ -12,13 +12,18 @@ export function ServiceWorkerUpdater() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return
 
-    const hadController = !!navigator.serviceWorker.controller
+    let hadController = !!navigator.serviceWorker.controller
     let reloading = false
 
     function handleControllerChange() {
-      // This also fires the first time a page is ever controlled; only
-      // reload when an existing controller is being replaced by a new one.
-      if (!hadController || reloading) return
+      if (reloading) return
+      // This also fires the first time a page is ever controlled; skip only
+      // that initial transition, then reload on every controller replacement
+      // after it (i.e. every later deploy that takes over this session).
+      if (!hadController) {
+        hadController = true
+        return
+      }
       reloading = true
       window.location.reload()
     }
