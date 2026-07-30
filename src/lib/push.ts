@@ -30,9 +30,9 @@ export async function sendPushNotification(
   subscription: { endpoint: string; p256dh: string; auth: string },
   payload: PushPayload
 ): Promise<PushSendResult> {
-  ensureConfigured()
-
   try {
+    ensureConfigured()
+
     await webpush.sendNotification(
       {
         endpoint: subscription.endpoint,

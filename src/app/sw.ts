@@ -25,7 +25,12 @@ const serwist = new Serwist({
 serwist.addEventListeners()
 
 self.addEventListener("push", (event) => {
-  const data = event.data?.json() ?? {}
+  let data: { title?: string; body?: string; url?: string } = {}
+  try {
+    data = event.data?.json() ?? {}
+  } catch {
+    // Malformed/empty payload - fall back to a generic notification.
+  }
   event.waitUntil(
     self.registration.showNotification(data.title ?? "FantasyPhish", {
       body: data.body,

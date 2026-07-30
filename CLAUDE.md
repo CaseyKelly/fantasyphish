@@ -271,6 +271,7 @@ Handles transient connection errors (exponential backoff, 3 retries).
    - Run `npm run db:migrate` locally to generate a migration file under `prisma/migrations/`, commit it with your PR
    - The `build` script runs `prisma migrate deploy` before `next build`, so Vercel applies pending migrations automatically on every deploy — no manual `db:push` against prod needed
    - `db:push` is fine for quick local prototyping, but any change that merges to `main` needs a real migration file
+   - **New databases need a one-time baseline before `migrate deploy` will work.** Any database whose schema was created outside of Prisma migrations (e.g. via `db:push`, or a Neon branch cloned from one) already has the tables but no `_prisma_migrations` history, so `prisma migrate deploy` fails with `P3005: The database schema is not empty`. Fix it once with `prisma migrate resolve --applied <migration_name>` against that database's **direct** (non-pooled) URL — this includes the Vercel/Neon integration's per-git-branch preview databases, which are cloned from prod and each need their own baseline the first time a branch with pending migrations is deployed
 
 ## Environment Variables
 
