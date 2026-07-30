@@ -23,6 +23,7 @@ model User {
   passwordResetExpiry   DateTime?
   isAdmin               Boolean   @default(false)
   emailPickReminders    Boolean   @default(false)
+  dismissedRemindersBanner Boolean @default(false)
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
   submissions           Submission[]

@@ -4,9 +4,14 @@ import { prisma } from "@/lib/prisma"
 import { withRetry } from "@/lib/db-retry"
 import { z } from "zod"
 
-const updatePreferencesSchema = z.object({
-  emailPickReminders: z.boolean(),
-})
+const updatePreferencesSchema = z
+  .object({
+    emailPickReminders: z.boolean().optional(),
+    dismissedRemindersBanner: z.boolean().optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one preference is required",
+  })
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -16,18 +21,18 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { emailPickReminders } = updatePreferencesSchema.parse(body)
+    const data = updatePreferencesSchema.parse(body)
 
     await withRetry(
       () =>
         prisma.user.update({
           where: { id: session.user.id },
-          data: { emailPickReminders },
+          data,
         }),
       { operationName: "update user preferences" }
     )
 
-    return NextResponse.json({ success: true, emailPickReminders })
+    return NextResponse.json({ success: true, ...data })
   } catch (error) {
     console.error("Error updating user preferences:", error)
 

@@ -4,6 +4,7 @@ import { User, Calendar, Trophy, Target, TrendingUp, Star } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { AchievementBadge } from "@/components/AchievementBadge"
 import { PickReminderToggle } from "@/components/PickReminderToggle"
+import { PickReminderBanner } from "@/components/PickReminderBanner"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import { withRetry } from "@/lib/db-retry"
@@ -87,6 +88,7 @@ async function getUserProfile(username: string) {
   if (!user) return null
 
   const emailPickReminders = user.emailPickReminders
+  const dismissedRemindersBanner = user.dismissedRemindersBanner
 
   // Include submissions that are either scored OR locked (show has started)
   const scoredOrLockedSubmissions = user.submissions.filter(
@@ -118,6 +120,7 @@ async function getUserProfile(username: string) {
     username: user.username,
     createdAt: user.createdAt,
     emailPickReminders,
+    dismissedRemindersBanner,
     stats: {
       totalShows: scoredOrLockedSubmissions.length,
       scoredShows: scoredSubmissions.length,
@@ -180,6 +183,11 @@ export default async function UserProfilePage({ params }: UserPageProps) {
         </h1>
         <p className="text-slate-400 mt-1">Player stats and achievements</p>
       </div>
+
+      {/* Announcement banner - admin-only during initial rollout */}
+      {isOwnProfile &&
+        session?.user?.isAdmin &&
+        !profile.dismissedRemindersBanner && <PickReminderBanner />}
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Account Info */}
