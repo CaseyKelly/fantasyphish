@@ -33,21 +33,23 @@ export function PickReminderBanner() {
   }
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border-2 border-[#c23a3a]/60 bg-[#c23a3a]/10 px-4 py-3">
-      <Bell className="h-5 w-5 flex-shrink-0 text-[#c23a3a]" />
-      <p className="flex-1 text-sm text-gray-200">
-        <span className="font-semibold text-white">New:</span> you can now opt
-        in to an email reminder on show days if you haven&apos;t submitted your
-        picks yet. Look for the toggle below.
-      </p>
-      <button
-        onClick={handleDismiss}
-        disabled={dismissing}
-        aria-label="Dismiss"
-        className="flex-shrink-0 rounded p-1 text-gray-400 hover:text-white disabled:opacity-50"
-      >
-        <X className="h-4 w-4" />
-      </button>
+    <div className="bg-[#c23a3a]/15 border-b-2 border-[#c23a3a]/40 px-4 py-2">
+      <div className="max-w-7xl mx-auto flex items-center gap-3">
+        <Bell className="h-4 w-4 flex-shrink-0 text-[#c23a3a]" />
+        <p className="flex-1 text-sm text-gray-200">
+          <strong className="font-semibold text-white">New: </strong>
+          You can now opt in to an email reminder on show days if you
+          haven&apos;t submitted your picks yet &mdash; check your profile page.
+        </p>
+        <button
+          onClick={handleDismiss}
+          disabled={dismissing}
+          aria-label="Dismiss"
+          className="flex-shrink-0 rounded p-1 text-gray-400 hover:text-white disabled:opacity-50"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   )
 }
