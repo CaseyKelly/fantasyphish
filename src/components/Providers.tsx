@@ -6,6 +6,7 @@ import { ReactNode } from "react"
 import { SerwistProvider } from "@serwist/turbopack/react"
 import { EasterEgg } from "@/components/EasterEgg"
 import { ScrollToTop } from "@/components/ScrollToTop"
+import { ServiceWorkerUpdater } from "@/components/ServiceWorkerUpdater"
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
@@ -13,6 +14,7 @@ export function Providers({ children }: { children: ReactNode }) {
       swUrl="/serwist/sw.js"
       disable={process.env.NODE_ENV === "development"}
     >
+      <ServiceWorkerUpdater />
       <SessionProvider>
         <ScrollToTop />
         {children}
