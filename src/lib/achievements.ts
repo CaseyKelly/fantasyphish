@@ -34,6 +34,13 @@ export const ACHIEVEMENT_DEFINITIONS = {
     icon: "PlaneLanding",
     category: "MILESTONE" as AchievementCategory,
   },
+  JACKPOT: {
+    slug: "jackpot",
+    name: "Jackpot",
+    description: "Picked Harpua and had it played",
+    icon: "Cat",
+    category: "SPECIAL" as AchievementCategory,
+  },
   NYE_RUN_2025_PARTICIPANT: {
     slug: "nye-run-2025-participant",
     name: "NYE Run 2025",

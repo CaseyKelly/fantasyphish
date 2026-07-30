@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
-import { ACHIEVEMENT_DEFINITIONS } from "@/lib/achievements"
+import { ACHIEVEMENT_DEFINITIONS, AchievementSlug } from "@/lib/achievements"
 import { PickType } from "@prisma/client"
+import { normalizeSongName } from "@/lib/phishnet"
 
 /**
  * Award opener or closer achievement to a user
@@ -75,6 +76,75 @@ export async function awardPickAchievement(
 }
 
 /**
+ * Award a one-off achievement tied to picking a specific song
+ * This is idempotent - safe to call multiple times
+ */
+export async function awardSongPickAchievement(
+  userId: string,
+  achievementSlug: AchievementSlug,
+  metadata?: {
+    showDate?: Date
+    venue?: string
+    songName?: string
+  }
+): Promise<{ awarded: boolean; error?: string }> {
+  try {
+    const achievementDef = ACHIEVEMENT_DEFINITIONS[achievementSlug]
+
+    // 1. Get or create the achievement record
+    const achievement = await prisma.achievement.upsert({
+      where: { slug: achievementDef.slug },
+      update: {
+        name: achievementDef.name,
+        description: achievementDef.description,
+        icon: achievementDef.icon,
+        category: achievementDef.category,
+      },
+      create: {
+        slug: achievementDef.slug,
+        name: achievementDef.name,
+        description: achievementDef.description,
+        icon: achievementDef.icon,
+        category: achievementDef.category,
+      },
+    })
+
+    // 2. Check if user already has this achievement
+    const existing = await prisma.userAchievement.findUnique({
+      where: {
+        userId_achievementId: {
+          userId,
+          achievementId: achievement.id,
+        },
+      },
+    })
+
+    if (existing) {
+      // User already has this achievement
+      return { awarded: false }
+    }
+
+    // 3. Award the achievement
+    await prisma.userAchievement.create({
+      data: {
+        userId,
+        achievementId: achievement.id,
+        metadata: metadata || {},
+      },
+    })
+
+    return { awarded: true }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error(
+      `[AwardSongPickAchievement] Error awarding ${achievementSlug} achievement:`,
+      errorMessage
+    )
+    return { awarded: false, error: errorMessage }
+  }
+}
+
+/**
  * Process achievement awards for picks that were just scored
  * Call this after updating picks in the scoring endpoint
  */
@@ -134,6 +204,32 @@ export async function processPickAchievements(
           errors++
           console.error(
             `[ProcessPickAchievements] ✗ Failed to award ${pick.pickType} achievement:`,
+            result.error
+          )
+        }
+        // If result.awarded is false but no error, user already has achievement (not an error)
+      }
+
+      if (pick && normalizeSongName(pick.song.name) === normalizeSongName("Harpua")) {
+        const result = await awardSongPickAchievement(
+          submission.userId,
+          "JACKPOT",
+          {
+            showDate: submission.show.showDate,
+            venue: submission.show.venue,
+            songName: pick.song.name,
+          }
+        )
+
+        if (result.awarded) {
+          awarded++
+          console.log(
+            `[ProcessPickAchievements] ✓ Awarded JACKPOT achievement to user ${submission.userId}`
+          )
+        } else if (result.error) {
+          errors++
+          console.error(
+            `[ProcessPickAchievements] ✗ Failed to award JACKPOT achievement:`,
             result.error
           )
         }
