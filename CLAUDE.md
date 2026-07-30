@@ -28,8 +28,8 @@ FantasyPhish is a fantasy game for Phish fans. Users pick 13 songs before each s
 
 ### Database
 
-- `npm run db:push` - Sync Prisma schema to database (development)
-- `npm run db:migrate` - Create and apply migrations (production)
+- `npm run db:migrate` - Create a migration from schema changes and apply it locally (use this for any schema change you intend to merge)
+- `npm run db:push` - Sync Prisma schema to database without a migration file (quick local prototyping only; never use for changes headed to main)
 - `npm run db:seed` - Seed songs from phish.net API
 - `npm run db:sync-tours [year]` - Sync tour/show data for specific year
 - `npm run db:sync-recent-songs` - Update song gap/lastPlayed stats
@@ -266,6 +266,11 @@ Handles transient connection errors (exponential backoff, 3 retries).
 8. **Test parallelization**
    - Playwright config uses `workers: 1` to avoid Resend API rate limits
    - Tests run sequentially, not in parallel
+
+9. **Schema changes go through migrations, not `db:push`**
+   - Run `npm run db:migrate` locally to generate a migration file under `prisma/migrations/`, commit it with your PR
+   - The `build` script runs `prisma migrate deploy` before `next build`, so Vercel applies pending migrations automatically on every deploy — no manual `db:push` against prod needed
+   - `db:push` is fine for quick local prototyping, but any change that merges to `main` needs a real migration file
 
 ## Environment Variables
 
