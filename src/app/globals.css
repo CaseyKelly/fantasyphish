@@ -52,3 +52,53 @@ body {
   background: var(--color-phish-blue-darker);
   min-height: 100vh;
 }
+
+/* Easter egg trigger: shakes briefly on each tap that doesn't unlock the game */
+@keyframes fp-egg-shake {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg) scale(var(--fp-egg-scale, 1));
+  }
+  25% {
+    transform: translate(-1.5px, 1px) rotate(-8deg)
+      scale(var(--fp-egg-scale, 1));
+  }
+  75% {
+    transform: translate(1.5px, -1px) rotate(8deg) scale(var(--fp-egg-scale, 1));
+  }
+}
+
+.fp-egg-shake {
+  animation: fp-egg-shake 250ms ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fp-egg-shake {
+    animation: none;
+  }
+}
+
+/* Kuroda-style light bars behind the Donut Catch canvas */
+@keyframes fp-kuroda-pulse {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.fp-kuroda-bar {
+  animation-name: fp-kuroda-pulse;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  mix-blend-mode: screen;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fp-kuroda-bar {
+    animation: none;
+    opacity: 0.2;
+  }
+}
