@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, type CSSProperties } from "react"
 import { X } from "lucide-react"
 import { DonutCatchGame } from "./DonutCatchGame"
 
@@ -32,8 +32,12 @@ const KEY_TO_TOKEN: Record<string, string> = {
   a: "a",
 }
 
+const TAP_OPACITY_STEPS = [0.15, 0.25, 0.4, 0.55, 0.75]
+const TAP_SCALE_STEPS = [1, 1.15, 1.3, 1.45, 1.6]
+
 export function EasterEgg() {
   const [open, setOpen] = useState(false)
+  const [tapCount, setTapCount] = useState(0)
   const openRef = useRef(false)
   const tapCountRef = useRef(0)
   const lastTapRef = useRef(0)
@@ -100,9 +104,20 @@ export function EasterEgg() {
     }
     lastTapRef.current = now
     tapCountRef.current += 1
+
     if (tapCountRef.current >= TAP_TRIGGER_COUNT) {
       tapCountRef.current = 0
       setOpen(true)
+      return
+    }
+
+    setTapCount(tapCountRef.current)
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+      try {
+        navigator.vibrate(10)
+      } catch {
+        // Not all browsers support vibrate; ignore.
+      }
     }
   }
 
@@ -116,7 +131,28 @@ export function EasterEgg() {
           aria-hidden="true"
           className="fixed bottom-0 right-0 z-[150] flex h-11 w-11 items-center justify-center"
         >
-          <span className="h-2 w-2 rounded-full bg-[#c23a3a]/15" />
+          <span
+            key={tapCount}
+            className={
+              tapCount > 0
+                ? "h-2 w-2 rounded-full bg-[#c23a3a] fp-egg-shake"
+                : "h-2 w-2 rounded-full bg-[#c23a3a]"
+            }
+            style={
+              {
+                opacity:
+                  TAP_OPACITY_STEPS[
+                    Math.min(tapCount, TAP_OPACITY_STEPS.length - 1)
+                  ],
+                transform: `scale(var(--fp-egg-scale, 1))`,
+                "--fp-egg-scale":
+                  TAP_SCALE_STEPS[
+                    Math.min(tapCount, TAP_SCALE_STEPS.length - 1)
+                  ],
+                transition: "opacity 150ms ease-out",
+              } as CSSProperties
+            }
+          />
         </button>
       )}
 

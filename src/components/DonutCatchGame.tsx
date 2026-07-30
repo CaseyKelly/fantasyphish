@@ -11,6 +11,19 @@ const DONUT_RADIUS = 16
 const STARTING_LIVES = 3
 const BEST_SCORE_KEY = "fantasyphish_donut_catch_best"
 
+const BONUS_DONUT_MIN_SCORE = 3
+const BONUS_DONUT_CHANCE = 0.07
+const BONUS_DONUT_POINTS = 5
+
+const JAM_STREAK_THRESHOLD = 8
+const JAM_DURATION_MS = 6000
+
+const OUTRO_LINES = [
+  (n: number) => `You caught ${n} donut${n === 1 ? "" : "s"}`,
+  (n: number) => `Setlist complete: ${n} donut${n === 1 ? "" : "s"} deep`,
+  (n: number) => `That's a wrap on ${n} donut${n === 1 ? "" : "s"}`,
+]
+
 type GameState = "idle" | "playing" | "gameover"
 
 interface Donut {
@@ -18,6 +31,8 @@ interface Donut {
   y: number
   speed: number
   spin: number
+  type: "regular" | "bonus"
+  wobblePhase: number
 }
 
 interface LeaderboardEntry {
@@ -43,6 +58,10 @@ export function DonutCatchGame() {
     right: false,
   })
   const sessionStatusRef = useRef(status)
+  const streakRef = useRef(0)
+  const jamUntilRef = useRef(0)
+  const jamActiveRef = useRef(false)
+  const toastUntilRef = useRef(0)
 
   const [gameState, setGameState] = useState<GameState>("idle")
   const [score, setScore] = useState(0)
@@ -53,6 +72,10 @@ export function DonutCatchGame() {
   })
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [justBeatBest, setJustBeatBest] = useState(false)
+  const [achievementUnlocked, setAchievementUnlocked] = useState(false)
+  const [jamMode, setJamMode] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
+  const [outroLine, setOutroLine] = useState("")
 
   useEffect(() => {
     sessionStatusRef.current = status
@@ -87,9 +110,16 @@ export function DonutCatchGame() {
     lastTimeRef.current = null
     basketXRef.current = CANVAS_WIDTH / 2 - BASKET_WIDTH / 2
     targetXRef.current = basketXRef.current
+    streakRef.current = 0
+    jamUntilRef.current = 0
+    jamActiveRef.current = false
+    toastUntilRef.current = 0
     setScore(0)
     setLives(STARTING_LIVES)
     setJustBeatBest(false)
+    setAchievementUnlocked(false)
+    setJamMode(false)
+    setToast(null)
     gameStateRef.current = "playing"
     setGameState("playing")
   }, [])
@@ -98,6 +128,7 @@ export function DonutCatchGame() {
     gameStateRef.current = "gameover"
     setGameState("gameover")
     const finalScore = scoreRef.current
+    setOutroLine(OUTRO_LINES[finalScore % OUTRO_LINES.length](finalScore))
 
     setBest((prevBest) => {
       if (finalScore > prevBest) {
@@ -117,6 +148,7 @@ export function DonutCatchGame() {
           if (!res.ok) return
           const data = await res.json()
           if (data.isNewBest) setJustBeatBest(true)
+          if (data.achievementAwarded) setAchievementUnlocked(true)
           await refreshLeaderboard()
         })
         .catch(() => {})
@@ -175,10 +207,20 @@ export function DonutCatchGame() {
       ctx.rotate(d.spin)
       ctx.beginPath()
       ctx.arc(0, 0, DONUT_RADIUS, 0, Math.PI * 2)
-      ctx.strokeStyle = "#c23a3a"
+      ctx.strokeStyle = d.type === "bonus" ? "#f4c542" : "#c23a3a"
       ctx.lineWidth = DONUT_RADIUS * 0.55
       ctx.stroke()
       ctx.restore()
+
+      if (d.type === "bonus") {
+        ctx.save()
+        ctx.translate(d.x, d.y)
+        ctx.font = `${DONUT_RADIUS}px sans-serif`
+        ctx.textAlign = "center"
+        ctx.textBaseline = "middle"
+        ctx.fillText("🐈", 0, 1)
+        ctx.restore()
+      }
     }
 
     const drawBasket = () => {
@@ -214,16 +256,39 @@ export function DonutCatchGame() {
         basketXRef.current +=
           (targetXRef.current - basketXRef.current) * Math.min(dt * 12, 1)
 
-        // Spawn donuts, ramping difficulty with score
+        // Type II Jam: expire it once its window is up
+        const jamActive = jamUntilRef.current > time
+        if (jamActive !== jamActiveRef.current) {
+          jamActiveRef.current = jamActive
+          setJamMode(jamActive)
+        }
+
+        // Clear any expired toast (bonus catch / jam banner)
+        if (toastUntilRef.current && toastUntilRef.current <= time) {
+          toastUntilRef.current = 0
+          setToast(null)
+        }
+
+        // Spawn donuts, ramping difficulty with score (faster during a jam)
         spawnTimerRef.current -= dt
-        const spawnInterval = Math.max(1.1 - scoreRef.current * 0.02, 0.4)
+        const baseSpawnInterval = Math.max(1.1 - scoreRef.current * 0.02, 0.4)
+        const spawnInterval = jamActive
+          ? baseSpawnInterval / 2
+          : baseSpawnInterval
         if (spawnTimerRef.current <= 0) {
           spawnTimerRef.current = spawnInterval
+          const hasBonus = donutsRef.current.some((d) => d.type === "bonus")
+          const spawnBonus =
+            !hasBonus &&
+            scoreRef.current >= BONUS_DONUT_MIN_SCORE &&
+            Math.random() < BONUS_DONUT_CHANCE
           donutsRef.current.push({
             x: DONUT_RADIUS + Math.random() * (CANVAS_WIDTH - DONUT_RADIUS * 2),
             y: -DONUT_RADIUS,
             speed: 90 + Math.random() * 40 + scoreRef.current * 4,
             spin: Math.random() * Math.PI,
+            type: spawnBonus ? "bonus" : "regular",
+            wobblePhase: Math.random() * Math.PI * 2,
           })
         }
 
@@ -233,6 +298,13 @@ export function DonutCatchGame() {
         for (const d of donutsRef.current) {
           d.y += d.speed * dt
           d.spin += dt * 2
+          if (d.type === "bonus") {
+            d.wobblePhase += dt * 6
+            d.x = Math.min(
+              Math.max(d.x + Math.sin(d.wobblePhase) * 60 * dt, DONUT_RADIUS),
+              CANVAS_WIDTH - DONUT_RADIUS
+            )
+          }
 
           const caught =
             d.y + DONUT_RADIUS >= basketY &&
@@ -241,12 +313,28 @@ export function DonutCatchGame() {
             d.x <= basketXRef.current + BASKET_WIDTH + DONUT_RADIUS * 0.3
 
           if (caught) {
-            scoreRef.current += 1
+            if (d.type === "bonus") {
+              scoreRef.current += BONUS_DONUT_POINTS
+              toastUntilRef.current = time + 1400
+              setToast(`🐈 Harpua! +${BONUS_DONUT_POINTS}`)
+            } else {
+              scoreRef.current += jamActive ? 2 : 1
+            }
             setScore(scoreRef.current)
+
+            streakRef.current += 1
+            if (streakRef.current >= JAM_STREAK_THRESHOLD && !jamActive) {
+              streakRef.current = 0
+              jamUntilRef.current = time + JAM_DURATION_MS
+              toastUntilRef.current = time + JAM_DURATION_MS
+              setToast("🎸 Type II Jam! 2x points")
+              setJamMode(true)
+            }
             continue
           }
 
           if (d.y - DONUT_RADIUS > CANVAS_HEIGHT) {
+            streakRef.current = 0
             livesRef.current -= 1
             setLives(livesRef.current)
             if (livesRef.current <= 0) {
@@ -291,14 +379,41 @@ export function DonutCatchGame() {
       </div>
 
       <div className="relative">
+        {gameState === "playing" && (
+          <div
+            className="absolute inset-0 flex overflow-hidden rounded-lg pointer-events-none"
+            aria-hidden="true"
+          >
+            {["#c23a3a", "#f4c542", "#3d5a6c", "#d64545", "#f4c542"].map(
+              (color, i) => (
+                <div
+                  key={i}
+                  className="fp-kuroda-bar flex-1"
+                  style={{
+                    backgroundColor: color,
+                    animationDuration: `${jamMode ? 0.5 : Math.max(2 - score * 0.03, 0.6)}s`,
+                    animationDelay: `${i * 0.15}s`,
+                  }}
+                />
+              )
+            )}
+          </div>
+        )}
+
         <canvas
           ref={canvasRef}
           width={CANVAS_WIDTH}
           height={CANVAS_HEIGHT}
           onPointerMove={handlePointerMove}
           onPointerDown={handlePointerDown}
-          className="rounded-lg bg-[#1e3340] border border-[#3d5a6c]/50 touch-none max-w-full"
+          className="relative rounded-lg bg-transparent border border-[#3d5a6c]/50 touch-none max-w-full"
         />
+
+        {gameState === "playing" && toast && (
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-[#1e3340]/90 border border-[#f4c542]/50 text-[#f4c542] text-sm font-semibold px-3 py-1 rounded-full whitespace-nowrap">
+            {toast}
+          </div>
+        )}
 
         {gameState !== "playing" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#1e3340]/90 rounded-lg text-center px-6">
@@ -307,12 +422,15 @@ export function DonutCatchGame() {
                 <p className="text-lg font-bold text-white">
                   Show&apos;s over!
                 </p>
-                <p className="text-gray-300 text-sm">
-                  You caught {score} donut{score === 1 ? "" : "s"}
-                </p>
+                <p className="text-gray-300 text-sm">{outroLine}</p>
                 {justBeatBest && (
                   <p className="text-sm font-semibold text-[#f4c542]">
                     🎉 New high score!
+                  </p>
+                )}
+                {achievementUnlocked && (
+                  <p className="text-sm font-semibold text-[#f4c542]">
+                    🏆 Achievement unlocked: Donut Devotee!
                   </p>
                 )}
               </>

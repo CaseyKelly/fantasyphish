@@ -41,6 +41,13 @@ export const ACHIEVEMENT_DEFINITIONS = {
     icon: "Cat",
     category: "SPECIAL" as AchievementCategory,
   },
+  DONUT_DEVOTEE: {
+    slug: "donut-devotee",
+    name: "Donut Devotee",
+    description: "Caught 20 donuts in a single game of Donut Catch",
+    icon: "🍩",
+    category: "SPECIAL" as AchievementCategory,
+  },
   NYE_RUN_2025_PARTICIPANT: {
     slug: "nye-run-2025-participant",
     name: "NYE Run 2025",

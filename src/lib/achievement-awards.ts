@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { ACHIEVEMENT_DEFINITIONS, AchievementSlug } from "@/lib/achievements"
-import { PickType } from "@prisma/client"
+import { PickType, Prisma } from "@prisma/client"
 import { normalizeSongName } from "@/lib/phishnet"
 
 /**
@@ -82,11 +82,7 @@ export async function awardPickAchievement(
 export async function awardSongPickAchievement(
   userId: string,
   achievementSlug: AchievementSlug,
-  metadata?: {
-    showDate?: Date
-    venue?: string
-    songName?: string
-  }
+  metadata?: Record<string, unknown>
 ): Promise<{ awarded: boolean; error?: string }> {
   try {
     const achievementDef = ACHIEVEMENT_DEFINITIONS[achievementSlug]
@@ -129,7 +125,7 @@ export async function awardSongPickAchievement(
       data: {
         userId,
         achievementId: achievement.id,
-        metadata: metadata || {},
+        metadata: (metadata || {}) as Prisma.InputJsonValue,
       },
     })
 
@@ -210,7 +206,10 @@ export async function processPickAchievements(
         // If result.awarded is false but no error, user already has achievement (not an error)
       }
 
-      if (pick && normalizeSongName(pick.song.name) === normalizeSongName("Harpua")) {
+      if (
+        pick &&
+        normalizeSongName(pick.song.name) === normalizeSongName("Harpua")
+      ) {
         const result = await awardSongPickAchievement(
           submission.userId,
           "JACKPOT",
