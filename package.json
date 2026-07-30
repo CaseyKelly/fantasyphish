@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.19.1",
+    "@serwist/turbopack": "^9.5.12",
     "@vercel/analytics": "^1.6.1",
     "@vercel/postgres": "^0.10.0",
     "bcryptjs": "^3.0.3",
@@ -47,6 +48,7 @@
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "resend": "^6.18.1",
+    "serwist": "^9.5.12",
     "sonner": "^2.0.7",
     "zod": "^4.2.1"
   },
@@ -58,6 +60,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "dotenv": "^17.2.3",
+    "esbuild": "^0.27.2",
     "eslint": "^9",
     "eslint-config-next": "16.0.10",
     "husky": "^9.1.7",

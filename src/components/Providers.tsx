@@ -3,25 +3,31 @@
 import { SessionProvider } from "next-auth/react"
 import { Toaster } from "sonner"
 import { ReactNode } from "react"
+import { SerwistProvider } from "@serwist/turbopack/react"
 import { EasterEgg } from "@/components/EasterEgg"
 import { ScrollToTop } from "@/components/ScrollToTop"
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <SessionProvider>
-      <ScrollToTop />
-      {children}
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          style: {
-            background: "#1e3340",
-            border: "1px solid #3d5a6c",
-            color: "#f1f5f9",
-          },
-        }}
-      />
-      <EasterEgg />
-    </SessionProvider>
+    <SerwistProvider
+      swUrl="/serwist/sw.js"
+      disable={process.env.NODE_ENV === "development"}
+    >
+      <SessionProvider>
+        <ScrollToTop />
+        {children}
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            style: {
+              background: "#1e3340",
+              border: "1px solid #3d5a6c",
+              color: "#f1f5f9",
+            },
+          }}
+        />
+        <EasterEgg />
+      </SessionProvider>
+    </SerwistProvider>
   )
 }
