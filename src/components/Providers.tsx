@@ -10,7 +10,7 @@ import { ScrollToTop } from "@/components/ScrollToTop"
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <SerwistProvider
-      swUrl="/sw.js"
+      swUrl="/serwist/sw.js"
       disable={process.env.NODE_ENV === "development"}
     >
       <SessionProvider>
