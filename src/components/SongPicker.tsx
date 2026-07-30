@@ -685,7 +685,7 @@ export function SongPicker({
     const isExpanded = expandedSection === pickType.toLowerCase()
 
     return (
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden" blur={false}>
         <CardHeader
           className="cursor-pointer"
           onClick={() => {

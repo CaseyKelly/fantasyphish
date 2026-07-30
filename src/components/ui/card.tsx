@@ -3,12 +3,18 @@ import { ReactNode, HTMLAttributes } from "react"
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode
   className?: string
+  blur?: boolean
 }
 
-export function Card({ children, className = "", ...props }: CardProps) {
+export function Card({
+  children,
+  className = "",
+  blur = true,
+  ...props
+}: CardProps) {
   return (
     <div
-      className={`bg-[#233d4d]/90 backdrop-blur-sm border-2 border-[#4a6b7d]/60 rounded-xl ${className}`}
+      className={`bg-[#233d4d]/90 ${blur ? "backdrop-blur-sm" : ""} border-2 border-[#4a6b7d]/60 rounded-xl ${className}`}
       {...props}
     >
       {children}
