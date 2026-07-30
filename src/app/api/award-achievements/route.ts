@@ -66,6 +66,10 @@ export async function POST(request: Request) {
     const closerResults = await awardAchievement("PERFECT_CLOSER", "ENCORE")
     results.push(closerResults)
 
+    // Award JACKPOT achievement (picked Harpua and had it played)
+    const jackpotResults = await awardJackpotAchievement()
+    results.push(jackpotResults)
+
     const duration = Date.now() - startTime
     console.log(`[AwardAchievements:POST] ✓ Complete in ${duration}ms`)
     console.log(
@@ -193,6 +197,140 @@ async function awardAchievement(
 
   console.log(
     `[AwardAchievements:POST] Found ${userPicksMap.size} unique users with correct ${pickTypeName} picks`
+  )
+
+  // 4. Award achievement to each user (skip if already awarded)
+  let awarded = 0
+  let skipped = 0
+
+  for (const [userId, pick] of userPicksMap.entries()) {
+    try {
+      await prisma.userAchievement.create({
+        data: {
+          userId: userId,
+          achievementId: achievement.id,
+          metadata: {
+            firstCorrectShow: pick.submission.show.showDate.toISOString(),
+            venue: pick.submission.show.venue,
+            songName: pick.song.name,
+          },
+        },
+      })
+      awarded++
+      console.log(
+        `[AwardAchievements:POST]   ✓ Awarded to ${pick.submission.user.username}`
+      )
+    } catch (error: unknown) {
+      // User already has this achievement (unique constraint violation)
+      if (
+        error &&
+        typeof error === "object" &&
+        "code" in error &&
+        error.code === "P2002"
+      ) {
+        skipped++
+      } else {
+        console.error(
+          `[AwardAchievements:POST] Error awarding achievement to user ${pick.submission.user.username}:`,
+          error
+        )
+      }
+    }
+  }
+
+  return {
+    achievement: achievementDef.name,
+    awarded,
+    skipped,
+    total: awarded + skipped,
+  }
+}
+
+async function awardJackpotAchievement() {
+  const achievementDef = ACHIEVEMENT_DEFINITIONS.JACKPOT
+
+  console.log(
+    `[AwardAchievements:POST] ${achievementDef.icon} Awarding ${achievementDef.name} achievements...`
+  )
+
+  // 1. Create or update the achievement record
+  const achievement = await prisma.achievement.upsert({
+    where: { slug: achievementDef.slug },
+    update: {
+      name: achievementDef.name,
+      description: achievementDef.description,
+      icon: achievementDef.icon,
+      category: achievementDef.category,
+    },
+    create: {
+      slug: achievementDef.slug,
+      name: achievementDef.name,
+      description: achievementDef.description,
+      icon: achievementDef.icon,
+      category: achievementDef.category,
+    },
+  })
+
+  console.log(
+    `[AwardAchievements:POST] ✓ Achievement record ready: ${achievement.name}`
+  )
+
+  // 2. Find all picks where the user picked Harpua and it was played
+  const harpuaPicks = await prisma.pick.findMany({
+    where: {
+      wasPlayed: true,
+      song: {
+        name: {
+          equals: "Harpua",
+          mode: "insensitive",
+        },
+      },
+    },
+    include: {
+      submission: {
+        include: {
+          show: true,
+          user: {
+            select: {
+              id: true,
+              username: true,
+            },
+          },
+        },
+      },
+      song: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  })
+
+  console.log(
+    `[AwardAchievements:POST] Found ${harpuaPicks.length} correct Harpua picks`
+  )
+
+  if (harpuaPicks.length === 0) {
+    console.log(`[AwardAchievements:POST] No correct Harpua picks found`)
+    return {
+      achievement: achievementDef.name,
+      awarded: 0,
+      skipped: 0,
+    }
+  }
+
+  // 3. Get unique users who correctly picked Harpua
+  const userPicksMap = new Map<string, (typeof harpuaPicks)[0]>()
+
+  for (const pick of harpuaPicks) {
+    const userId = pick.submission.user.id
+    if (!userPicksMap.has(userId)) {
+      userPicksMap.set(userId, pick)
+    }
+  }
+
+  console.log(
+    `[AwardAchievements:POST] Found ${userPicksMap.size} unique users with correct Harpua picks`
   )
 
   // 4. Award achievement to each user (skip if already awarded)
