@@ -286,6 +286,13 @@ async function awardJackpotAchievement() {
         },
       },
     },
+    orderBy: {
+      submission: {
+        show: {
+          showDate: "asc",
+        },
+      },
+    },
     include: {
       submission: {
         include: {
