@@ -122,15 +122,17 @@ export function EasterEgg() {
 
       {open && (
         <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4">
-          <div className="bg-[#2d4654] rounded-xl shadow-xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+          <div className="relative max-h-[90vh]">
             <button
               onClick={() => setOpen(false)}
-              className="absolute -top-3 -right-3 bg-[#c23a3a] hover:bg-[#d64545] text-white rounded-full p-1.5 shadow-lg transition-colors"
+              className="absolute -top-3 -right-3 z-10 bg-[#c23a3a] hover:bg-[#d64545] text-white rounded-full p-1.5 shadow-lg transition-colors"
               aria-label="Close game"
             >
               <X className="h-4 w-4" />
             </button>
-            <DonutCatchGame />
+            <div className="bg-[#2d4654] rounded-xl shadow-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+              <DonutCatchGame />
+            </div>
           </div>
         </div>
       )}
