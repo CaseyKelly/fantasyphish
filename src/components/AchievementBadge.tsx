@@ -1,7 +1,7 @@
 "use client"
 
 import * as LucideIcons from "lucide-react"
-import { useLayoutEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 
 const TOOLTIP_VIEWPORT_MARGIN = 8
 
@@ -57,6 +57,21 @@ export function AchievementBadge({
     return () => window.removeEventListener("resize", recalculate)
   }, [showTooltip])
 
+  // Let a tap outside the card dismiss the tooltip - hover alone doesn't
+  // reliably close it on touch devices, which have no real mouseleave.
+  useEffect(() => {
+    if (!showTooltip) return
+
+    const handleOutsideTap = (e: PointerEvent) => {
+      if (!cardRef.current?.contains(e.target as Node)) {
+        setShowTooltip(false)
+      }
+    }
+
+    document.addEventListener("pointerdown", handleOutsideTap)
+    return () => document.removeEventListener("pointerdown", handleOutsideTap)
+  }, [showTooltip])
+
   // Check if icon is a lucide icon name or emoji
   const isLucideIcon = icon in LucideIcons
   const LucideIcon = isLucideIcon
@@ -76,7 +91,7 @@ export function AchievementBadge({
       {description && showTooltip && (
         <div
           ref={tooltipRef}
-          className={`absolute left-1/2 max-w-[min(240px,80vw)] px-3 py-2 bg-slate-900 text-white text-xs rounded-lg shadow-lg whitespace-normal z-10 border border-slate-700 ${placement === "above" ? "bottom-full mb-2" : "top-full mt-2"}`}
+          className={`absolute left-1/2 w-max max-w-[min(280px,85vw)] px-3 py-2 bg-slate-900 text-white text-xs rounded-lg shadow-lg whitespace-normal z-10 border border-slate-700 ${placement === "above" ? "bottom-full mb-2" : "top-full mt-2"}`}
           style={{
             transform: `translateX(-50%) translateX(${tooltipOffset}px)`,
           }}
