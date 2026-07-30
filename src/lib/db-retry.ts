@@ -31,7 +31,9 @@ export async function withRetry<T>(
         lastError.message.includes("P1001") ||
         lastError.message.includes("ECONNREFUSED") ||
         lastError.message.includes("ETIMEDOUT") ||
-        lastError.message.includes("Error in PostgreSQL connection")
+        lastError.message.includes("Error in PostgreSQL connection") ||
+        lastError.message.includes("Engine is not yet connected") ||
+        lastError.message.includes("Response from the Engine was empty")
 
       if (!isConnectionError || attempt === maxRetries) {
         throw lastError

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { ACHIEVEMENT_DEFINITIONS } from "@/lib/achievements"
 import { shouldRunCronJobs } from "@/lib/cron-helpers"
+import { withRetry } from "@/lib/db-retry"
 
 // Force dynamic rendering and disable caching
 export const dynamic = "force-dynamic"
@@ -122,52 +123,60 @@ async function awardAchievement(
   )
 
   // 1. Create or update the achievement record
-  const achievement = await prisma.achievement.upsert({
-    where: { slug: achievementDef.slug },
-    update: {
-      name: achievementDef.name,
-      description: achievementDef.description,
-      icon: achievementDef.icon,
-      category: achievementDef.category,
-    },
-    create: {
-      slug: achievementDef.slug,
-      name: achievementDef.name,
-      description: achievementDef.description,
-      icon: achievementDef.icon,
-      category: achievementDef.category,
-    },
-  })
+  const achievement = await withRetry(
+    () =>
+      prisma.achievement.upsert({
+        where: { slug: achievementDef.slug },
+        update: {
+          name: achievementDef.name,
+          description: achievementDef.description,
+          icon: achievementDef.icon,
+          category: achievementDef.category,
+        },
+        create: {
+          slug: achievementDef.slug,
+          name: achievementDef.name,
+          description: achievementDef.description,
+          icon: achievementDef.icon,
+          category: achievementDef.category,
+        },
+      }),
+    { operationName: `upsert achievement ${achievementDef.slug}` }
+  )
 
   console.log(
     `[AwardAchievements:POST] ✓ Achievement record ready: ${achievement.name}`
   )
 
   // 2. Find all picks where user correctly guessed the opener/encore
-  const correctPicks = await prisma.pick.findMany({
-    where: {
-      pickType: pickType,
-      wasPlayed: true,
-    },
-    include: {
-      submission: {
+  const correctPicks = await withRetry(
+    () =>
+      prisma.pick.findMany({
+        where: {
+          pickType: pickType,
+          wasPlayed: true,
+        },
         include: {
-          show: true,
-          user: {
+          submission: {
+            include: {
+              show: true,
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                },
+              },
+            },
+          },
+          song: {
             select: {
-              id: true,
-              username: true,
+              name: true,
             },
           },
         },
-      },
-      song: {
-        select: {
-          name: true,
-        },
-      },
-    },
-  })
+      }),
+    { operationName: `find correct ${pickTypeName} picks` }
+  )
 
   console.log(
     `[AwardAchievements:POST] Found ${correctPicks.length} correct ${pickTypeName} picks`
@@ -205,17 +214,21 @@ async function awardAchievement(
 
   for (const [userId, pick] of userPicksMap.entries()) {
     try {
-      await prisma.userAchievement.create({
-        data: {
-          userId: userId,
-          achievementId: achievement.id,
-          metadata: {
-            firstCorrectShow: pick.submission.show.showDate.toISOString(),
-            venue: pick.submission.show.venue,
-            songName: pick.song.name,
-          },
-        },
-      })
+      await withRetry(
+        () =>
+          prisma.userAchievement.create({
+            data: {
+              userId: userId,
+              achievementId: achievement.id,
+              metadata: {
+                firstCorrectShow: pick.submission.show.showDate.toISOString(),
+                venue: pick.submission.show.venue,
+                songName: pick.song.name,
+              },
+            },
+          }),
+        { operationName: `award ${achievementDef.slug} to user ${userId}` }
+      )
       awarded++
       console.log(
         `[AwardAchievements:POST]   ✓ Awarded to ${pick.submission.user.username}`
@@ -254,64 +267,72 @@ async function awardJackpotAchievement() {
   )
 
   // 1. Create or update the achievement record
-  const achievement = await prisma.achievement.upsert({
-    where: { slug: achievementDef.slug },
-    update: {
-      name: achievementDef.name,
-      description: achievementDef.description,
-      icon: achievementDef.icon,
-      category: achievementDef.category,
-    },
-    create: {
-      slug: achievementDef.slug,
-      name: achievementDef.name,
-      description: achievementDef.description,
-      icon: achievementDef.icon,
-      category: achievementDef.category,
-    },
-  })
+  const achievement = await withRetry(
+    () =>
+      prisma.achievement.upsert({
+        where: { slug: achievementDef.slug },
+        update: {
+          name: achievementDef.name,
+          description: achievementDef.description,
+          icon: achievementDef.icon,
+          category: achievementDef.category,
+        },
+        create: {
+          slug: achievementDef.slug,
+          name: achievementDef.name,
+          description: achievementDef.description,
+          icon: achievementDef.icon,
+          category: achievementDef.category,
+        },
+      }),
+    { operationName: `upsert achievement ${achievementDef.slug}` }
+  )
 
   console.log(
     `[AwardAchievements:POST] ✓ Achievement record ready: ${achievement.name}`
   )
 
   // 2. Find all picks where the user picked Harpua and it was played
-  const harpuaPicks = await prisma.pick.findMany({
-    where: {
-      wasPlayed: true,
-      song: {
-        name: {
-          equals: "Harpua",
-          mode: "insensitive",
-        },
-      },
-    },
-    orderBy: {
-      submission: {
-        show: {
-          showDate: "asc",
-        },
-      },
-    },
-    include: {
-      submission: {
-        include: {
-          show: true,
-          user: {
-            select: {
-              id: true,
-              username: true,
+  const harpuaPicks = await withRetry(
+    () =>
+      prisma.pick.findMany({
+        where: {
+          wasPlayed: true,
+          song: {
+            name: {
+              equals: "Harpua",
+              mode: "insensitive",
             },
           },
         },
-      },
-      song: {
-        select: {
-          name: true,
+        orderBy: {
+          submission: {
+            show: {
+              showDate: "asc",
+            },
+          },
         },
-      },
-    },
-  })
+        include: {
+          submission: {
+            include: {
+              show: true,
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                },
+              },
+            },
+          },
+          song: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      }),
+    { operationName: "find correct Harpua picks" }
+  )
 
   console.log(
     `[AwardAchievements:POST] Found ${harpuaPicks.length} correct Harpua picks`
@@ -346,17 +367,21 @@ async function awardJackpotAchievement() {
 
   for (const [userId, pick] of userPicksMap.entries()) {
     try {
-      await prisma.userAchievement.create({
-        data: {
-          userId: userId,
-          achievementId: achievement.id,
-          metadata: {
-            firstCorrectShow: pick.submission.show.showDate.toISOString(),
-            venue: pick.submission.show.venue,
-            songName: pick.song.name,
-          },
-        },
-      })
+      await withRetry(
+        () =>
+          prisma.userAchievement.create({
+            data: {
+              userId: userId,
+              achievementId: achievement.id,
+              metadata: {
+                firstCorrectShow: pick.submission.show.showDate.toISOString(),
+                venue: pick.submission.show.venue,
+                songName: pick.song.name,
+              },
+            },
+          }),
+        { operationName: `award ${achievementDef.slug} to user ${userId}` }
+      )
       awarded++
       console.log(
         `[AwardAchievements:POST]   ✓ Awarded to ${pick.submission.user.username}`
