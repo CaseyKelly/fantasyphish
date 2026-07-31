@@ -4,11 +4,11 @@ import { shouldRunCronJobs } from "@/lib/cron-helpers"
 import { sendPickReminders } from "@/lib/reminders"
 import { getHourInTimezone } from "@/lib/date-utils"
 
-// This cron is scheduled twice daily (14:00 and 15:00 UTC) to cover both
+// This cron is scheduled twice daily (18:00 and 19:00 UTC) to cover both
 // MDT and MST, since Vercel cron schedules are fixed UTC and don't shift
-// with daylight saving. Only the invocation that actually lands at 8 AM
+// with daylight saving. Only the invocation that actually lands at noon
 // Mountain should send reminders; the other is a no-op.
-const TARGET_HOUR_MT = 8
+const TARGET_HOUR_MT = 12
 
 // Force dynamic rendering and disable caching
 export const dynamic = "force-dynamic"
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
 
     console.log("[Send Reminders] Authorization successful")
 
-    // Only proceed on the invocation that actually lands at 8 AM Mountain
+    // Only proceed on the invocation that actually lands at noon Mountain
     // (see TARGET_HOUR_MT comment above)
     const currentHourMT = getHourInTimezone(new Date(), "America/Denver")
     if (currentHourMT !== TARGET_HOUR_MT) {

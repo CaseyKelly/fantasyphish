@@ -16,9 +16,6 @@ export interface ReminderRunResult {
 /**
  * Send show-day pick reminder emails to opted-in users who haven't
  * submitted picks yet for today's show(s).
- *
- * Gated to admins only for the initial rollout - remove the `isAdmin: true`
- * clause below to enable for all opted-in users.
  */
 export async function sendPickReminders(options?: {
   dryRunUserId?: string
@@ -56,7 +53,6 @@ export async function sendPickReminders(options?: {
       () =>
         prisma.user.findMany({
           where: {
-            isAdmin: true, // TODO: remove this line to roll out to all users
             submissions: { none: { showId: show.id } },
             OR: [
               { emailPickReminders: true, emailVerified: { not: null } },
