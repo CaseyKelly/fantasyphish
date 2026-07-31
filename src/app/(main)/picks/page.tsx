@@ -68,7 +68,9 @@ export default function PicksPage() {
   const [songs, setSongs] = useState<Song[]>([])
   const [loading, setLoading] = useState(true)
   const [isLocked, setIsLocked] = useState(false)
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false)
+  const [notificationsEnabled, setNotificationsEnabled] = useState<
+    boolean | null
+  >(null)
 
   const fetchData = async () => {
     try {
@@ -103,19 +105,20 @@ export default function PicksPage() {
   }, [])
 
   useEffect(() => {
-    if (!session?.user) return
+    if (!session?.user?.id) return
 
-    fetch("/api/user/preferences")
+    fetch("/api/user/preferences", { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data) {
-          setNotificationsEnabled(
-            !!data.emailPickReminders || !!data.hasPushSubscription
-          )
-        }
+        setNotificationsEnabled(
+          data ? !!data.emailPickReminders || !!data.hasPushSubscription : false
+        )
       })
-      .catch(() => {})
-  }, [session?.user])
+      .catch((error) => {
+        console.error("Error fetching notification preferences:", error)
+        setNotificationsEnabled(false)
+      })
+  }, [session?.user?.id])
 
   if (loading) {
     return (
@@ -233,7 +236,7 @@ export default function PicksPage() {
         hideHeader={true}
         onSubmitSuccess={fetchData}
       />
-      {session?.user?.username && !notificationsEnabled && (
+      {session?.user?.username && notificationsEnabled === false && (
         <p className="text-center text-sm text-gray-400">
           Want a reminder on show day if you haven&apos;t submitted picks yet?
           Set your notification preferences on{" "}

@@ -96,7 +96,7 @@ async function hasNotificationsEnabled(userId: string) {
     { operationName: "check notification preferences for pick page" }
   )
 
-  return !!user?.emailPickReminders || !!user?._count.pushSubscriptions
+  return !!user?.emailPickReminders || (user?._count.pushSubscriptions ?? 0) > 0
 }
 
 async function getAllSongs() {
