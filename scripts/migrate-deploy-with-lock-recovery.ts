@@ -29,7 +29,7 @@ async function clearStaleAdvisoryLock(lockId: string): Promise<boolean> {
     return false
   }
 
-  const prisma = new PrismaClient({ datasourceUrl: directUrl })
+  const prisma = new PrismaClient({ datasources: { db: { url: directUrl } } })
   try {
     const holders = await prisma.$queryRawUnsafe<
       { pid: number; state: string | null }[]
