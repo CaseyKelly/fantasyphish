@@ -88,6 +88,24 @@ export function SortableTable<T>({
               <th
                 key={column.key}
                 onClick={() => handleSort(column)}
+                onKeyDown={(e) => {
+                  if (!column.sortable) return
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    handleSort(column)
+                  }
+                }}
+                role={column.sortable ? "button" : undefined}
+                tabIndex={column.sortable ? 0 : undefined}
+                aria-sort={
+                  column.sortable
+                    ? sortKey === column.key
+                      ? sortDir === "asc"
+                        ? "ascending"
+                        : "descending"
+                      : "none"
+                    : undefined
+                }
                 className={`border-b-2 border-[#3d5a6c]/60 px-3 py-2 font-semibold whitespace-nowrap text-gray-300 ${alignClass(
                   column.align
                 )} ${column.sortable ? "cursor-pointer select-none hover:text-white" : ""}`}

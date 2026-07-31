@@ -38,7 +38,7 @@ export async function getUsageOverview(): Promise<UsageOverview> {
         prisma.user.count({ where: { dismissedRemindersBanner: true } }),
         prisma.pushSubscription.groupBy({ by: ["userId"] }),
         prisma.easterEggScore.count(),
-        prisma.submission.count(),
+        prisma.submission.count({ where: { show: excludeTestShows } }),
       ]),
     { operationName: "get usage overview" }
   )
@@ -92,7 +92,7 @@ export async function getUserEngagementRows(): Promise<UserEngagementRow[]> {
             dismissedRemindersBanner: true,
             _count: {
               select: {
-                submissions: true,
+                submissions: { where: { show: excludeTestShows } },
                 achievements: true,
                 pushSubscriptions: true,
               },
@@ -102,6 +102,7 @@ export async function getUserEngagementRows(): Promise<UserEngagementRow[]> {
         }),
         prisma.submission.groupBy({
           by: ["userId"],
+          where: { show: excludeTestShows },
           _max: { createdAt: true },
         }),
         prisma.easterEggScore.findMany({
