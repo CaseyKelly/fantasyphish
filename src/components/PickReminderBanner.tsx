@@ -38,7 +38,7 @@ export function PickReminderBanner() {
         <Bell className="h-4 w-4 flex-shrink-0 text-[#c23a3a]" />
         <p className="flex-1 text-sm text-gray-200">
           <strong className="font-semibold text-white">New: </strong>
-          You can now opt in to an email reminder on show days if you
+          You can now opt in to email or push reminders on show days if you
           haven&apos;t submitted your picks yet &mdash; check your profile page.
         </p>
         <button
