@@ -202,6 +202,13 @@ async function syncYear(year: number): Promise<{
         continue
       }
 
+      // A manually overridden lock time must survive re-syncs, so it's
+      // excluded from both the diff check and the update payload below.
+      const hasLockTimeOverride = !!existingShow?.lockTimeOverride
+      const effectiveLockTime = hasLockTimeOverride
+        ? existingShow!.lockTime!
+        : lockTime
+
       const showNeedsUpdate =
         !existingShow ||
         existingShow.venue !== show.venue ||
@@ -210,7 +217,8 @@ async function syncYear(year: number): Promise<{
         existingShow.country !== show.country ||
         existingShow.tourId !== tourIdStr ||
         existingShow.timezone !== timezone ||
-        existingShow.lockTime?.getTime() !== lockTime.getTime()
+        (!hasLockTimeOverride &&
+          existingShow.lockTime?.getTime() !== lockTime.getTime())
 
       if (!existingShow) {
         await withRetry(
@@ -242,7 +250,7 @@ async function syncYear(year: number): Promise<{
                 country: show.country,
                 tourId: tourIdStr,
                 timezone: timezone,
-                lockTime: lockTime,
+                lockTime: effectiveLockTime,
               },
             }),
           { operationName: `update show ${show.venue}` }

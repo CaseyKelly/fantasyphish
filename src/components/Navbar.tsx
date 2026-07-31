@@ -15,6 +15,7 @@ import {
   Users,
   Eye,
   BarChart3,
+  Clock,
 } from "lucide-react"
 import { toast } from "sonner"
 import { DonutLogo } from "./DonutLogo"
@@ -49,7 +50,10 @@ export function Navbar() {
       ? [{ href: "/submissions", label: "Submissions", icon: Eye }]
       : []),
     ...(isAdmin
-      ? [{ href: "/admin/usage", label: "Usage", icon: BarChart3 }]
+      ? [
+          { href: "/admin/usage", label: "Usage", icon: BarChart3 },
+          { href: "/admin/shows", label: "Lock Times", icon: Clock },
+        ]
       : []),
   ]
 
