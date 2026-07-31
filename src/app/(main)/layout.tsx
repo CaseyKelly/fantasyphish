@@ -17,9 +17,8 @@ export default async function MainLayout({
   // Allow optional authentication for public pages (leaderboard, results_detail)
   // Individual pages handle their own auth requirements if needed
 
-  // Admin-only during initial rollout of the pick reminders feature
   let showReminderBanner = false
-  if (session?.user?.isAdmin) {
+  if (session?.user?.id) {
     const user = await withRetry(
       () =>
         prisma.user.findUnique({

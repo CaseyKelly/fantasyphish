@@ -320,8 +320,8 @@ export default async function UserProfilePage({ params }: UserPageProps) {
         </Card>
       )}
 
-      {/* Notification Preferences - admin-only during initial rollout */}
-      {isOwnProfile && session?.user?.isAdmin && (
+      {/* Notification Preferences */}
+      {isOwnProfile && (
         <NotificationSettings
           initialEmailEnabled={profile.emailPickReminders}
         />
