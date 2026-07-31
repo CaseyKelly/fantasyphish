@@ -18,6 +18,10 @@ interface ShowSummary {
   lockTimeOverride: string | null
 }
 
+interface SetLockOverrideResponse {
+  show: { lockTime: string | null }
+}
+
 export function ShowLockOverrideForm({ show }: { show: ShowSummary }) {
   const router = useRouter()
   const currentLockTime = show.lockTime ? new Date(show.lockTime) : null
@@ -51,11 +55,18 @@ export function ShowLockOverrideForm({ show }: { show: ShowSummary }) {
         }),
       })
 
-      const data = await response.json()
+      const data = (await response.json()) as SetLockOverrideResponse & {
+        error?: string
+      }
       if (!response.ok) {
         throw new Error(data.error || "Failed to set lock time")
       }
 
+      if (data.show.lockTime) {
+        setTimeInput(
+          formatInTimeZone(new Date(data.show.lockTime), show.timezone, "HH:mm")
+        )
+      }
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to set lock time")
@@ -74,11 +85,18 @@ export function ShowLockOverrideForm({ show }: { show: ShowSummary }) {
         body: JSON.stringify({ showId: show.id, lockTime: null }),
       })
 
-      const data = await response.json()
+      const data = (await response.json()) as SetLockOverrideResponse & {
+        error?: string
+      }
       if (!response.ok) {
         throw new Error(data.error || "Failed to clear lock time override")
       }
 
+      if (data.show.lockTime) {
+        setTimeInput(
+          formatInTimeZone(new Date(data.show.lockTime), show.timezone, "HH:mm")
+        )
+      }
       router.refresh()
     } catch (err) {
       setError(
@@ -92,7 +110,10 @@ export function ShowLockOverrideForm({ show }: { show: ShowSummary }) {
   }
 
   return (
-    <div className="flex flex-col gap-3 border-b-2 border-[#4a6b7d]/30 pb-4 last:border-b-0 last:pb-0 sm:flex-row sm:items-end sm:justify-between">
+    <div
+      data-testid={`show-lock-override-${show.id}`}
+      className="flex flex-col gap-3 border-b-2 border-[#4a6b7d]/30 pb-4 last:border-b-0 last:pb-0 sm:flex-row sm:items-end sm:justify-between"
+    >
       <div>
         <p className="font-semibold text-white">
           {show.venue}

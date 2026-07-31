@@ -14,11 +14,9 @@ const setLockOverrideSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const session = await auth()
-    if (
-      !session?.user?.id ||
-      !session.user.isAdmin ||
-      !isAdminFeaturesEnabled()
-    ) {
+    const isAdmin =
+      session?.impersonating?.originalIsAdmin ?? session?.user?.isAdmin
+    if (!session?.user?.id || !isAdmin || !isAdminFeaturesEnabled()) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
