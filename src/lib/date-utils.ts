@@ -1,4 +1,5 @@
 import { format } from "date-fns"
+import { formatInTimeZone } from "date-fns-tz"
 
 // Timezone abbreviation mapping
 const TIMEZONE_ABBR: Record<string, string> = {
@@ -17,6 +18,15 @@ const TIMEZONE_ABBR: Record<string, string> = {
  */
 export function getTimezoneAbbr(timezone: string): string {
   return TIMEZONE_ABBR[timezone] || timezone
+}
+
+/**
+ * Format a time-of-day in a given timezone as "7 PM", or "6:30 PM" when the
+ * minutes aren't zero (e.g. a manually overridden show lock time).
+ */
+export function formatTimeOfDay(date: Date, timezone: string): string {
+  const minutes = formatInTimeZone(date, timezone, "m")
+  return formatInTimeZone(date, timezone, minutes === "0" ? "h a" : "h:mm a")
 }
 
 /**
