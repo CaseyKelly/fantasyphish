@@ -7,6 +7,7 @@ import { SerwistProvider } from "@serwist/turbopack/react"
 import { EasterEgg } from "@/components/EasterEgg"
 import { ScrollToTop } from "@/components/ScrollToTop"
 import { ServiceWorkerUpdater } from "@/components/ServiceWorkerUpdater"
+import { ClearAppBadge } from "@/components/ClearAppBadge"
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
@@ -15,6 +16,7 @@ export function Providers({ children }: { children: ReactNode }) {
       disable={process.env.NODE_ENV === "development"}
     >
       <ServiceWorkerUpdater />
+      <ClearAppBadge />
       <SessionProvider>
         <ScrollToTop />
         {children}
