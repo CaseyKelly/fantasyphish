@@ -111,7 +111,7 @@ export function NotificationSettings({
       <CardHeader>
         <h2 className="text-xl font-semibold text-white">Notifications</h2>
       </CardHeader>
-      <CardContent className="space-y-4 divide-y divide-[#3d5a6c]">
+      <CardContent className="space-y-5">
         <label className="flex items-center justify-between gap-4 cursor-pointer">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-[#3d5a6c] rounded-lg">
@@ -134,7 +134,7 @@ export function NotificationSettings({
           />
         </label>
 
-        <div className="pt-4">
+        <div className="pt-5 border-t border-[#3d5a6c]/50">
           {pushAvailable ? (
             <label className="flex items-center justify-between gap-4 cursor-pointer">
               <div className="flex items-center space-x-3">
