@@ -62,6 +62,23 @@ test.describe("Admin show lock time overrides", () => {
     const timezone = "America/New_York"
     const computedLockTime = getShowLockTime(testDate, timezone)
 
+    // A decoy show in the same timezone, ordered before the real test show,
+    // guards against a regression where the lock-time input's id collides
+    // across same-timezone rows (each row's <label> must stay associated
+    // with its own <input>, not just whichever is first on the page).
+    const decoyDate = new Date(testDate.getTime() - 24 * 60 * 60 * 1000)
+    const decoyShow = await prisma.show.create({
+      data: {
+        venue: "Test Venue Lock Override Decoy",
+        city: "Test City",
+        state: "NY",
+        showDate: decoyDate,
+        timezone,
+        lockTime: getShowLockTime(decoyDate, timezone),
+        isComplete: false,
+      },
+    })
+
     const show = await prisma.show.create({
       data: {
         venue: "Test Venue Lock Override",
@@ -74,49 +91,51 @@ test.describe("Admin show lock time overrides", () => {
       },
     })
 
-    await page.goto("/login")
-    await page.getByPlaceholder("Email address").fill(adminEmail)
-    await page.getByPlaceholder("Password").fill(adminPassword)
-    await page.click('button[type="submit"]')
-    await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
+    try {
+      await page.goto("/login")
+      await page.getByPlaceholder("Email address").fill(adminEmail)
+      await page.getByPlaceholder("Password").fill(adminPassword)
+      await page.click('button[type="submit"]')
+      await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
 
-    await page.getByRole("link", { name: "Admin" }).first().click()
-    await expect(page).toHaveURL(/\/admin$/, { timeout: 10000 })
-    await page.getByRole("link", { name: "Show Lock Times" }).click()
-    await expect(page).toHaveURL(/\/admin\/shows/, { timeout: 10000 })
-    await expect(
-      page.getByRole("heading", { name: "Show Lock Times" })
-    ).toBeVisible()
+      await page.getByRole("link", { name: "Admin" }).first().click()
+      await expect(page).toHaveURL(/\/admin$/, { timeout: 10000 })
+      await page.getByRole("link", { name: "Show Lock Times" }).click()
+      await expect(page).toHaveURL(/\/admin\/shows/, { timeout: 10000 })
+      await expect(
+        page.getByRole("heading", { name: "Show Lock Times" })
+      ).toBeVisible()
 
-    const row = page.getByTestId(`show-lock-override-${show.id}`)
-    await expect(row).toContainText("Test Venue Lock Override")
+      const row = page.getByTestId(`show-lock-override-${show.id}`)
+      await expect(row).toContainText("Test Venue Lock Override")
 
-    // Set an override 30 minutes earlier than the standard 7 PM lock
-    await row.getByLabel(/Lock time/).fill("18:30")
-    await row.getByRole("button", { name: "Save" }).click()
-    await expect(row).toContainText("manual override", { timeout: 10000 })
+      // Set an override 30 minutes earlier than the standard 7 PM lock
+      await row.getByLabel(/Lock time/).fill("18:30")
+      await row.getByRole("button", { name: "Save" }).click()
+      await expect(row).toContainText("manual override", { timeout: 10000 })
 
-    const overridden = await prisma.show.findUnique({
-      where: { id: show.id },
-    })
-    expect(overridden?.lockTimeOverride).not.toBeNull()
-    expect(overridden?.lockTime?.toISOString()).toBe(
-      overridden?.lockTimeOverride?.toISOString()
-    )
+      const overridden = await prisma.show.findUnique({
+        where: { id: show.id },
+      })
+      expect(overridden?.lockTimeOverride).not.toBeNull()
+      expect(overridden?.lockTime?.toISOString()).toBe(
+        overridden?.lockTimeOverride?.toISOString()
+      )
 
-    // Clear the override and confirm it reverts to the computed lock time
-    await row.getByRole("button", { name: "Clear" }).click()
-    await expect(row).not.toContainText("manual override", {
-      timeout: 10000,
-    })
+      // Clear the override and confirm it reverts to the computed lock time
+      await row.getByRole("button", { name: "Clear" }).click()
+      await expect(row).not.toContainText("manual override", {
+        timeout: 10000,
+      })
 
-    const cleared = await prisma.show.findUnique({ where: { id: show.id } })
-    expect(cleared?.lockTimeOverride).toBeNull()
-    expect(cleared?.lockTime?.toISOString()).toBe(
-      computedLockTime.toISOString()
-    )
-
-    // Cleanup
-    await prisma.show.delete({ where: { id: show.id } })
+      const cleared = await prisma.show.findUnique({ where: { id: show.id } })
+      expect(cleared?.lockTimeOverride).toBeNull()
+      expect(cleared?.lockTime?.toISOString()).toBe(
+        computedLockTime.toISOString()
+      )
+    } finally {
+      await prisma.show.delete({ where: { id: show.id } })
+      await prisma.show.delete({ where: { id: decoyShow.id } })
+    }
   })
 })

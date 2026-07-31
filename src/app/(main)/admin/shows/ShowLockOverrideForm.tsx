@@ -146,6 +146,7 @@ export function ShowLockOverrideForm({ show }: { show: ShowSummary }) {
       <div className="flex items-end gap-2">
         <Input
           type="time"
+          id={`lock-time-${show.id}`}
           label={`Lock time (${tzAbbr})`}
           value={timeInput}
           onChange={(e) => setTimeInput(e.target.value)}
