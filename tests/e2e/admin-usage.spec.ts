@@ -32,7 +32,7 @@ test.describe("Admin usage dashboard", () => {
     await page.click('button[type="submit"]')
     await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
 
-    await expect(page.getByRole("link", { name: "Usage" })).toHaveCount(0)
+    await expect(page.getByRole("link", { name: "Admin" })).toHaveCount(0)
 
     const response = await page.request.get("/admin/usage")
     expect(response.status()).toBe(404)
@@ -62,7 +62,9 @@ test.describe("Admin usage dashboard", () => {
     const response = await page.request.get("/admin/usage")
     expect(response.status()).toBe(200)
 
-    await page.getByRole("link", { name: "Usage" }).first().click()
+    await page.getByRole("link", { name: "Admin" }).first().click()
+    await expect(page).toHaveURL(/\/admin$/, { timeout: 10000 })
+    await page.getByRole("link", { name: "Feature Usage" }).click()
     await expect(page).toHaveURL(/\/admin\/usage/, { timeout: 10000 })
     await expect(
       page.getByRole("heading", { name: "Feature Usage" })

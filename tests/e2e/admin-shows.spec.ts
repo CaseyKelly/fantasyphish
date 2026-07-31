@@ -32,7 +32,7 @@ test.describe("Admin show lock time overrides", () => {
     await page.click('button[type="submit"]')
     await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
 
-    await expect(page.getByRole("link", { name: "Lock Times" })).toHaveCount(0)
+    await expect(page.getByRole("link", { name: "Admin" })).toHaveCount(0)
 
     const response = await page.request.get("/admin/shows")
     expect(response.status()).toBe(404)
@@ -80,7 +80,9 @@ test.describe("Admin show lock time overrides", () => {
     await page.click('button[type="submit"]')
     await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
 
-    await page.getByRole("link", { name: "Lock Times" }).first().click()
+    await page.getByRole("link", { name: "Admin" }).first().click()
+    await expect(page).toHaveURL(/\/admin$/, { timeout: 10000 })
+    await page.getByRole("link", { name: "Show Lock Times" }).click()
     await expect(page).toHaveURL(/\/admin\/shows/, { timeout: 10000 })
     await expect(
       page.getByRole("heading", { name: "Show Lock Times" })
