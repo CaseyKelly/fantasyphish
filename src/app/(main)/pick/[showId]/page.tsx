@@ -5,6 +5,7 @@ import { hasShowStarted } from "@/lib/phishnet"
 import { SongPicker } from "@/components/SongPicker"
 import { Metadata } from "next"
 import { withRetry } from "@/lib/db-retry"
+import Link from "next/link"
 
 interface PickPageProps {
   params: Promise<{ showId: string }>
@@ -145,6 +146,16 @@ export default async function PickPage({ params }: PickPageProps) {
         totalPoints={existingSubmission?.totalPoints}
         isLocked={isLocked}
       />
+      <p className="text-center text-sm text-gray-400 mt-6">
+        Want a reminder if you haven&apos;t submitted picks yet? Set your{" "}
+        <Link
+          href={`/user/${session.user.username}`}
+          className="text-[#c23a3a] hover:underline"
+        >
+          notification preferences
+        </Link>{" "}
+        on your profile.
+      </p>
     </div>
   )
 }
