@@ -24,11 +24,17 @@ export default async function MainLayout({
       () =>
         prisma.user.findUnique({
           where: { id: session.user.id },
-          select: { dismissedRemindersBanner: true },
+          select: {
+            dismissedRemindersBanner: true,
+            emailPickReminders: true,
+            _count: { select: { pushSubscriptions: true } },
+          },
         }),
       { operationName: "check reminders banner dismissal" }
     )
-    showReminderBanner = !user?.dismissedRemindersBanner
+    const alreadyOptedIn =
+      !!user?.emailPickReminders || !!user?._count.pushSubscriptions
+    showReminderBanner = !user?.dismissedRemindersBanner && !alreadyOptedIn
   }
 
   return (
