@@ -122,7 +122,8 @@ export default function CompleteShowsClient({
             <CardContent className="flex items-center justify-between gap-4 flex-wrap">
               <div>
                 <div className="text-white font-semibold">
-                  {show.venue} • {show.city}
+                  {show.venue}
+                  {show.city && ` • ${show.city}`}
                   {show.state && `, ${show.state}`}
                 </div>
                 <div className="text-sm text-slate-400">

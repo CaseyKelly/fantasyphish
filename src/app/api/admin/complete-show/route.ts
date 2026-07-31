@@ -16,9 +16,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { showId } = await request.json()
+    let showId: unknown
+    try {
+      ;({ showId } = await request.json())
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
 
-    if (!showId) {
+    if (typeof showId !== "string" || showId.length === 0) {
       return NextResponse.json({ error: "showId is required" }, { status: 400 })
     }
 
