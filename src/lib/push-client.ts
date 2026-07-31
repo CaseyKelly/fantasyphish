@@ -17,6 +17,15 @@ export function isPushSupported(): boolean {
   )
 }
 
+export function isStandalonePwa(): boolean {
+  if (typeof window === "undefined") return false
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (window.navigator as unknown as { standalone?: boolean }).standalone ===
+      true
+  )
+}
+
 export async function subscribeToPush(): Promise<void> {
   const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
   if (!publicKey) {
@@ -41,7 +50,8 @@ export async function subscribeToPush(): Promise<void> {
   })
 
   if (!res.ok) {
-    throw new Error("Failed to save push subscription")
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data.error || "Failed to save push subscription")
   }
 }
 

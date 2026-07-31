@@ -3,8 +3,7 @@ import { format } from "date-fns"
 import { User, Calendar, Trophy, Target, TrendingUp, Star } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { AchievementBadge } from "@/components/AchievementBadge"
-import { PickReminderToggle } from "@/components/PickReminderToggle"
-import { PushReminderToggle } from "@/components/PushReminderToggle"
+import { NotificationSettings } from "@/components/NotificationSettings"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import { withRetry } from "@/lib/db-retry"
@@ -323,10 +322,10 @@ export default async function UserProfilePage({ params }: UserPageProps) {
 
       {/* Notification Preferences - admin-only during initial rollout */}
       {isOwnProfile && session?.user?.isAdmin && (
-        <>
-          <PickReminderToggle initialEnabled={profile.emailPickReminders} />
-          <PushReminderToggle isAdmin={session.user.isAdmin} />
-        </>
+        <NotificationSettings
+          initialEmailEnabled={profile.emailPickReminders}
+          isAdmin={session.user.isAdmin}
+        />
       )}
     </div>
   )
