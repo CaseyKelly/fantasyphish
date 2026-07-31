@@ -2,7 +2,14 @@ import { auth } from "@/lib/auth"
 import { redirect, notFound } from "next/navigation"
 import { Metadata } from "next"
 import Link from "next/link"
-import { BarChart3, Clock, Eye, ChevronRight } from "lucide-react"
+import {
+  BarChart3,
+  Clock,
+  Eye,
+  ChevronRight,
+  CheckCircle2,
+  Users,
+} from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 
 export const metadata: Metadata = {
@@ -41,6 +48,20 @@ export default async function AdminHubPage() {
             description:
               "Set a manual pick lock time for a specific show, overriding the standard 7 PM venue-time rule.",
             icon: Clock,
+          },
+          {
+            href: "/admin/complete-shows",
+            title: "Complete Shows",
+            description:
+              "Mark a show complete early once you've confirmed the encore ended, instead of waiting out the grace period.",
+            icon: CheckCircle2,
+          },
+          {
+            href: "/admin/impersonate",
+            title: "Impersonate User",
+            description:
+              "View the app as another user for debugging or support.",
+            icon: Users,
           },
         ]
       : []),
