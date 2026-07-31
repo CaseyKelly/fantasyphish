@@ -20,6 +20,23 @@ export function getTimezoneAbbr(timezone: string): string {
 }
 
 /**
+ * Get the current hour (0-23) local to the given IANA timezone.
+ * Used to make fixed-UTC cron schedules DST-safe: Vercel cron times
+ * are UTC-only and don't shift with daylight saving, so a job that
+ * needs to fire at a specific local time must be scheduled at both
+ * possible UTC offsets and self-check the local hour before acting.
+ */
+export function getHourInTimezone(date: Date, timezone: string): number {
+  const hourStr = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    hour: "numeric",
+    hour12: false,
+  }).format(date)
+  // "24" is returned for midnight by some ICU implementations
+  return parseInt(hourStr, 10) % 24
+}
+
+/**
  * Parse an ISO date string to a Date object in UTC
  * This avoids timezone conversion issues by parsing the date components directly
  *
