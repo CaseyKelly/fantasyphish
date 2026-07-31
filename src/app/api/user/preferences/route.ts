@@ -7,7 +7,6 @@ import { z } from "zod"
 const updatePreferencesSchema = z
   .object({
     emailPickReminders: z.boolean().optional(),
-    dismissedRemindersBanner: z.boolean().optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: "At least one preference is required",
@@ -22,6 +21,24 @@ export async function PATCH(request: NextRequest) {
 
     const body = await request.json()
     const data = updatePreferencesSchema.parse(body)
+
+    if (data.emailPickReminders) {
+      const user = await withRetry(
+        () =>
+          prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { emailVerified: true },
+          }),
+        { operationName: "check email verification for preferences update" }
+      )
+
+      if (!user?.emailVerified) {
+        return NextResponse.json(
+          { error: "Verify your email before enabling email reminders" },
+          { status: 400 }
+        )
+      }
+    }
 
     await withRetry(
       () =>

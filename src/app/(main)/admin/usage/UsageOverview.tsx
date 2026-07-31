@@ -16,7 +16,6 @@ type MetricKey =
   | "donutPlayers"
   | "emailOptIn"
   | "pushEnabled"
-  | "bannerDismissed"
 
 interface MetricConfig {
   title: string
@@ -116,16 +115,6 @@ const metricConfig: Record<MetricKey, MetricConfig> = {
     ],
     initialSortKey: "pushCount",
   },
-  bannerDismissed: {
-    title: "Dismissed Reminder Banner",
-    filter: (row) => row.bannerDismissed,
-    columns: [
-      { key: "username", header: "User", sortable: true },
-      { key: "email", header: "Email", sortable: true },
-    ],
-    initialSortKey: "username",
-    initialSortDir: "asc",
-  },
 }
 
 function StatTile({
@@ -197,11 +186,6 @@ export function UsageOverview({
           label="Push Enabled"
           value={`${overview.pushEnabledUsers} (${overview.pushEnabledPct}%)`}
           onClick={() => setSelectedMetric("pushEnabled")}
-        />
-        <StatTile
-          label="Banner Dismissed"
-          value={`${overview.bannerDismissedUsers} (${overview.bannerDismissedPct}%)`}
-          onClick={() => setSelectedMetric("bannerDismissed")}
         />
       </div>
 

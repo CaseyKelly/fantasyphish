@@ -104,13 +104,6 @@ const engagementColumns: Column<UserEngagementRow>[] = [
     align: "right",
   },
   {
-    key: "bannerDismissed",
-    header: "Banner Dismissed",
-    sortable: true,
-    align: "center",
-    render: (row) => (row.bannerDismissed ? "✓" : "—"),
-  },
-  {
     key: "donutScore",
     header: "Donut Best",
     sortable: true,

@@ -1,10 +1,7 @@
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
-import { withRetry } from "@/lib/db-retry"
 import { Navbar } from "@/components/Navbar"
 import { ImpersonationBanner } from "@/components/ImpersonationBanner"
-import { PickReminderBanner } from "@/components/PickReminderBanner"
 import { Footer } from "@/components/Footer"
 
 export default async function MainLayout({
@@ -17,24 +14,10 @@ export default async function MainLayout({
   // Allow optional authentication for public pages (leaderboard, results_detail)
   // Individual pages handle their own auth requirements if needed
 
-  let showReminderBanner = false
-  if (session?.user?.id) {
-    const user = await withRetry(
-      () =>
-        prisma.user.findUnique({
-          where: { id: session.user.id },
-          select: { dismissedRemindersBanner: true },
-        }),
-      { operationName: "check reminders banner dismissal" }
-    )
-    showReminderBanner = !user?.dismissedRemindersBanner
-  }
-
   return (
     <div className="min-h-screen flex flex-col">
       {session && <ImpersonationBanner />}
       <Navbar />
-      {showReminderBanner && <PickReminderBanner />}
       <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
         {children}
       </main>
