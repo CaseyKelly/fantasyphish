@@ -216,10 +216,10 @@ export function Navbar() {
         {/* Mobile menu */}
         {session && (
           <div
-            className={`md:hidden border-t border-[#3d5a6c]/50 grid transition-all duration-300 ease-in-out ${
+            className={`md:hidden absolute left-0 right-0 top-full border-t border-[#3d5a6c]/50 bg-[#2d4654] shadow-lg grid transition-all duration-300 ease-in-out ${
               isMenuOpen
                 ? "grid-rows-[1fr] opacity-100"
-                : "grid-rows-[0fr] opacity-0"
+                : "grid-rows-[0fr] opacity-0 pointer-events-none"
             }`}
           >
             <div className="overflow-hidden">
