@@ -83,6 +83,22 @@ async function getShowData(showId: string, userId: string) {
   return { show, isLocked }
 }
 
+async function hasNotificationsEnabled(userId: string) {
+  const user = await withRetry(
+    () =>
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          emailPickReminders: true,
+          _count: { select: { pushSubscriptions: true } },
+        },
+      }),
+    { operationName: "check notification preferences for pick page" }
+  )
+
+  return !!user?.emailPickReminders || !!user?._count.pushSubscriptions
+}
+
 async function getAllSongs() {
   return withRetry(
     () =>
@@ -109,9 +125,10 @@ export default async function PickPage({ params }: PickPageProps) {
   }
 
   const { showId } = await params
-  const [showData, songs] = await Promise.all([
+  const [showData, songs, notificationsEnabled] = await Promise.all([
     getShowData(showId, session.user.id),
     getAllSongs(),
+    hasNotificationsEnabled(session.user.id),
   ])
 
   if (!showData) {
@@ -146,17 +163,19 @@ export default async function PickPage({ params }: PickPageProps) {
         totalPoints={existingSubmission?.totalPoints}
         isLocked={isLocked}
       />
-      <p className="text-center text-sm text-gray-400 mt-6">
-        Want a reminder on show day if you haven&apos;t submitted picks yet? Set
-        your notification preferences on{" "}
-        <Link
-          href={`/user/${session.user.username}`}
-          className="text-[#c23a3a] hover:underline"
-        >
-          your profile
-        </Link>
-        .
-      </p>
+      {!notificationsEnabled && (
+        <p className="text-center text-sm text-gray-400 mt-6">
+          Want a reminder on show day if you haven&apos;t submitted picks yet?
+          Set your notification preferences on{" "}
+          <Link
+            href={`/user/${session.user.username}`}
+            className="text-[#c23a3a] hover:underline"
+          >
+            your profile
+          </Link>
+          .
+        </p>
+      )}
     </div>
   )
 }

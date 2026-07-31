@@ -68,6 +68,7 @@ export default function PicksPage() {
   const [songs, setSongs] = useState<Song[]>([])
   const [loading, setLoading] = useState(true)
   const [isLocked, setIsLocked] = useState(false)
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false)
 
   const fetchData = async () => {
     try {
@@ -100,6 +101,21 @@ export default function PicksPage() {
   useEffect(() => {
     fetchData()
   }, [])
+
+  useEffect(() => {
+    if (!session?.user) return
+
+    fetch("/api/user/preferences")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) {
+          setNotificationsEnabled(
+            !!data.emailPickReminders || !!data.hasPushSubscription
+          )
+        }
+      })
+      .catch(() => {})
+  }, [session?.user])
 
   if (loading) {
     return (
@@ -217,7 +233,7 @@ export default function PicksPage() {
         hideHeader={true}
         onSubmitSuccess={fetchData}
       />
-      {session?.user?.username && (
+      {session?.user?.username && !notificationsEnabled && (
         <p className="text-center text-sm text-gray-400">
           Want a reminder on show day if you haven&apos;t submitted picks yet?
           Set your notification preferences on{" "}
