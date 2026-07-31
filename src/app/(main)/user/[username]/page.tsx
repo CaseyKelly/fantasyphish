@@ -324,7 +324,6 @@ export default async function UserProfilePage({ params }: UserPageProps) {
       {isOwnProfile && session?.user?.isAdmin && (
         <NotificationSettings
           initialEmailEnabled={profile.emailPickReminders}
-          isAdmin={session.user.isAdmin}
         />
       )}
     </div>
