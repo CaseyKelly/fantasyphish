@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma migrate deploy && next build",
+    "build": "prisma generate && npx tsx scripts/migrate-deploy-with-lock-recovery.ts && next build",
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write .",

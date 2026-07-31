@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect, notFound } from "next/navigation"
 import { Metadata } from "next"
+import Link from "next/link"
+import { ArrowLeft } from "lucide-react"
 import { withRetry } from "@/lib/db-retry"
 import { excludeTestShows } from "@/lib/test-filters"
 import { isPrivateViewerOwner } from "@/lib/private-access"
@@ -39,7 +41,14 @@ export default async function SubmissionsPage() {
   if (!nextShow) {
     return (
       <div className="space-y-4">
-        <h1 className="text-3xl font-bold font-display text-white">
+        <Link
+          href="/admin"
+          className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-white"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Admin
+        </Link>
+        <h1 className="mt-2 text-3xl font-bold font-display text-white">
           Submissions
         </h1>
         <p className="text-gray-400">No upcoming show found.</p>
@@ -63,7 +72,14 @@ export default async function SubmissionsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold font-display text-white">
+        <Link
+          href="/admin"
+          className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-white"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Admin
+        </Link>
+        <h1 className="mt-2 text-3xl font-bold font-display text-white">
           Submissions
         </h1>
         <p className="text-gray-400 mt-1">

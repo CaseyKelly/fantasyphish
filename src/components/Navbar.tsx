@@ -13,8 +13,7 @@ import {
   LogOut,
   User,
   Users,
-  Eye,
-  BarChart3,
+  Shield,
 } from "lucide-react"
 import { toast } from "sonner"
 import { DonutLogo } from "./DonutLogo"
@@ -45,11 +44,8 @@ export function Navbar() {
     { href: "/picks", label: "My Picks", icon: Music },
     { href: "/results", label: "Results", icon: ClipboardList },
     { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
-    ...(session?.user?.isPrivateViewer
-      ? [{ href: "/submissions", label: "Submissions", icon: Eye }]
-      : []),
-    ...(isAdmin
-      ? [{ href: "/admin/usage", label: "Usage", icon: BarChart3 }]
+    ...(isAdmin || session?.user?.isPrivateViewer
+      ? [{ href: "/admin", label: "Admin", icon: Shield }]
       : []),
   ]
 

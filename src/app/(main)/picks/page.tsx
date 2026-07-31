@@ -9,8 +9,11 @@ import { DonutLogo } from "@/components/DonutLogo"
 import { SongPicker } from "@/components/SongPicker"
 import { LoadingDonut } from "@/components/LoadingDonut"
 import { LiveBadge } from "@/components/LiveBadge"
-import { formatInTimeZone } from "date-fns-tz"
-import { getTimezoneAbbr, parseUTCDate } from "@/lib/date-utils"
+import {
+  getTimezoneAbbr,
+  parseUTCDate,
+  formatTimeOfDay,
+} from "@/lib/date-utils"
 
 interface Song {
   id: string
@@ -209,11 +212,7 @@ export default function PicksPage() {
         {!isLocked && nextShow.lockTime && nextShow.timezone && (
           <p className="text-sm text-gray-500">
             Picks lock at{" "}
-            {formatInTimeZone(
-              new Date(nextShow.lockTime),
-              nextShow.timezone,
-              "h a"
-            )}{" "}
+            {formatTimeOfDay(new Date(nextShow.lockTime), nextShow.timezone)}{" "}
             {getTimezoneAbbr(nextShow.timezone)} on{" "}
             {parseUTCDate(nextShow.showDate, "MMM d")}
           </p>

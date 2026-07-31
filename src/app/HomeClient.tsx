@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { format } from "date-fns"
-import { formatInTimeZone } from "date-fns-tz"
 import { Target, ArrowRight, Trophy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DonutLogo } from "@/components/DonutLogo"
@@ -11,7 +10,11 @@ import { SongPicker } from "@/components/SongPicker"
 import { LoadingDonut } from "@/components/LoadingDonut"
 import { GuestRegistrationModal } from "@/components/GuestRegistrationModal"
 import { LiveBadge } from "@/components/LiveBadge"
-import { getTimezoneAbbr, parseUTCDate } from "@/lib/date-utils"
+import {
+  getTimezoneAbbr,
+  parseUTCDate,
+  formatTimeOfDay,
+} from "@/lib/date-utils"
 
 interface Song {
   id: string
@@ -101,7 +104,7 @@ export function HomeClient() {
 
     if (timezone) {
       // Show venue time (7 PM MT)
-      const venueTimeStr = formatInTimeZone(lockDate, timezone, "h a")
+      const venueTimeStr = formatTimeOfDay(lockDate, timezone)
       const venueAbbr = getTimezoneAbbr(timezone)
 
       // Get user's timezone
@@ -110,7 +113,7 @@ export function HomeClient() {
 
       // Only show local time if different from venue time
       if (userTz !== timezone) {
-        const userTimeStr = formatInTimeZone(lockDate, userTz, "h a")
+        const userTimeStr = formatTimeOfDay(lockDate, userTz)
         return `${venueTimeStr} ${venueAbbr} (${userTimeStr} ${userAbbr}) on ${formattedDate}`
       }
 

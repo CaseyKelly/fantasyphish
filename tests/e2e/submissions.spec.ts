@@ -43,7 +43,9 @@ test.describe("Private submissions viewer", () => {
     await page.click('button[type="submit"]')
     await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
 
-    await expect(page.getByRole("link", { name: "Submissions" })).toHaveCount(0)
+    // This user is neither admin nor the private viewer, so they shouldn't
+    // even see the consolidated "Admin" nav entry.
+    await expect(page.getByRole("link", { name: "Admin" })).toHaveCount(0)
 
     const response = await page.request.get("/submissions")
     expect(response.status()).toBe(404)
@@ -70,9 +72,12 @@ test.describe("Private submissions viewer", () => {
     await page.click('button[type="submit"]')
     await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
 
-    // Visibility is gated by email, not isAdmin, so an admin account
-    // that isn't the designated owner must still be denied, and must
-    // not see the nav link either.
+    // Visibility is gated by email, not isAdmin. This account is an admin,
+    // so it does see the consolidated "Admin" nav entry (for Usage/Lock
+    // Times) — but the hub page it leads to must not offer a Submissions
+    // card, and /submissions itself must still be denied.
+    await page.getByRole("link", { name: "Admin" }).first().click()
+    await expect(page).toHaveURL(/\/admin$/, { timeout: 10000 })
     await expect(page.getByRole("link", { name: "Submissions" })).toHaveCount(0)
 
     const response = await page.request.get("/submissions")
@@ -107,8 +112,11 @@ test.describe("Private submissions viewer", () => {
       const response = await page.request.get("/submissions")
       expect(response.status()).toBe(200)
 
-      // Only the owner should see the nav link, and it should lead here.
-      await page.getByRole("link", { name: "Submissions" }).first().click()
+      // Only the owner (or an admin) should see the consolidated "Admin"
+      // nav entry, and its hub page should offer a Submissions card.
+      await page.getByRole("link", { name: "Admin" }).first().click()
+      await expect(page).toHaveURL(/\/admin$/, { timeout: 10000 })
+      await page.getByRole("link", { name: "Submissions" }).click()
       await expect(page).toHaveURL(/\/submissions/, { timeout: 10000 })
       await expect(
         page.getByRole("heading", { name: "Submissions" })
