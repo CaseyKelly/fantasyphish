@@ -68,7 +68,7 @@ export async function POST(request: Request) {
 
     const duration = Date.now() - startTime
     console.log(
-      `[Send Reminders] ✓ Sent ${result.sent}/${result.eligibleUsers} reminders in ${duration}ms (${result.failed} failed)`
+      `[Send Reminders] ✓ ${result.eligibleUsers} eligible users in ${duration}ms — email: ${result.sent} sent/${result.failed} failed, push: ${result.pushSent} notifications sent/${result.pushFailed} failed`
     )
 
     return NextResponse.json({
