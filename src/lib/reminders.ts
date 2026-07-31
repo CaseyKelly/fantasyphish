@@ -14,8 +14,8 @@ export interface ReminderRunResult {
 }
 
 /**
- * Send show-day pick reminder emails to opted-in users who haven't
- * submitted picks yet for today's show(s).
+ * Send show-day pick reminder emails and push notifications to opted-in
+ * users who haven't submitted picks yet for today's show(s).
  */
 export async function sendPickReminders(options?: {
   dryRunUserId?: string
