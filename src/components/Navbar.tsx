@@ -14,6 +14,7 @@ import {
   User,
   Users,
   Eye,
+  BarChart3,
 } from "lucide-react"
 import { toast } from "sonner"
 import { DonutLogo } from "./DonutLogo"
@@ -46,6 +47,9 @@ export function Navbar() {
     { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
     ...(session?.user?.isPrivateViewer
       ? [{ href: "/submissions", label: "Submissions", icon: Eye }]
+      : []),
+    ...(isAdmin
+      ? [{ href: "/admin/usage", label: "Usage", icon: BarChart3 }]
       : []),
   ]
 
