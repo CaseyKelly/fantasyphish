@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
+import { useSession } from "next-auth/react"
 import { Sparkles } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { DonutLogo } from "@/components/DonutLogo"
@@ -61,6 +63,7 @@ interface Show {
 }
 
 export default function PicksPage() {
+  const { data: session } = useSession()
   const [nextShow, setNextShow] = useState<Show | null>(null)
   const [songs, setSongs] = useState<Song[]>([])
   const [loading, setLoading] = useState(true)
@@ -214,6 +217,19 @@ export default function PicksPage() {
         hideHeader={true}
         onSubmitSuccess={fetchData}
       />
+      {session?.user?.username && (
+        <p className="text-center text-sm text-gray-400">
+          Want a reminder if you haven&apos;t submitted picks yet? Set your
+          notification preferences on{" "}
+          <Link
+            href={`/user/${session.user.username}`}
+            className="text-[#c23a3a] hover:underline"
+          >
+            your profile
+          </Link>
+          .
+        </p>
+      )}
     </div>
   )
 }
