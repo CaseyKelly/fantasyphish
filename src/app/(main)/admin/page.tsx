@@ -3,7 +3,7 @@ import { redirect, notFound } from "next/navigation"
 import { Metadata } from "next"
 import Link from "next/link"
 import { BarChart3, Clock, Eye, ChevronRight } from "lucide-react"
-import { Card, CardHeader } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 
 export const metadata: Metadata = {
   title: "Admin",
@@ -67,7 +67,7 @@ export default async function AdminHubPage() {
         {tools.map((tool) => (
           <Link key={tool.href} href={tool.href}>
             <Card className="h-full transition-colors hover:border-[#5a7b8d]">
-              <CardHeader className="flex flex-row items-start justify-between gap-4">
+              <CardContent className="flex flex-row items-start justify-between gap-4">
                 <div className="flex gap-3">
                   <tool.icon className="h-6 w-6 flex-shrink-0 text-gray-400" />
                   <div>
@@ -78,7 +78,7 @@ export default async function AdminHubPage() {
                   </div>
                 </div>
                 <ChevronRight className="h-5 w-5 flex-shrink-0 text-gray-500" />
-              </CardHeader>
+              </CardContent>
             </Card>
           </Link>
         ))}

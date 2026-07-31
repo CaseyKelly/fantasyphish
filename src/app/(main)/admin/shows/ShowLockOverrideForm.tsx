@@ -112,7 +112,7 @@ export function ShowLockOverrideForm({ show }: { show: ShowSummary }) {
   return (
     <div
       data-testid={`show-lock-override-${show.id}`}
-      className="flex flex-col gap-3 border-b-2 border-[#4a6b7d]/30 pb-4 last:border-b-0 last:pb-0 sm:flex-row sm:items-end sm:justify-between"
+      className="flex flex-col gap-3 border-b-2 border-[#4a6b7d]/30 pb-4 last:border-b-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
     >
       <div>
         <p className="font-semibold text-white">
@@ -153,12 +153,12 @@ export function ShowLockOverrideForm({ show }: { show: ShowSummary }) {
           className="w-32"
           disabled={isSaving}
         />
-        <Button size="sm" onClick={handleSave} isLoading={isSaving}>
+        <Button size="md" onClick={handleSave} isLoading={isSaving}>
           Save
         </Button>
         {hasOverride && (
           <Button
-            size="sm"
+            size="md"
             variant="outline"
             onClick={handleClear}
             disabled={isSaving}
