@@ -87,6 +87,7 @@ async function getUserProfile(username: string) {
   if (!user) return null
 
   const emailPickReminders = user.emailPickReminders
+  const emailVerified = !!user.emailVerified
 
   // Include submissions that are either scored OR locked (show has started)
   const scoredOrLockedSubmissions = user.submissions.filter(
@@ -118,6 +119,7 @@ async function getUserProfile(username: string) {
     username: user.username,
     createdAt: user.createdAt,
     emailPickReminders,
+    emailVerified,
     stats: {
       totalShows: scoredOrLockedSubmissions.length,
       scoredShows: scoredSubmissions.length,
@@ -324,6 +326,7 @@ export default async function UserProfilePage({ params }: UserPageProps) {
       {isOwnProfile && (
         <NotificationSettings
           initialEmailEnabled={profile.emailPickReminders}
+          emailVerified={profile.emailVerified}
         />
       )}
     </div>
