@@ -147,8 +147,8 @@ export default async function PickPage({ params }: PickPageProps) {
         isLocked={isLocked}
       />
       <p className="text-center text-sm text-gray-400 mt-6">
-        Want a reminder if you haven&apos;t submitted picks yet? Set your
-        notification preferences on{" "}
+        Want a reminder on show day if you haven&apos;t submitted picks yet? Set
+        your notification preferences on{" "}
         <Link
           href={`/user/${session.user.username}`}
           className="text-[#c23a3a] hover:underline"

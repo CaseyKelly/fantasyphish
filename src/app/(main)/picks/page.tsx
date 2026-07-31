@@ -219,8 +219,8 @@ export default function PicksPage() {
       />
       {session?.user?.username && (
         <p className="text-center text-sm text-gray-400">
-          Want a reminder if you haven&apos;t submitted picks yet? Set your
-          notification preferences on{" "}
+          Want a reminder on show day if you haven&apos;t submitted picks yet?
+          Set your notification preferences on{" "}
           <Link
             href={`/user/${session.user.username}`}
             className="text-[#c23a3a] hover:underline"
