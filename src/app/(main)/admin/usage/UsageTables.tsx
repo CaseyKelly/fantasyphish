@@ -1,5 +1,7 @@
 "use client"
 
+import { ReactNode, useState } from "react"
+import { ChevronDown, ChevronUp } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { SortableTable, Column } from "@/components/admin/SortableTable"
 import {
@@ -11,6 +13,53 @@ import {
 
 function formatDate(iso: string | null): string {
   return iso ? iso.slice(0, 10) : "—"
+}
+
+function CollapsibleCard({
+  title,
+  description,
+  defaultOpen = true,
+  children,
+}: {
+  title: string
+  description?: string
+  defaultOpen?: boolean
+  children: ReactNode
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+
+  const toggle = () => setOpen((o) => !o)
+
+  return (
+    <Card>
+      <CardHeader
+        onClick={toggle}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault()
+            toggle()
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        aria-expanded={open}
+        className="flex cursor-pointer items-center justify-between gap-4 select-none"
+      >
+        <div>
+          <h2 className="text-lg font-semibold text-white">{title}</h2>
+          {description && (
+            <p className="text-sm text-gray-500">{description}</p>
+          )}
+        </div>
+        {open ? (
+          <ChevronUp className="h-5 w-5 flex-shrink-0 text-gray-400" />
+        ) : (
+          <ChevronDown className="h-5 w-5 flex-shrink-0 text-gray-400" />
+        )}
+      </CardHeader>
+      {open && <CardContent>{children}</CardContent>}
+    </Card>
+  )
 }
 
 const engagementColumns: Column<UserEngagementRow>[] = [
@@ -162,78 +211,54 @@ export function UsageTables({
 }: UsageTablesProps) {
   return (
     <>
-      <Card>
-        <CardHeader>
-          <h2 className="text-lg font-semibold text-white">User Engagement</h2>
-          <p className="text-sm text-gray-500">
-            One row per user. Click a column header to sort.
-          </p>
-        </CardHeader>
-        <CardContent>
-          <SortableTable
-            columns={engagementColumns}
-            rows={engagementRows}
-            rowKey={(row) => row.id}
-            initialSortKey="signupDate"
-          />
-        </CardContent>
-      </Card>
+      <CollapsibleCard
+        title="User Engagement"
+        description="One row per user. Click a column header to sort."
+      >
+        <SortableTable
+          columns={engagementColumns}
+          rows={engagementRows}
+          rowKey={(row) => row.id}
+          initialSortKey="signupDate"
+        />
+      </CollapsibleCard>
 
-      <Card>
-        <CardHeader>
-          <h2 className="text-lg font-semibold text-white">
-            Show Participation
-          </h2>
-          <p className="text-sm text-gray-500">
-            Most recent 25 shows. Participation is submissions ÷ current total
-            users, so older shows will read low relative to today&apos;s
-            userbase.
-          </p>
-        </CardHeader>
-        <CardContent>
-          <SortableTable
-            columns={showColumns}
-            rows={showRows}
-            rowKey={(row) => row.id}
-            initialSortKey="showDate"
-          />
-        </CardContent>
-      </Card>
+      <CollapsibleCard
+        title="Show Participation"
+        description="Most recent 25 shows. Participation is submissions ÷ current total users, so older shows will read low relative to today's userbase."
+      >
+        <SortableTable
+          columns={showColumns}
+          rows={showRows}
+          rowKey={(row) => row.id}
+          initialSortKey="showDate"
+        />
+      </CollapsibleCard>
 
-      <Card>
-        <CardHeader>
-          <h2 className="text-lg font-semibold text-white">
-            Achievement Distribution
-          </h2>
-          <p className="text-sm text-gray-500">Sorted rarest first.</p>
-        </CardHeader>
-        <CardContent>
-          <SortableTable
-            columns={achievementColumns}
-            rows={achievementRows}
-            rowKey={(row) => row.id}
-            initialSortKey="earnedCount"
-            initialSortDir="asc"
-          />
-        </CardContent>
-      </Card>
+      <CollapsibleCard
+        title="Achievement Distribution"
+        description="Sorted rarest first."
+      >
+        <SortableTable
+          columns={achievementColumns}
+          rows={achievementRows}
+          rowKey={(row) => row.id}
+          initialSortKey="earnedCount"
+          initialSortDir="asc"
+        />
+      </CollapsibleCard>
 
-      <Card>
-        <CardHeader>
-          <h2 className="text-lg font-semibold text-white">
-            Donut Catch Leaderboard
-          </h2>
-          <p className="text-sm text-gray-500">Top 25 personal bests.</p>
-        </CardHeader>
-        <CardContent>
-          <SortableTable
-            columns={donutColumns}
-            rows={donutRows}
-            rowKey={(row) => row.userId}
-            initialSortKey="score"
-          />
-        </CardContent>
-      </Card>
+      <CollapsibleCard
+        title="Donut Catch Leaderboard"
+        description="Top 25 personal bests."
+      >
+        <SortableTable
+          columns={donutColumns}
+          rows={donutRows}
+          rowKey={(row) => row.userId}
+          initialSortKey="score"
+        />
+      </CollapsibleCard>
     </>
   )
 }
