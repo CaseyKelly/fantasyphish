@@ -519,4 +519,60 @@ test.describe("Song Picker Flow", () => {
     await prisma.submission.delete({ where: { id: submission.id } })
     await prisma.show.delete({ where: { id: show.id } })
   })
+
+  test("should hide the reminder prompt once the user has notifications enabled", async ({
+    page,
+    createUser,
+    prisma,
+  }) => {
+    // Create user
+    const userEmail = `picker-reminder-${Date.now()}@example.com`
+    const userUsername = `pickerreminder${Date.now()}`
+    const userPassword = "PickerPassword123!"
+
+    await createUser({
+      email: userEmail,
+      username: userUsername,
+      password: userPassword,
+      verified: true,
+    })
+
+    // Create a future test show
+    const futureDate = new Date()
+    futureDate.setDate(futureDate.getDate() + 30)
+
+    const show = await prisma.show.create({
+      data: {
+        venue: "Test Venue Reminder",
+        city: "Test City",
+        state: "NY",
+        showDate: futureDate,
+        isComplete: false,
+      },
+    })
+
+    // Login
+    await page.goto("/login")
+    await page.getByPlaceholder("Email address").fill(userEmail)
+    await page.getByPlaceholder("Password").fill(userPassword)
+    await page.click('button[type="submit"]')
+    await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
+
+    const reminderPrompt = page.getByText(/Want a reminder on show day/i)
+
+    // Notifications are off by default, so the prompt should show
+    await page.goto(`/pick/${show.id}`)
+    await expect(reminderPrompt).toBeVisible()
+
+    // Enable email reminders, then the prompt should disappear
+    await prisma.user.update({
+      where: { email: userEmail.toLowerCase() },
+      data: { emailPickReminders: true },
+    })
+    await page.reload()
+    await expect(reminderPrompt).not.toBeVisible()
+
+    // Cleanup
+    await prisma.show.delete({ where: { id: show.id } })
+  })
 })

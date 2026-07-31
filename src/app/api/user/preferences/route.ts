@@ -12,6 +12,38 @@ const updatePreferencesSchema = z
     message: "At least one preference is required",
   })
 
+export async function GET() {
+  try {
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const user = await withRetry(
+      () =>
+        prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: {
+            emailPickReminders: true,
+            _count: { select: { pushSubscriptions: true } },
+          },
+        }),
+      { operationName: "fetch user preferences" }
+    )
+
+    return NextResponse.json({
+      emailPickReminders: !!user?.emailPickReminders,
+      hasPushSubscription: !!user && user._count.pushSubscriptions > 0,
+    })
+  } catch (error) {
+    console.error("Error fetching user preferences:", error)
+    return NextResponse.json(
+      { error: "Failed to fetch preferences" },
+      { status: 500 }
+    )
+  }
+}
+
 export async function PATCH(request: NextRequest) {
   try {
     const session = await auth()
