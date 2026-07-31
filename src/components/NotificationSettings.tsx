@@ -13,10 +13,8 @@ import {
 
 export function NotificationSettings({
   initialEmailEnabled,
-  isAdmin,
 }: {
   initialEmailEnabled: boolean
-  isAdmin: boolean
 }) {
   const [emailEnabled, setEmailEnabled] = useState(initialEmailEnabled)
   const [savingEmail, setSavingEmail] = useState(false)
@@ -24,7 +22,6 @@ export function NotificationSettings({
   const [pushAvailable, setPushAvailable] = useState(false)
   const [pushEnabled, setPushEnabled] = useState(false)
   const [savingPush, setSavingPush] = useState(false)
-  const [sendingTest, setSendingTest] = useState(false)
 
   useEffect(() => {
     if (!isPushSupported() || !isStandalonePwa()) return
@@ -81,28 +78,6 @@ export function NotificationSettings({
       )
     } finally {
       setSavingPush(false)
-    }
-  }
-
-  async function handleTestPush() {
-    setSendingTest(true)
-    try {
-      const res = await fetch("/api/admin/test-push", { method: "POST" })
-      const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data.error || "Test push failed")
-      }
-
-      toast.success(
-        `Test notification sent (${data.sent} sent, ${data.failed} failed)`
-      )
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Couldn't send test push"
-      )
-    } finally {
-      setSendingTest(false)
     }
   }
 
@@ -170,16 +145,6 @@ export function NotificationSettings({
                 </p>
               </div>
             </div>
-          )}
-
-          {isAdmin && pushEnabled && (
-            <button
-              onClick={handleTestPush}
-              disabled={sendingTest}
-              className="mt-3 text-sm text-gray-300 underline hover:text-white disabled:opacity-50"
-            >
-              {sendingTest ? "Sending…" : "Send test notification"}
-            </button>
           )}
         </div>
       </CardContent>
