@@ -2,6 +2,13 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { shouldRunCronJobs } from "@/lib/cron-helpers"
 import { sendPickReminders } from "@/lib/reminders"
+import { getHourInTimezone } from "@/lib/date-utils"
+
+// This cron is scheduled twice daily (21:00 and 22:00 UTC) to cover both
+// EDT and EST, since Vercel cron schedules are fixed UTC and don't shift
+// with daylight saving. Only the invocation that actually lands at 5 PM
+// Eastern should send reminders; the other is a no-op.
+const TARGET_HOUR_ET = 17
 
 // Force dynamic rendering and disable caching
 export const dynamic = "force-dynamic"
@@ -36,6 +43,19 @@ export async function POST(request: Request) {
     }
 
     console.log("[Send Reminders] Authorization successful")
+
+    // Only proceed on the invocation that actually lands at 5 PM Eastern
+    // (see TARGET_HOUR_ET comment above)
+    const currentHourET = getHourInTimezone(new Date(), "America/New_York")
+    if (currentHourET !== TARGET_HOUR_ET) {
+      console.log(
+        `[Send Reminders] Skipping: current ET hour is ${currentHourET}, not ${TARGET_HOUR_ET}`
+      )
+      return NextResponse.json(
+        { skipped: true, reason: "Not the target Eastern hour" },
+        { status: 200 }
+      )
+    }
 
     // Check if cron jobs should run (only when tours are active)
     const { shouldRun, reason } = await shouldRunCronJobs()

@@ -18,7 +18,11 @@
     },
     {
       "path": "/api/send-reminders",
-      "schedule": "0 11 * * *"
+      "schedule": "0 21 * * *"
+    },
+    {
+      "path": "/api/send-reminders",
+      "schedule": "0 22 * * *"
     }
   ]
 }
