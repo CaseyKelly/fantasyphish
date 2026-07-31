@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth"
 import { redirect, notFound } from "next/navigation"
 import { Metadata } from "next"
-import { Card, CardContent } from "@/components/ui/card"
+import { UsageOverview } from "./UsageOverview"
 import { UsageTables } from "./UsageTables"
 import {
   getUsageOverview,
@@ -17,17 +17,6 @@ export const metadata: Metadata = {
     index: false,
     follow: false,
   },
-}
-
-function StatTile({ label, value }: { label: string; value: string }) {
-  return (
-    <Card>
-      <CardContent className="space-y-1">
-        <p className="text-xs uppercase tracking-wide text-gray-500">{label}</p>
-        <p className="text-2xl font-bold text-white">{value}</p>
-      </CardContent>
-    </Card>
-  )
 }
 
 export default async function AdminUsagePage() {
@@ -61,30 +50,7 @@ export default async function AdminUsagePage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatTile label="Total Users" value={String(overview.totalUsers)} />
-        <StatTile label="Verified" value={String(overview.verifiedUsers)} />
-        <StatTile
-          label="Total Submissions"
-          value={String(overview.totalSubmissions)}
-        />
-        <StatTile
-          label="Donut Players"
-          value={`${overview.donutPlayers} (${overview.donutPlayersPct}%)`}
-        />
-        <StatTile
-          label="Email Reminders On"
-          value={`${overview.emailOptInUsers} (${overview.emailOptInPct}%)`}
-        />
-        <StatTile
-          label="Push Enabled"
-          value={`${overview.pushEnabledUsers} (${overview.pushEnabledPct}%)`}
-        />
-        <StatTile
-          label="Banner Dismissed"
-          value={`${overview.bannerDismissedUsers} (${overview.bannerDismissedPct}%)`}
-        />
-      </div>
+      <UsageOverview overview={overview} engagementRows={engagementRows} />
 
       <UsageTables
         engagementRows={engagementRows}
