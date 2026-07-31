@@ -9,8 +9,6 @@ export interface UsageOverview {
   emailOptInPct: number
   pushEnabledUsers: number
   pushEnabledPct: number
-  bannerDismissedUsers: number
-  bannerDismissedPct: number
   donutPlayers: number
   donutPlayersPct: number
   totalSubmissions: number
@@ -25,7 +23,6 @@ export async function getUsageOverview(): Promise<UsageOverview> {
     totalUsers,
     verifiedUsers,
     emailOptInUsers,
-    bannerDismissedUsers,
     pushUserGroups,
     donutPlayers,
     totalSubmissions,
@@ -35,7 +32,6 @@ export async function getUsageOverview(): Promise<UsageOverview> {
         prisma.user.count(),
         prisma.user.count({ where: { emailVerified: { not: null } } }),
         prisma.user.count({ where: { emailPickReminders: true } }),
-        prisma.user.count({ where: { dismissedRemindersBanner: true } }),
         prisma.pushSubscription.groupBy({ by: ["userId"] }),
         prisma.easterEggScore.count(),
         prisma.submission.count({ where: { show: excludeTestShows } }),
@@ -52,8 +48,6 @@ export async function getUsageOverview(): Promise<UsageOverview> {
     emailOptInPct: pctOf(emailOptInUsers, totalUsers),
     pushEnabledUsers,
     pushEnabledPct: pctOf(pushEnabledUsers, totalUsers),
-    bannerDismissedUsers,
-    bannerDismissedPct: pctOf(bannerDismissedUsers, totalUsers),
     donutPlayers,
     donutPlayersPct: pctOf(donutPlayers, totalUsers),
     totalSubmissions,
@@ -68,7 +62,6 @@ export interface UserEngagementRow {
   emailVerified: boolean
   isAdmin: boolean
   emailOptIn: boolean
-  bannerDismissed: boolean
   pushCount: number
   submissionCount: number
   lastSubmissionDate: string | null
@@ -89,7 +82,6 @@ export async function getUserEngagementRows(): Promise<UserEngagementRow[]> {
             emailVerified: true,
             isAdmin: true,
             emailPickReminders: true,
-            dismissedRemindersBanner: true,
             _count: {
               select: {
                 submissions: { where: { show: excludeTestShows } },
@@ -125,7 +117,6 @@ export async function getUserEngagementRows(): Promise<UserEngagementRow[]> {
     emailVerified: !!user.emailVerified,
     isAdmin: user.isAdmin,
     emailOptIn: user.emailPickReminders,
-    bannerDismissed: user.dismissedRemindersBanner,
     pushCount: user._count.pushSubscriptions,
     submissionCount: user._count.submissions,
     lastSubmissionDate: lastSubmissionMap.get(user.id)?.toISOString() ?? null,
