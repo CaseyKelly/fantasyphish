@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card"
 import { LoadingDonut } from "@/components/LoadingDonut"
 import { format, parseISO } from "date-fns"
 import { Trash2, ScrollText, ChevronDown } from "lucide-react"
+import { useRefetchOnReturn } from "@/hooks/useRefetchOnReturn"
 
 interface Pick {
   id: string
@@ -145,6 +146,10 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
       return () => clearInterval(interval)
     }
   }, [data?.show.isComplete, showId, fetchResults])
+
+  // Refetch immediately when the user returns to the tab/app instead of
+  // waiting for the next 60s interval tick
+  useRefetchOnReturn(fetchResults, !data?.show.isComplete)
 
   if (loading) {
     return (

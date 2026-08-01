@@ -19,6 +19,7 @@ import {
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { LiveBadge } from "@/components/LiveBadge"
 import { LoadingDonut } from "@/components/LoadingDonut"
+import { useRefetchOnReturn } from "@/hooks/useRefetchOnReturn"
 
 // Helper to format show dates consistently without timezone issues
 function formatShowDate(showDate: Date | string, formatStr: string): string {
@@ -132,6 +133,10 @@ export default function ResultsClient({
 
     return () => clearInterval(interval)
   }, [hasInProgressShows, router])
+
+  // Refetch immediately when the user returns to the tab/app instead of
+  // waiting for the next 60s interval tick
+  useRefetchOnReturn(() => router.refresh(), hasInProgressShows)
 
   const handleDeleteSubmission = async (
     submissionId: string,
