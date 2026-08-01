@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   Trophy,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { parseUTCDate } from "@/lib/date-utils"
+import { useRefetchOnReturn } from "@/hooks/useRefetchOnReturn"
 
 interface Pick {
   songName: string
@@ -691,10 +693,15 @@ export default function LeaderboardClient({
   currentUserId,
   hasPastTours,
 }: LeaderboardClientProps) {
+  const router = useRouter()
   const isActiveTour = nextShow?.tour?.status === "ACTIVE"
   const [view, setView] = useState<View>(isActiveTour ? "show" : "tour")
   const [expandedShow, setExpandedShow] = useState<Set<string>>(new Set())
   const [expandedTour, setExpandedTour] = useState<Set<string>>(new Set())
+
+  // Leaderboard has no polling of its own (unlike results), so refetch
+  // server data when the user returns to the tab/app during an active tour
+  useRefetchOnReturn(() => router.refresh(), isActiveTour)
 
   const toggleShow = (userId: string) => {
     setExpandedShow((prev) => {
