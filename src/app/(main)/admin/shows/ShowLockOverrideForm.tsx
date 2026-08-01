@@ -143,14 +143,14 @@ export function ShowLockOverrideForm({ show }: { show: ShowSummary }) {
         {error && <p className="mt-1 text-sm text-[#d64545]">{error}</p>}
       </div>
 
-      <div className="flex items-end gap-2">
+      <div className="flex flex-wrap items-end gap-2">
         <Input
           type="time"
           id={`lock-time-${show.id}`}
           label={`Lock time (${tzAbbr})`}
           value={timeInput}
           onChange={(e) => setTimeInput(e.target.value)}
-          className="w-32"
+          widthClassName="w-32"
           disabled={isSaving}
         />
         <Button size="md" onClick={handleSave} isLoading={isSaving}>
