@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useLayoutEffect, useRef } from "react"
 
 // Refetch when the user comes back to the page after being away - e.g.
 // backgrounding the PWA/tab and reopening it - instead of waiting for the
@@ -10,7 +10,12 @@ import { useEffect, useRef } from "react"
 export function useRefetchOnReturn(onReturn: () => void, enabled = true) {
   const onReturnRef = useRef(onReturn)
 
-  useEffect(() => {
+  // Writing directly to a ref during render is disallowed (react-hooks/refs),
+  // so sync it in a layout effect instead - it runs synchronously before
+  // paint, so there's no gap where a visibilitychange/focus event could fire
+  // against a stale callback (unlike a plain useEffect, which runs after
+  // paint).
+  useLayoutEffect(() => {
     onReturnRef.current = onReturn
   })
 
