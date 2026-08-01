@@ -3,14 +3,19 @@ import { forwardRef, InputHTMLAttributes } from "react"
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string
   error?: string
+  /** Width utility class applied to both the outer wrapper and the input itself. Defaults to "w-full". */
+  widthClassName?: string
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, className = "", id, ...props }, ref) => {
+  (
+    { label, error, className = "", widthClassName = "w-full", id, ...props },
+    ref
+  ) => {
     const inputId = id || label?.toLowerCase().replace(/\s+/g, "-")
 
     return (
-      <div className="w-full">
+      <div className={widthClassName}>
         {label && (
           <label
             htmlFor={inputId}
@@ -23,8 +28,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           id={inputId}
           className={`
-            w-full px-4 py-2.5 
-            bg-[#233d4d] border-2 border-[#4a6b7d] 
+            ${widthClassName} px-4 py-2.5
+            bg-[#233d4d] border-2 border-[#4a6b7d]
             rounded-lg text-white placeholder-gray-500
             focus:outline-none focus:ring-2 focus:ring-[#c23a3a] focus:border-transparent
             disabled:opacity-50 disabled:cursor-not-allowed
