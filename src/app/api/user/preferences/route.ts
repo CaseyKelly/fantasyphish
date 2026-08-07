@@ -3,14 +3,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { withRetry } from "@/lib/db-retry"
 import { z } from "zod"
-
-const updatePreferencesSchema = z
-  .object({
-    emailPickReminders: z.boolean().optional(),
-  })
-  .refine((data) => Object.keys(data).length > 0, {
-    message: "At least one preference is required",
-  })
+import { updatePreferencesSchema } from "./schema"
 
 export async function GET() {
   try {

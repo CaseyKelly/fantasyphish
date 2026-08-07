@@ -14,7 +14,7 @@ export interface UsageOverview {
   totalSubmissions: number
 }
 
-function pctOf(count: number, total: number): number {
+export function pctOf(count: number, total: number): number {
   return total === 0 ? 0 : Math.round((count / total) * 100)
 }
 

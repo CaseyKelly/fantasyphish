@@ -182,19 +182,21 @@ export function SongPicker({
     }
   }, [justSaved])
 
-  // Prevent background scroll when mobile modal is open and clear search when closed
+  // Prevent background scroll when mobile modal is open
   useEffect(() => {
-    if (mobileModalOpen) {
-      document.body.style.overflow = "hidden"
-    } else {
-      document.body.style.overflow = ""
-      setSearchQuery("")
-    }
+    document.body.style.overflow = mobileModalOpen ? "hidden" : ""
 
     return () => {
       document.body.style.overflow = ""
     }
-  }, [mobileModalOpen, setSearchQuery])
+  }, [mobileModalOpen])
+
+  // Close the mobile modal and clear its search field together, so the
+  // search box always starts empty next time the modal opens.
+  const closeMobileModal = () => {
+    setMobileModalOpen(null)
+    setSearchQuery("")
+  }
 
   // Filter songs based on search
   const filteredSongs = useMemo(() => {
@@ -259,14 +261,14 @@ export function SongPicker({
     if (pickType === "OPENER") {
       setOpenerPick(pick)
       if (isMobile) {
-        setMobileModalOpen(null)
+        closeMobileModal()
       } else {
         setExpandedSection("encore")
       }
     } else if (pickType === "ENCORE") {
       setEncorePick(pick)
       if (isMobile) {
-        setMobileModalOpen(null)
+        closeMobileModal()
       } else {
         setExpandedSection("regular")
       }
@@ -275,7 +277,7 @@ export function SongPicker({
         setRegularPicks([...regularPicks, pick])
         if (regularPicks.length === 10) {
           if (isMobile) {
-            setMobileModalOpen(null)
+            closeMobileModal()
           } else {
             setExpandedSection(null)
           }
@@ -432,7 +434,7 @@ export function SongPicker({
           <div className="flex items-center justify-between p-4 border-b-2 border-[#4a6b7d]/60">
             <h2 className="text-xl font-semibold text-white">{title}</h2>
             <button
-              onClick={() => setMobileModalOpen(null)}
+              onClick={closeMobileModal}
               className="p-2 hover:bg-[#4a6b7d]/50 rounded-lg transition-colors"
             >
               <X className="h-5 w-5 text-gray-400" />
