@@ -24,7 +24,7 @@ describe("ACHIEVEMENT_DEFINITIONS", () => {
         "JACKPOT",
         "DONUT_DEVOTEE",
         "NYE_RUN_2025_PARTICIPANT",
-        "NOTIFICATIONS_ENABLED",
+        "ICCULUS",
       ].sort()
     )
   })

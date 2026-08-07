@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       { operationName: "save push subscription" }
     )
 
-    await awardSongPickAchievement(session.user.id, "NOTIFICATIONS_ENABLED")
+    await awardSongPickAchievement(session.user.id, "ICCULUS")
 
     return NextResponse.json({ success: true })
   } catch (error) {

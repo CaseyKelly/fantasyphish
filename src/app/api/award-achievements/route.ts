@@ -48,7 +48,7 @@ export async function POST(request: Request) {
 
     const results = []
 
-    // Award NOTIFICATIONS_ENABLED achievement (backfills existing opted-in
+    // Award ICCULUS achievement (backfills existing opted-in
     // users, not just future opt-ins). Not tied to active tours, so this
     // runs regardless of the shouldRunCronJobs() check below.
     const notificationsResults = await awardNotificationsAchievement()
@@ -271,7 +271,7 @@ async function awardAchievement(
 }
 
 async function awardNotificationsAchievement() {
-  const achievementDef = ACHIEVEMENT_DEFINITIONS.NOTIFICATIONS_ENABLED
+  const achievementDef = ACHIEVEMENT_DEFINITIONS.ICCULUS
 
   console.log(
     `[AwardAchievements:POST] ${achievementDef.icon} Awarding ${achievementDef.name} achievements...`

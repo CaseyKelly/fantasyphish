@@ -60,11 +60,11 @@ export const ACHIEVEMENT_DEFINITIONS = {
       venue: "Madison Square Garden",
     },
   },
-  NOTIFICATIONS_ENABLED: {
-    slug: "notifications-enabled",
-    name: "Signal Boost",
-    description: "Enabled email or push notifications for show reminders",
-    icon: "Bell",
+  ICCULUS: {
+    slug: "icculus",
+    name: "You Summoned",
+    description: "You summoned Icculus by signing up for notifications",
+    icon: "Book",
     category: "PARTICIPATION" as AchievementCategory,
   },
   // Future achievement examples:

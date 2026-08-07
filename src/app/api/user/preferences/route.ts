@@ -76,7 +76,7 @@ export async function PATCH(request: NextRequest) {
     )
 
     if (data.emailPickReminders) {
-      await awardSongPickAchievement(session.user.id, "NOTIFICATIONS_ENABLED")
+      await awardSongPickAchievement(session.user.id, "ICCULUS")
     }
 
     return NextResponse.json({ success: true, ...data })
