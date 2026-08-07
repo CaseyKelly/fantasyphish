@@ -24,6 +24,7 @@ export default function VerifyRequiredClient() {
     // Get email from sessionStorage instead of URL parameter
     const storedEmail = sessionStorage.getItem("unverified-email")
     if (storedEmail) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing from sessionStorage, which is only readable client-side after mount
       setEmail(storedEmail)
     } else {
       // If no email in session, redirect to login

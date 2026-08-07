@@ -59,12 +59,9 @@ export default function CompleteShowsClient({
 }: CompleteShowsClientProps) {
   const router = useRouter()
   const now = useNow(1000)
-  const [shows, setShows] = useState(initialShows)
+  const [removedIds, setRemovedIds] = useState<Set<string>>(() => new Set())
   const [completingId, setCompletingId] = useState<string | null>(null)
-
-  useEffect(() => {
-    setShows(initialShows)
-  }, [initialShows])
+  const shows = initialShows.filter((s) => !removedIds.has(s.id))
 
   const handleMarkComplete = async (show: ShowRow) => {
     const confirmed = confirm(
@@ -88,7 +85,7 @@ export default function CompleteShowsClient({
       }
 
       toast.success(`${show.venue} marked complete`)
-      setShows((prev) => prev.filter((s) => s.id !== show.id))
+      setRemovedIds((prev) => new Set(prev).add(show.id))
       router.refresh()
     } catch (err) {
       toast.error(

@@ -11,23 +11,50 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { DonutLogo } from "@/components/DonutLogo"
 import { LoadingDonut } from "@/components/LoadingDonut"
 
+// Map NextAuth error codes to friendly messages
+function getErrorMessage(errorCode: string | null) {
+  if (!errorCode) return ""
+
+  // If it's already a detailed message, use it
+  if (
+    errorCode.length > 20 ||
+    errorCode.includes("email") ||
+    errorCode.includes("account")
+  ) {
+    return errorCode
+  }
+
+  switch (errorCode) {
+    case "Configuration":
+      return "No account found with this email. Please sign up first."
+    case "CredentialsSignin":
+      return "Invalid credentials. Please check your email and password."
+    case "AccessDenied":
+      return "Access denied. Please verify your email or contact support."
+    default:
+      return errorCode
+  }
+}
+
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
+  const [error, setError] = useState(() =>
+    getErrorMessage(searchParams.get("error"))
+  )
   const [isLoading, setIsLoading] = useState(false)
 
   const callbackUrl = searchParams.get("callbackUrl") || "/picks"
   const verified = searchParams.get("verified")
-  const authError = searchParams.get("error")
 
   // Auto-fill email from sessionStorage if user just verified
   useEffect(() => {
     if (verified) {
       const verifiedEmail = sessionStorage.getItem("verified-email")
       if (verifiedEmail) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing from sessionStorage, which is only readable client-side after mount
         setEmail(verifiedEmail)
         sessionStorage.removeItem("verified-email")
         // Focus password field after a brief delay
@@ -37,38 +64,6 @@ function LoginForm() {
       }
     }
   }, [verified])
-
-  // Map NextAuth error codes to friendly messages
-  const getErrorMessage = (errorCode: string | null) => {
-    if (!errorCode) return ""
-
-    // If it's already a detailed message, use it
-    if (
-      errorCode.length > 20 ||
-      errorCode.includes("email") ||
-      errorCode.includes("account")
-    ) {
-      return errorCode
-    }
-
-    switch (errorCode) {
-      case "Configuration":
-        return "No account found with this email. Please sign up first."
-      case "CredentialsSignin":
-        return "Invalid credentials. Please check your email and password."
-      case "AccessDenied":
-        return "Access denied. Please verify your email or contact support."
-      default:
-        return errorCode
-    }
-  }
-
-  // Set error from URL parameter on mount
-  useEffect(() => {
-    if (authError) {
-      setError(getErrorMessage(authError))
-    }
-  }, [authError])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

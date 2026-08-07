@@ -27,6 +27,7 @@ export function NotificationSettings({
 
   useEffect(() => {
     if (!isPushSupported() || !isStandalonePwa()) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- feature detection only possible client-side after mount
     setPushAvailable(true)
     navigator.serviceWorker.ready
       .then((registration) => registration.pushManager.getSubscription())

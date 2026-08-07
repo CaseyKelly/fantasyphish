@@ -188,6 +188,7 @@ export function SongPicker({
       document.body.style.overflow = "hidden"
     } else {
       document.body.style.overflow = ""
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing search alongside the scroll-lock cleanup when the modal closes
       setSearchQuery("")
     }
 

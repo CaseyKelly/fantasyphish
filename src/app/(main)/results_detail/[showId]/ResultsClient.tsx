@@ -133,6 +133,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
 
   // Initial fetch
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch on mount
     fetchResults()
   }, [showId, fetchResults])
 
