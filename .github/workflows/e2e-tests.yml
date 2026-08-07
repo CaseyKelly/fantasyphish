@@ -138,7 +138,7 @@ jobs:
           PHISHNET_API_KEY: ${{ secrets.PHISHNET_API_KEY }}
 
       - name: Upload Playwright report and test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-results
