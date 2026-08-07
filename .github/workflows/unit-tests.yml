@@ -30,7 +30,7 @@ jobs:
 
       - name: Cache node_modules
         id: node-modules-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: node_modules
           # node-version-pinned suffix so this never shares a cache entry with
