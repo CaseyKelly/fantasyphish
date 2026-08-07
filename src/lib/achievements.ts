@@ -60,6 +60,13 @@ export const ACHIEVEMENT_DEFINITIONS = {
       venue: "Madison Square Garden",
     },
   },
+  NOTIFICATIONS_ENABLED: {
+    slug: "notifications-enabled",
+    name: "Signal Boost",
+    description: "Enabled email or push notifications for show reminders",
+    icon: "Bell",
+    category: "PARTICIPATION" as AchievementCategory,
+  },
   // Future achievement examples:
   // SUMMER_TOUR_2025_CHAMPION: {
   //   slug: "summer-tour-2025-champion",

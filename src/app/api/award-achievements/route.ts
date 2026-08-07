@@ -46,18 +46,29 @@ export async function POST(request: Request) {
 
     console.log("[AwardAchievements:POST] Authorization successful")
 
+    const results = []
+
+    // Award NOTIFICATIONS_ENABLED achievement (backfills existing opted-in
+    // users, not just future opt-ins). Not tied to active tours, so this
+    // runs regardless of the shouldRunCronJobs() check below.
+    const notificationsResults = await awardNotificationsAchievement()
+    results.push(notificationsResults)
+
     // Check if cron jobs should run (only when tours are active)
     const { shouldRun, reason } = await shouldRunCronJobs()
     if (!shouldRun) {
-      console.log(`[AwardAchievements:POST] Skipping: ${reason}`)
-      return NextResponse.json({ skipped: true, reason }, { status: 200 })
+      console.log(
+        `[AwardAchievements:POST] Skipping tour-dependent achievements: ${reason}`
+      )
+      return NextResponse.json(
+        { skipped: true, reason, results },
+        { status: 200 }
+      )
     }
 
     console.log(
       "[AwardAchievements:POST] Active tours found, proceeding with achievement awards"
     )
-
-    const results = []
 
     // Award PERFECT_OPENER achievement
     const openerResults = await awardAchievement("PERFECT_OPENER", "OPENER")
@@ -245,6 +256,112 @@ async function awardAchievement(
       } else {
         console.error(
           `[AwardAchievements:POST] Error awarding achievement to user ${pick.submission.user.username}:`,
+          error
+        )
+      }
+    }
+  }
+
+  return {
+    achievement: achievementDef.name,
+    awarded,
+    skipped,
+    total: awarded + skipped,
+  }
+}
+
+async function awardNotificationsAchievement() {
+  const achievementDef = ACHIEVEMENT_DEFINITIONS.NOTIFICATIONS_ENABLED
+
+  console.log(
+    `[AwardAchievements:POST] ${achievementDef.icon} Awarding ${achievementDef.name} achievements...`
+  )
+
+  // 1. Create or update the achievement record
+  const achievement = await withRetry(
+    () =>
+      prisma.achievement.upsert({
+        where: { slug: achievementDef.slug },
+        update: {
+          name: achievementDef.name,
+          description: achievementDef.description,
+          icon: achievementDef.icon,
+          category: achievementDef.category,
+        },
+        create: {
+          slug: achievementDef.slug,
+          name: achievementDef.name,
+          description: achievementDef.description,
+          icon: achievementDef.icon,
+          category: achievementDef.category,
+        },
+      }),
+    { operationName: `upsert achievement ${achievementDef.slug}` }
+  )
+
+  console.log(
+    `[AwardAchievements:POST] ✓ Achievement record ready: ${achievement.name}`
+  )
+
+  // 2. Find all users who have email reminders or push notifications enabled
+  // (covers both existing opted-in users and anyone whose inline award at
+  // opt-in time was missed)
+  const users = await withRetry(
+    () =>
+      prisma.user.findMany({
+        where: {
+          OR: [
+            { emailPickReminders: true },
+            { pushSubscriptions: { some: {} } },
+          ],
+        },
+        select: { id: true, username: true },
+      }),
+    { operationName: "find users with notifications enabled" }
+  )
+
+  console.log(
+    `[AwardAchievements:POST] Found ${users.length} users with notifications enabled`
+  )
+
+  if (users.length === 0) {
+    return {
+      achievement: achievementDef.name,
+      awarded: 0,
+      skipped: 0,
+    }
+  }
+
+  // 3. Award achievement to each user (skip if already awarded)
+  let awarded = 0
+  let skipped = 0
+
+  for (const user of users) {
+    try {
+      await withRetry(
+        () =>
+          prisma.userAchievement.create({
+            data: {
+              userId: user.id,
+              achievementId: achievement.id,
+            },
+          }),
+        { operationName: `award ${achievementDef.slug} to user ${user.id}` }
+      )
+      awarded++
+      console.log(`[AwardAchievements:POST]   ✓ Awarded to ${user.username}`)
+    } catch (error: unknown) {
+      // User already has this achievement (unique constraint violation)
+      if (
+        error &&
+        typeof error === "object" &&
+        "code" in error &&
+        error.code === "P2002"
+      ) {
+        skipped++
+      } else {
+        console.error(
+          `[AwardAchievements:POST] Error awarding achievement to user ${user.username}:`,
           error
         )
       }
