@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { toast } from "sonner"
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { LoadingDonut } from "@/components/LoadingDonut"
+import { useFocusTrap } from "@/hooks/useFocusTrap"
 
 interface Pick {
   songId: string
@@ -36,6 +37,9 @@ export function GuestRegistrationModal({
     password: "",
     confirmPassword: "",
   })
+  const modalRef = useRef<HTMLDivElement>(null)
+
+  useFocusTrap(modalRef, true, onClose)
 
   // Prevent background scroll when modal is open
   useEffect(() => {
@@ -167,12 +171,23 @@ export function GuestRegistrationModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-md bg-[#1e3340] border-[#3d5a6c]">
+    <div
+      ref={modalRef}
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+    >
+      <Card
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="guest-registration-modal-title"
+        className="w-full max-w-md bg-[#1e3340] border-[#3d5a6c]"
+      >
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-white">
+              <h2
+                id="guest-registration-modal-title"
+                className="text-2xl font-bold text-white"
+              >
                 {mode === "register"
                   ? "Create Your Account"
                   : "Sign In to Save Picks"}
@@ -185,9 +200,10 @@ export function GuestRegistrationModal({
             </div>
             <button
               onClick={onClose}
+              aria-label="Close"
               className="text-gray-400 hover:text-white transition-colors"
             >
-              <X className="h-6 w-6" />
+              <X aria-hidden="true" className="h-6 w-6" />
             </button>
           </div>
         </CardHeader>

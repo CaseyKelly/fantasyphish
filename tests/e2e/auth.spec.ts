@@ -4,6 +4,7 @@ import {
   waitForEmail,
   extractVerificationToken,
 } from "./helpers/email"
+import AxeBuilder from "@axe-core/playwright"
 
 test.describe.configure({ mode: "serial" }) // Run tests sequentially to avoid rate limiting
 
@@ -20,6 +21,22 @@ const skipEmailSend = process.env.SKIP_EMAIL_SEND === "true"
  * - All other tests: Use direct database creation to avoid hitting email quota
  */
 test.describe("User Authentication", () => {
+  test("login and register pages should have no automatically detectable accessibility violations", async ({
+    page,
+  }) => {
+    await page.goto("/login")
+    const loginResults = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa"])
+      .analyze()
+    expect(loginResults.violations).toEqual([])
+
+    await page.goto("/register")
+    const registerResults = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa"])
+      .analyze()
+    expect(registerResults.violations).toEqual([])
+  })
+
   test("should complete full registration flow with email verification", async ({
     page,
     prisma,

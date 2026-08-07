@@ -133,17 +133,27 @@ export default function RegisterClient() {
           </CardHeader>
           <CardContent>
             {error && (
-              <div className="mb-6 p-4 bg-[#c23a3a]/20 border border-[#c23a3a]/30 rounded-lg flex items-start space-x-3">
-                <AlertCircle className="h-5 w-5 text-[#d64545] flex-shrink-0 mt-0.5" />
+              <div
+                role="alert"
+                className="mb-6 p-4 bg-[#c23a3a]/20 border border-[#c23a3a]/30 rounded-lg flex items-start space-x-3"
+              >
+                <AlertCircle
+                  aria-hidden="true"
+                  className="h-5 w-5 text-[#d64545] flex-shrink-0 mt-0.5"
+                />
                 <p className="text-sm text-[#d64545]">{error}</p>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <User
+                  aria-hidden="true"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"
+                />
                 <Input
                   type="text"
+                  aria-label="Username"
                   placeholder="Username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -155,9 +165,13 @@ export default function RegisterClient() {
               </div>
 
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Mail
+                  aria-hidden="true"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"
+                />
                 <Input
                   type="email"
+                  aria-label="Email address"
                   placeholder="Email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -167,9 +181,13 @@ export default function RegisterClient() {
               </div>
 
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Lock
+                  aria-hidden="true"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"
+                />
                 <Input
                   type="password"
+                  aria-label="Password (minimum 8 characters)"
                   placeholder="Password (min 8 characters)"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -180,9 +198,13 @@ export default function RegisterClient() {
               </div>
 
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Lock
+                  aria-hidden="true"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"
+                />
                 <Input
                   type="password"
+                  aria-label="Confirm password"
                   placeholder="Confirm password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}

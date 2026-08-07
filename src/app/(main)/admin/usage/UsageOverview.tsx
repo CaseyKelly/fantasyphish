@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { X } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { SortableTable, Column } from "@/components/admin/SortableTable"
@@ -8,6 +8,7 @@ import {
   UsageOverview as UsageOverviewStats,
   UserEngagementRow,
 } from "@/lib/admin-usage"
+import { useFocusTrap } from "@/hooks/useFocusTrap"
 
 type MetricKey =
   | "totalUsers"
@@ -150,9 +151,12 @@ export function UsageOverview({
   engagementRows,
 }: UsageOverviewProps) {
   const [selectedMetric, setSelectedMetric] = useState<MetricKey | null>(null)
+  const modalRef = useRef<HTMLDivElement>(null)
 
   const config = selectedMetric ? metricConfig[selectedMetric] : null
   const rows = config ? engagementRows.filter(config.filter) : []
+
+  useFocusTrap(modalRef, config !== null, () => setSelectedMetric(null))
 
   return (
     <>
@@ -190,26 +194,41 @@ export function UsageOverview({
       </div>
 
       {config && (
+        // Backdrop dismisses the modal on click; Escape-to-close and focus
+        // trapping are handled by useFocusTrap above, so the backdrop and
+        // its content wrapper don't need their own keyboard handlers.
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events
         <div
+          ref={modalRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="usage-overview-modal-title"
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
           onClick={() => setSelectedMetric(null)}
         >
+          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
           <div
             className="flex max-h-[80vh] w-full max-w-2xl flex-col rounded-lg bg-[#2d4654] shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-[#3d5a6c]/50 p-6">
               <div>
-                <h2 className="text-xl font-bold text-white">{config.title}</h2>
+                <h2
+                  id="usage-overview-modal-title"
+                  className="text-xl font-bold text-white"
+                >
+                  {config.title}
+                </h2>
                 <p className="text-sm text-gray-500">
                   {rows.length} user{rows.length === 1 ? "" : "s"}
                 </p>
               </div>
               <button
                 onClick={() => setSelectedMetric(null)}
+                aria-label="Close"
                 className="text-gray-400 transition-colors hover:text-white"
               >
-                <X className="h-6 w-6" />
+                <X aria-hidden="true" className="h-6 w-6" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-6">

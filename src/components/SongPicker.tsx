@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { format } from "date-fns"
@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { LiveBadge } from "@/components/LiveBadge"
+import { useFocusTrap } from "@/hooks/useFocusTrap"
 
 interface Song {
   id: string
@@ -86,6 +87,7 @@ export function SongPicker({
     "OPENER" | "ENCORE" | "REGULAR" | null
   >(null)
   const [justSaved, setJustSaved] = useState(false)
+  const mobileModalRef = useRef<HTMLDivElement>(null)
 
   // Live scoring state for the locked panel - seeded from server props,
   // refreshed periodically once the show has started
@@ -197,6 +199,8 @@ export function SongPicker({
     setMobileModalOpen(null)
     setSearchQuery("")
   }
+
+  useFocusTrap(mobileModalRef, mobileModalOpen !== null, closeMobileModal)
 
   // Filter songs based on search
   const filteredSongs = useMemo(() => {
@@ -373,6 +377,7 @@ export function SongPicker({
               key={song.id}
               onClick={() => !isDisabled && handleSelectSong(song, pickType)}
               disabled={isDisabled}
+              aria-pressed={isSelected}
               className={`w-full text-left px-3 py-2 rounded-lg transition-all ${
                 isSelected
                   ? "bg-[#1e3340]/60 text-gray-500 cursor-not-allowed"
@@ -395,7 +400,12 @@ export function SongPicker({
                         </span>
                       )
                     })()}
-                  {isSelected && <Check className="h-4 w-4 text-green-500" />}
+                  {isSelected && (
+                    <Check
+                      aria-hidden="true"
+                      className="h-4 w-4 text-green-500"
+                    />
+                  )}
                 </div>
               </div>
             </button>
@@ -426,18 +436,28 @@ export function SongPicker({
 
     return (
       <div
+        ref={mobileModalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mobile-picker-modal-title"
         className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
         style={{ minHeight: "100dvh" }}
       >
         <div className="bg-[#233d4d] w-full max-w-2xl rounded-lg max-h-[90dvh] flex flex-col border-2 border-[#4a6b7d]/60">
           {/* Modal Header */}
           <div className="flex items-center justify-between p-4 border-b-2 border-[#4a6b7d]/60">
-            <h2 className="text-xl font-semibold text-white">{title}</h2>
+            <h2
+              id="mobile-picker-modal-title"
+              className="text-xl font-semibold text-white"
+            >
+              {title}
+            </h2>
             <button
               onClick={closeMobileModal}
+              aria-label="Close"
               className="p-2 hover:bg-[#4a6b7d]/50 rounded-lg transition-colors"
             >
-              <X className="h-5 w-5 text-gray-400" />
+              <X aria-hidden="true" className="h-5 w-5 text-gray-400" />
             </button>
           </div>
 
@@ -449,7 +469,7 @@ export function SongPicker({
                 className="w-full flex items-center justify-between px-4 py-3 bg-[#4a6b7d] rounded-lg text-white hover:bg-[#5a7b8d] transition-colors"
               >
                 <span>Current: {currentPick.songName}</span>
-                <X className="h-4 w-4" />
+                <X aria-hidden="true" className="h-4 w-4" />
               </button>
             </div>
           )}
@@ -464,10 +484,11 @@ export function SongPicker({
                   <button
                     key={pick.songId}
                     onClick={() => handleRemovePick("REGULAR", pick.songId)}
+                    aria-label={`Remove ${pick.songName}`}
                     className="flex items-center space-x-1 px-3 py-1.5 bg-[#4a6b7d] rounded-full text-sm text-white hover:bg-[#5a7b8d] transition-colors"
                   >
                     <span>{pick.songName}</span>
-                    <X className="h-3 w-3" />
+                    <X aria-hidden="true" className="h-3 w-3" />
                   </button>
                 ))}
               </div>
@@ -477,9 +498,13 @@ export function SongPicker({
           {/* Search */}
           <div className="p-4 border-b-2 border-[#4a6b7d]/60">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search
+                aria-hidden="true"
+                className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"
+              />
               <Input
                 type="text"
+                aria-label="Search songs"
                 placeholder="Search songs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -488,9 +513,10 @@ export function SongPicker({
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
+                  aria-label="Clear search"
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
                 >
-                  <X className="h-5 w-5" />
+                  <X aria-hidden="true" className="h-5 w-5" />
                 </button>
               )}
             </div>
@@ -522,7 +548,7 @@ export function SongPicker({
               <div className="relative">
                 <div className="absolute inset-0 bg-[#c23a3a]/30 blur-3xl rounded-full animate-pulse" />
                 <div className="relative bg-gradient-to-br from-[#c23a3a] to-[#d64545] p-6 rounded-full">
-                  <Music className="h-16 w-16 text-white" />
+                  <Music aria-hidden="true" className="h-16 w-16 text-white" />
                 </div>
               </div>
             </div>
@@ -551,7 +577,7 @@ export function SongPicker({
                     : "inline-flex items-center gap-2 px-4 py-2 bg-[#c23a3a] hover:bg-[#d64545] text-white font-semibold rounded-lg shadow-lg shadow-[#c23a3a]/20 transition-colors"
                 }
               >
-                <Trophy className="h-4 w-4" />
+                <Trophy aria-hidden="true" className="h-4 w-4" />
                 View Leaderboard
               </Link>
             </div>
@@ -589,7 +615,10 @@ export function SongPicker({
       <div
         className={`flex items-center gap-2 px-3 py-2 rounded-lg ${specialPickClasses(pick)}`}
       >
-        <Star className="h-4 w-4 text-[#c23a3a] flex-shrink-0" />
+        <Star
+          aria-hidden="true"
+          className="h-4 w-4 text-[#c23a3a] flex-shrink-0"
+        />
         <span className="text-xs text-gray-400 flex-shrink-0">{label}</span>
         <span className="text-sm text-white truncate flex-1 text-left">
           {pick.songName}
@@ -613,7 +642,7 @@ export function SongPicker({
             <div className="relative">
               <div className="absolute inset-0 bg-[#c23a3a]/30 blur-3xl rounded-full animate-pulse" />
               <div className="relative bg-gradient-to-br from-[#c23a3a] to-[#d64545] p-6 rounded-full">
-                <Lock className="h-16 w-16 text-white" />
+                <Lock aria-hidden="true" className="h-16 w-16 text-white" />
               </div>
             </div>
           </div>
@@ -637,7 +666,13 @@ export function SongPicker({
                     className={`px-3 py-1 rounded-full text-xs flex items-center gap-1 ${regularPickClasses(pick)}`}
                   >
                     <span>{pick.songName}</span>
-                    {pick.wasPlayed && <Check className="h-3 w-3" />}
+                    {pick.wasPlayed !== null &&
+                      pick.wasPlayed !== undefined &&
+                      (pick.wasPlayed ? (
+                        <Check aria-hidden="true" className="h-3 w-3" />
+                      ) : (
+                        <X aria-hidden="true" className="h-3 w-3" />
+                      ))}
                   </span>
                 ))}
               </div>
@@ -655,7 +690,10 @@ export function SongPicker({
             </div>
           ) : (
             <div className="inline-flex items-center space-x-3 px-6 py-3 bg-[#3d5a6c]/50 rounded-xl border border-[#3d5a6c]/70 mb-6">
-              <CheckCircle className="h-5 w-5 text-green-400" />
+              <CheckCircle
+                aria-hidden="true"
+                className="h-5 w-5 text-green-400"
+              />
               <span className="text-gray-300 font-medium">
                 Your picks are saved
               </span>
@@ -686,75 +724,89 @@ export function SongPicker({
   ) => {
     const isExpanded = expandedSection === pickType.toLowerCase()
 
+    const panelId = `picker-panel-${pickType}`
+
     return (
       <Card className="overflow-hidden" blur={false}>
-        <CardHeader
-          className="cursor-pointer"
-          onClick={() => {
-            if (isMobile && !isLocked) {
-              setMobileModalOpen(pickType)
-            } else {
-              setExpandedSection(isExpanded ? null : pickType.toLowerCase())
-            }
-          }}
-        >
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-              <div
-                className={`p-2 rounded-lg flex-shrink-0 ${
-                  pickType === "REGULAR"
-                    ? "bg-[#4a6b7d]"
-                    : "bg-[#c23a3a]/30 border border-[#c23a3a]/30"
-                }`}
-              >
-                {icon}
+        <CardHeader className="p-0">
+          <button
+            type="button"
+            className="w-full text-left px-4 py-3 sm:px-6 cursor-pointer"
+            aria-expanded={isMobile ? undefined : isExpanded}
+            aria-haspopup={isMobile && !isLocked ? "dialog" : undefined}
+            aria-controls={!isMobile ? panelId : undefined}
+            onClick={() => {
+              if (isMobile && !isLocked) {
+                setMobileModalOpen(pickType)
+              } else {
+                setExpandedSection(isExpanded ? null : pickType.toLowerCase())
+              }
+            }}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                <div
+                  className={`p-2 rounded-lg flex-shrink-0 ${
+                    pickType === "REGULAR"
+                      ? "bg-[#4a6b7d]"
+                      : "bg-[#c23a3a]/30 border border-[#c23a3a]/30"
+                  }`}
+                >
+                  {icon}
+                </div>
+                <div className="min-w-0 overflow-hidden">
+                  <h3 className="font-semibold text-white text-sm sm:text-base truncate">
+                    {title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-400 truncate">
+                    {subtitle}
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0 overflow-hidden">
-                <h3 className="font-semibold text-white text-sm sm:text-base truncate">
-                  {title}
-                </h3>
-                <p className="text-xs sm:text-sm text-gray-400 truncate">
-                  {subtitle}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-              {pickType === "REGULAR" ? (
-                pickCount === 11 ? (
-                  <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium whitespace-nowrap">
-                    Complete
+              <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                {pickType === "REGULAR" ? (
+                  pickCount === 11 ? (
+                    <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium whitespace-nowrap">
+                      Complete
+                    </span>
+                  ) : (
+                    <span className="text-gray-500 text-sm whitespace-nowrap">
+                      {11 - (pickCount || 0)} more needed
+                    </span>
+                  )
+                ) : currentPick ? (
+                  <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium max-w-[150px] truncate">
+                    {currentPick.songName}
                   </span>
                 ) : (
                   <span className="text-gray-500 text-sm whitespace-nowrap">
-                    {11 - (pickCount || 0)} more needed
+                    Not selected
                   </span>
-                )
-              ) : currentPick ? (
-                <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium max-w-[150px] truncate">
-                  {currentPick.songName}
-                </span>
-              ) : (
-                <span className="text-gray-500 text-sm whitespace-nowrap">
-                  Not selected
-                </span>
-              )}
-              {!isMobile && isExpanded && (
-                <ChevronUp className="h-5 w-5 text-gray-400" />
-              )}
-              {!isMobile && !isExpanded && (
-                <ChevronDown className="h-5 w-5 text-gray-400" />
-              )}
+                )}
+                {!isMobile && isExpanded && (
+                  <ChevronUp
+                    aria-hidden="true"
+                    className="h-5 w-5 text-gray-400"
+                  />
+                )}
+                {!isMobile && !isExpanded && (
+                  <ChevronDown
+                    aria-hidden="true"
+                    className="h-5 w-5 text-gray-400"
+                  />
+                )}
+              </div>
             </div>
-          </div>
+          </button>
         </CardHeader>
         {!isMobile && isExpanded && (
-          <CardContent>
+          <CardContent id={panelId}>
             {pickType !== "REGULAR" && currentPick && !isLocked && (
               <button
                 onClick={() => handleRemovePick(pickType)}
                 className="mb-4 flex items-center space-x-2 px-3 py-2 bg-[#4a6b7d] rounded-lg text-sm text-white hover:bg-[#5a7b8d] transition-colors"
               >
-                <X className="h-4 w-4" />
+                <X aria-hidden="true" className="h-4 w-4" />
                 <span>Remove: {currentPick.songName}</span>
               </button>
             )}
@@ -764,10 +816,11 @@ export function SongPicker({
                   <button
                     key={pick.songId}
                     onClick={() => handleRemovePick("REGULAR", pick.songId)}
+                    aria-label={`Remove ${pick.songName}`}
                     className="flex items-center space-x-1 px-3 py-1.5 bg-[#4a6b7d] rounded-full text-sm text-white hover:bg-[#5a7b8d] transition-colors"
                   >
                     <span>{pick.songName}</span>
-                    <X className="h-3 w-3" />
+                    <X aria-hidden="true" className="h-3 w-3" />
                   </button>
                 ))}
               </div>
@@ -799,15 +852,15 @@ export function SongPicker({
           {isLocked && <LiveBadge />}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-gray-400">
             <span className="flex items-center">
-              <Music className="h-4 w-4 mr-1" />
+              <Music aria-hidden="true" className="h-4 w-4 mr-1" />
               {show.venue}
             </span>
             <span className="flex items-center">
-              <MapPin className="h-4 w-4 mr-1" />
+              <MapPin aria-hidden="true" className="h-4 w-4 mr-1" />
               {show.city}, {show.state}
             </span>
             <span className="flex items-center">
-              <Calendar className="h-4 w-4 mr-1" />
+              <Calendar aria-hidden="true" className="h-4 w-4 mr-1" />
               {format(
                 new Date(show.showDate.split("T")[0] + "T12:00:00.000Z"),
                 "MMMM d, yyyy"
@@ -830,9 +883,13 @@ export function SongPicker({
             {!isMobile && (
               // z-10 ensures focus ring isn't clipped by card below
               <div className="relative z-10 mb-6">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+                <Search
+                  aria-hidden="true"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500"
+                />
                 <Input
                   type="text"
+                  aria-label="Search songs"
                   placeholder="Search songs..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -841,9 +898,10 @@ export function SongPicker({
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
+                    aria-label="Clear search"
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                   >
-                    <X className="h-5 w-5" />
+                    <X aria-hidden="true" className="h-5 w-5" />
                   </button>
                 )}
               </div>
@@ -855,21 +913,21 @@ export function SongPicker({
                 "OPENER",
                 "Opener Pick",
                 "3 points if correct",
-                <Star className="h-5 w-5 text-[#c23a3a]" />,
+                <Star aria-hidden="true" className="h-5 w-5 text-[#c23a3a]" />,
                 openerPick
               )}
               {renderPickCard(
                 "ENCORE",
                 "Encore Pick",
                 "3 points if correct",
-                <Star className="h-5 w-5 text-[#c23a3a]" />,
+                <Star aria-hidden="true" className="h-5 w-5 text-[#c23a3a]" />,
                 encorePick
               )}
               {renderPickCard(
                 "REGULAR",
                 "Regular Picks",
                 `1 point each (${regularPicks.length}/11 selected)`,
-                <Music className="h-5 w-5 text-white" />,
+                <Music aria-hidden="true" className="h-5 w-5 text-white" />,
                 null,
                 regularPicks.length
               )}
@@ -899,10 +957,16 @@ export function SongPicker({
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1 flex items-center gap-2">
               {isComplete && justSaved && !hasUnsavedChanges && (
-                <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                <CheckCircle
+                  aria-hidden="true"
+                  className="h-5 w-5 text-green-500 flex-shrink-0"
+                />
               )}
               {isComplete && hasUnsavedChanges && (
-                <AlertCircle className="h-5 w-5 text-yellow-500 flex-shrink-0" />
+                <AlertCircle
+                  aria-hidden="true"
+                  className="h-5 w-5 text-yellow-500 flex-shrink-0"
+                />
               )}
               <div className="min-w-0">
                 <p className="font-medium text-white text-sm sm:text-base">

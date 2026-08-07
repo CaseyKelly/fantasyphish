@@ -107,7 +107,10 @@ export function AchievementBadge({
       )}
 
       {/* Icon */}
-      <div className="flex items-center justify-center w-16 h-16">
+      <div
+        aria-hidden="true"
+        className="flex items-center justify-center w-16 h-16"
+      >
         {isLucideIcon && LucideIcon ? (
           <LucideIcon className="w-12 h-12 text-[#c23a3a]" />
         ) : (

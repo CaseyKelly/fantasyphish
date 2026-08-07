@@ -1,8 +1,55 @@
 import { test, expect } from "./helpers/fixtures"
+import AxeBuilder from "@axe-core/playwright"
 
 test.describe.configure({ mode: "serial" })
 
 test.describe("Song Picker Flow", () => {
+  test("pick page should have no automatically detectable accessibility violations", async ({
+    page,
+    createUser,
+    prisma,
+  }) => {
+    const userEmail = `picker-a11y-${Date.now()}@example.com`
+    const userUsername = `pickera11y${Date.now()}`
+    const userPassword = "PickerPassword123!"
+
+    await createUser({
+      email: userEmail,
+      username: userUsername,
+      password: userPassword,
+      verified: true,
+    })
+
+    const futureDate = new Date()
+    futureDate.setDate(futureDate.getDate() + 31)
+
+    const show = await prisma.show.create({
+      data: {
+        venue: "Test Venue Picker A11y",
+        city: "Test City",
+        state: "NY",
+        showDate: futureDate,
+        isComplete: false,
+      },
+    })
+
+    await page.goto("/login")
+    await page.getByPlaceholder("Email address").fill(userEmail)
+    await page.getByPlaceholder("Password").fill(userPassword)
+    await page.click('button[type="submit"]')
+    await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
+
+    await page.goto(`/pick/${show.id}`)
+    await expect(page.getByText("Opener Pick")).toBeVisible()
+
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa"])
+      .analyze()
+    expect(results.violations).toEqual([])
+
+    await prisma.show.delete({ where: { id: show.id } })
+  })
+
   test("should allow user to submit picks for a show", async ({
     page,
     createUser,

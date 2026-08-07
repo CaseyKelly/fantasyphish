@@ -68,7 +68,10 @@ export function Navbar() {
                           : "text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50"
                       }`}
                     >
-                      <Icon className="h-4 w-4 flex-shrink-0" />
+                      <Icon
+                        aria-hidden="true"
+                        className="h-4 w-4 flex-shrink-0"
+                      />
                       <span>{item.label}</span>
                     </Link>
                   )
@@ -83,7 +86,7 @@ export function Navbar() {
                   href="/profile"
                   className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50 transition-colors whitespace-nowrap"
                 >
-                  <User className="h-4 w-4 flex-shrink-0" />
+                  <User aria-hidden="true" className="h-4 w-4 flex-shrink-0" />
                   <span className="truncate max-w-[150px]">
                     {session.user.username}
                   </span>
@@ -92,7 +95,10 @@ export function Navbar() {
                   onClick={() => signOut({ callbackUrl: "/" })}
                   className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50 transition-colors whitespace-nowrap"
                 >
-                  <LogOut className="h-4 w-4 flex-shrink-0" />
+                  <LogOut
+                    aria-hidden="true"
+                    className="h-4 w-4 flex-shrink-0"
+                  />
                   <span>Sign Out</span>
                 </button>
               </div>
@@ -102,12 +108,14 @@ export function Navbar() {
             {session && (
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
+                aria-expanded={isMenuOpen}
+                aria-label={isMenuOpen ? "Close menu" : "Open menu"}
                 className="md:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-[#3d5a6c]/50"
               >
                 {isMenuOpen ? (
-                  <X className="h-6 w-6" />
+                  <X aria-hidden="true" className="h-6 w-6" />
                 ) : (
-                  <Menu className="h-6 w-6" />
+                  <Menu aria-hidden="true" className="h-6 w-6" />
                 )}
               </button>
             )}
@@ -156,7 +164,7 @@ export function Navbar() {
                           : "text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50"
                       }`}
                     >
-                      <Icon className="h-5 w-5" />
+                      <Icon aria-hidden="true" className="h-5 w-5" />
                       <span>{item.label}</span>
                     </Link>
                   )
@@ -167,14 +175,14 @@ export function Navbar() {
                     onClick={() => setIsMenuOpen(false)}
                     className="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50 transition-colors"
                   >
-                    <User className="h-5 w-5" />
+                    <User aria-hidden="true" className="h-5 w-5" />
                     <span>{session.user.username}</span>
                   </Link>
                   <button
                     onClick={() => signOut({ callbackUrl: "/" })}
                     className="flex items-center space-x-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50 transition-colors"
                   >
-                    <LogOut className="h-5 w-5" />
+                    <LogOut aria-hidden="true" className="h-5 w-5" />
                     <span>Sign Out</span>
                   </button>
                 </div>
