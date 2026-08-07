@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, Suspense } from "react"
+import { useEffect, useRef, useState, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 
 import Link from "next/link"
@@ -18,8 +18,19 @@ function VerifyContent() {
   )
   const [message, setMessage] = useState("")
   const token = searchParams.get("token")
+  const hasStartedVerification = useRef(false)
 
   useEffect(() => {
+    // The verify endpoint consumes the token (nulling it on success), so it
+    // isn't safe to call twice. Guard with a ref (rather than relying on
+    // effect cleanup) because React's StrictMode double-invokes this effect
+    // in dev, and both invocations would otherwise race real requests
+    // against that non-idempotent endpoint.
+    if (hasStartedVerification.current) {
+      return
+    }
+    hasStartedVerification.current = true
+
     const verifyEmail = async () => {
       if (!token) {
         setStatus("error")
