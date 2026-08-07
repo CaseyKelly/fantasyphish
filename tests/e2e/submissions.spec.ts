@@ -1,5 +1,5 @@
 import { hash } from "bcryptjs"
-import { test, expect } from "./helpers/fixtures"
+import { test, expect, uniqueUsername } from "./helpers/fixtures"
 import { PRIVATE_VIEWER_EMAIL } from "@/lib/private-access"
 import { excludeTestShows } from "@/lib/test-filters"
 
@@ -27,7 +27,7 @@ test.describe("Private submissions viewer", () => {
     createUser,
   }) => {
     const userEmail = `user-submissions-${Date.now()}@example.com`
-    const userUsername = `user${Date.now()}`
+    const userUsername = uniqueUsername("user")
     const userPassword = "UserPassword123!"
 
     await createUser({
@@ -56,7 +56,7 @@ test.describe("Private submissions viewer", () => {
     createAdmin,
   }) => {
     const adminEmail = `admin-submissions-${Date.now()}@example.com`
-    const adminUsername = `admin${Date.now()}`
+    const adminUsername = uniqueUsername("admin")
     const adminPassword = "AdminPassword123!"
 
     await createAdmin({
@@ -96,7 +96,7 @@ test.describe("Private submissions viewer", () => {
     await prisma.user.create({
       data: {
         email: OWNER_EMAIL,
-        username: `owner${Date.now()}`,
+        username: uniqueUsername("owner"),
         passwordHash: await hash(password, 12),
         emailVerified: new Date(),
       },
@@ -139,7 +139,7 @@ test.describe("Submission timestamp formatting", () => {
     await prisma.user.deleteMany({ where: { email: OWNER_EMAIL } })
 
     const password = "OwnerTestPassword123!"
-    const ownerUsername = `owner${Date.now()}`
+    const ownerUsername = uniqueUsername("owner")
     await prisma.user.create({
       data: {
         email: OWNER_EMAIL,

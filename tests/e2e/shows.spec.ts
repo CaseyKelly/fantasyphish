@@ -1,6 +1,14 @@
 import { test, expect } from "@playwright/test"
 import { PrismaClient } from "@prisma/client"
 
+// These tests use hardcoded literal showDates (2030-06 through 2030-10) and
+// clean up by deleting that date/range before and after each test, rather
+// than by row id. That's only safe because no other e2e spec file creates
+// shows in those months - under parallel workers, a concurrently-running
+// file that picked one of these dates would have its rows silently deleted
+// by this file's cleanup (or vice versa). Pick an unused month/year if you
+// add a hardcoded showDate anywhere else in the suite.
+
 // Create a dedicated Prisma client for the test database
 const testPrisma = new PrismaClient({
   datasources: {

@@ -1,4 +1,4 @@
-import { test, expect } from "./helpers/fixtures"
+import { test, expect, uniqueUsername } from "./helpers/fixtures"
 
 test.describe.configure({ mode: "serial" })
 
@@ -20,7 +20,7 @@ test.describe("Admin complete-shows", () => {
     createUser,
   }) => {
     const userEmail = `user-admin-complete-shows-${Date.now()}@example.com`
-    const userUsername = `user${Date.now()}`
+    const userUsername = uniqueUsername("user")
     const userPassword = "UserPassword123!"
 
     await createUser({
@@ -53,7 +53,7 @@ test.describe("Admin complete-shows", () => {
     prisma,
   }) => {
     const adminEmail = `admin-complete-shows-${Date.now()}@example.com`
-    const adminUsername = `admin${Date.now()}`
+    const adminUsername = uniqueUsername("admin")
     const adminPassword = "AdminPassword123!"
 
     await createAdmin({
@@ -65,7 +65,7 @@ test.describe("Admin complete-shows", () => {
 
     const showDate = new Date()
     showDate.setFullYear(2030)
-    showDate.setMonth(4)
+    showDate.setMonth(5) // Different month than admin-shows.spec.ts's synthetic show
     showDate.setMilliseconds(Date.now() % 1000)
 
     const show = await prisma.show.create({

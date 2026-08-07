@@ -1,4 +1,4 @@
-import { test, expect } from "./helpers/fixtures"
+import { test, expect, uniqueUsername } from "./helpers/fixtures"
 import { getShowLockTime } from "@/lib/timezone"
 
 test.describe.configure({ mode: "serial" })
@@ -16,7 +16,7 @@ test.describe("Admin show lock time overrides", () => {
     createUser,
   }) => {
     const userEmail = `user-admin-shows-${Date.now()}@example.com`
-    const userUsername = `user${Date.now()}`
+    const userUsername = uniqueUsername("user")
     const userPassword = "UserPassword123!"
 
     await createUser({
@@ -44,7 +44,7 @@ test.describe("Admin show lock time overrides", () => {
     prisma,
   }) => {
     const adminEmail = `admin-shows-${Date.now()}@example.com`
-    const adminUsername = `admin${Date.now()}`
+    const adminUsername = uniqueUsername("admin")
     const adminPassword = "AdminPassword123!"
 
     await createAdmin({

@@ -264,8 +264,10 @@ Handles transient connection errors (exponential backoff, 3 retries).
    - Handles punctuation, spacing, case differences
 
 8. **Test parallelization**
-   - Playwright config uses `workers: 1` to avoid Resend API rate limits
-   - Tests run sequentially, not in parallel
+   - CI runs e2e spec files across 4 workers (`workers: process.env.CI ? 4 : 1` in `playwright.config.ts`); local runs stay single-worker for simpler debugging output
+   - `fullyParallel` stays `false`: tests within one file still run in declaration order, only different files can land on different workers
+   - All e2e tests in a CI run share one ephemeral Neon branch, so every spec file must generate its own unique usernames/emails/showDates instead of reusing fixed literals - use `uniqueUsername()` from `tests/e2e/helpers/fixtures.ts`, and check the reserved-dates note atop `tests/e2e/shows.spec.ts` before hardcoding a showDate elsewhere
+   - Only one test (the real registration email send, gated by `SKIP_EMAIL_SEND`) hits the real Resend API, so worker count doesn't affect Resend rate limits
 
 9. **Schema changes go through migrations, not `db:push`**
    - Run `npm run db:migrate` locally to generate a migration file under `prisma/migrations/`, commit it with your PR

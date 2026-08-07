@@ -8,6 +8,13 @@ async function hashPassword(password: string): Promise<string> {
   return hash(password, 12)
 }
 
+// Date.now() alone isn't enough to keep usernames unique once spec files run
+// concurrently across Playwright workers - two files calling this in the same
+// millisecond would otherwise collide on the `username @unique` constraint.
+export function uniqueUsername(prefix: string): string {
+  return `${prefix}${Date.now()}${crypto.randomBytes(3).toString("hex")}`
+}
+
 // Helper function to create a user directly in the database (bypasses email sending)
 export async function createTestUser(
   prisma: PrismaClient,
