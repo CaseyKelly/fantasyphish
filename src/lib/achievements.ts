@@ -62,7 +62,7 @@ export const ACHIEVEMENT_DEFINITIONS = {
   },
   ICCULUS: {
     slug: "icculus",
-    name: "You Summoned",
+    name: "Helping Friendly Book",
     description: "You summoned Icculus by signing up for notifications",
     icon: "Book",
     category: "PARTICIPATION" as AchievementCategory,
