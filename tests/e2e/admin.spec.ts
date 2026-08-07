@@ -1,4 +1,4 @@
-import { test, expect } from "./helpers/fixtures"
+import { test, expect, uniqueUsername } from "./helpers/fixtures"
 
 test.describe.configure({ mode: "serial" })
 
@@ -11,7 +11,7 @@ test.describe("Admin Authorization", () => {
   }) => {
     // Create admin user
     const adminEmail = `admin-delete-${Date.now()}@example.com`
-    const adminUsername = `admin${Date.now()}`
+    const adminUsername = uniqueUsername("admin")
     const adminPassword = "AdminPassword123!"
 
     await createAdmin({
@@ -23,7 +23,7 @@ test.describe("Admin Authorization", () => {
 
     // Create regular user with a submission
     const userEmail = `user-${Date.now()}@example.com`
-    const userUsername = `user${Date.now()}`
+    const userUsername = uniqueUsername("user")
     const userPassword = "UserPassword123!"
 
     await createUser({
@@ -101,7 +101,7 @@ test.describe("Admin Authorization", () => {
   }) => {
     // Create regular user
     const userEmail = `user-nonadmin-${Date.now()}@example.com`
-    const userUsername = `user${Date.now()}`
+    const userUsername = uniqueUsername("user")
     const userPassword = "UserPassword123!"
 
     await createUser({
@@ -194,7 +194,7 @@ test.describe("Admin Authorization", () => {
   }) => {
     // Create admin user
     const adminEmail = `admin-reset-${Date.now()}@example.com`
-    const adminUsername = `admin${Date.now()}`
+    const adminUsername = uniqueUsername("admin")
     const adminPassword = "AdminPassword123!"
 
     await createAdmin({
@@ -254,7 +254,7 @@ test.describe("Admin Authorization", () => {
   }) => {
     // Create regular user
     const userEmail = `user-reset-${Date.now()}@example.com`
-    const userUsername = `user${Date.now()}`
+    const userUsername = uniqueUsername("user")
     const userPassword = "UserPassword123!"
 
     await createUser({

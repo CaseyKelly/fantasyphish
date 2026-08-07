@@ -23,10 +23,21 @@ process.env.PRIVATE_VIEWER_EMAIL = "owner-test-fixture@example.com"
 
 export default defineConfig({
   testDir: "./tests/e2e",
-  fullyParallel: false, // Run tests sequentially to avoid rate limiting
+  // Keep false: tests within a file still must run in declaration order
+  // (some describe blocks share fixture rows across sibling tests). This only
+  // controls whether *different files* can be handed to different workers.
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 1, // Always use 1 worker to avoid Resend API rate limits
+  // Spec files run concurrently against one shared database (one ephemeral
+  // Neon branch per CI run), so every file must generate its own unique
+  // usernames/emails/showDates rather than reusing fixed literals - see
+  // uniqueUsername() in tests/e2e/helpers/fixtures.ts and the reserved-dates
+  // note atop shows.spec.ts. Only the one real-Resend-send test is rate
+  // sensitive, and it's a single test gated by SKIP_EMAIL_SEND, so raising
+  // this doesn't multiply Resend calls. Single worker locally for simpler,
+  // deterministic output during interactive debugging.
+  workers: process.env.CI ? 4 : 1,
   reporter: process.env.CI
     ? [["html"], ["github"]] // In CI: HTML report + GitHub annotations
     : "list", // Locally: just list output
