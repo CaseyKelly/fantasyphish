@@ -12,8 +12,14 @@ export default defineConfig({
   migrations: {
     path: "prisma/migrations",
   },
-  engine: "classic",
   datasource: {
-    url: process.env.DATABASE_URL || "postgresql://localhost:5432/fantasyphish",
+    // Migrate/introspect should always go through the direct (non-pooled)
+    // connection, since pgbouncer's transaction pooling doesn't release
+    // Prisma's session-level advisory lock cleanly. Falls back to
+    // DATABASE_URL if DIRECT_URL isn't set (e.g. non-pooled local Postgres).
+    url:
+      process.env.DIRECT_URL ||
+      process.env.DATABASE_URL ||
+      "postgresql://localhost:5432/fantasyphish",
   },
 })

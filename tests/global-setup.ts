@@ -1,11 +1,13 @@
 import { PrismaClient } from "@prisma/client"
+import { PrismaPg } from "@prisma/adapter-pg"
 import dotenv from "dotenv"
 
 // Load environment variables
 dotenv.config({ path: ".env.local" })
 
 async function globalSetup() {
-  const prisma = new PrismaClient()
+  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
+  const prisma = new PrismaClient({ adapter })
 
   console.log("🧹 Cleaning up test shows from previous runs...")
 

@@ -1,5 +1,6 @@
 import { spawnSync } from "child_process"
 import { PrismaClient } from "@prisma/client"
+import { PrismaPg } from "@prisma/adapter-pg"
 
 /**
  * Wraps `prisma migrate deploy` with one-shot recovery from the known Neon
@@ -29,7 +30,8 @@ async function clearStaleAdvisoryLock(lockId: string): Promise<boolean> {
     return false
   }
 
-  const prisma = new PrismaClient({ datasources: { db: { url: directUrl } } })
+  const adapter = new PrismaPg({ connectionString: directUrl })
+  const prisma = new PrismaClient({ adapter })
   try {
     const holders = await prisma.$queryRawUnsafe<
       { pid: number; state: string | null }[]

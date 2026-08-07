@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client"
+import { PrismaPg } from "@prisma/adapter-pg"
 import { getTimezoneForLocation, getShowLockTime } from "../src/lib/timezone"
 import { config } from "dotenv"
 
@@ -6,7 +7,9 @@ import { config } from "dotenv"
 config({ path: ".env.local" })
 config({ path: ".env" })
 
-const prisma = new PrismaClient()
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
+
+const prisma = new PrismaClient({ adapter })
 
 const PHISHNET_API_BASE = "https://api.phish.net/v5"
 

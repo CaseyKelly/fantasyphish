@@ -1,9 +1,12 @@
 import { config } from "dotenv"
 import { PrismaClient } from "@prisma/client"
+import { PrismaPg } from "@prisma/adapter-pg"
 
 config({ path: ".env.local" })
 
-const prisma = new PrismaClient()
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
+
+const prisma = new PrismaClient({ adapter })
 
 async function deleteTestShows() {
   // Delete all shows with "test" in venue or city

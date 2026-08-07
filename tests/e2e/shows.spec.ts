@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test"
 import { PrismaClient } from "@prisma/client"
+import { PrismaPg } from "@prisma/adapter-pg"
 
 // These tests use hardcoded literal showDates (2030-06 through 2030-10) and
 // clean up by deleting that date/range before and after each test, rather
@@ -10,13 +11,10 @@ import { PrismaClient } from "@prisma/client"
 // add a hardcoded showDate anywhere else in the suite.
 
 // Create a dedicated Prisma client for the test database
-const testPrisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.TEST_DATABASE_URL || process.env.DATABASE_URL,
-    },
-  },
+const testAdapter = new PrismaPg({
+  connectionString: process.env.TEST_DATABASE_URL || process.env.DATABASE_URL,
 })
+const testPrisma = new PrismaClient({ adapter: testAdapter })
 
 test.describe("Show sync and query logic", () => {
   test.afterAll(async () => {

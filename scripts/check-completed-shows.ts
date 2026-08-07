@@ -1,9 +1,11 @@
 import { PrismaClient, Prisma } from "@prisma/client"
+import { PrismaPg } from "@prisma/adapter-pg"
 import { config } from "dotenv"
 import { parseSetlist, type PhishNetSetlist } from "../src/lib/phishnet"
 
 config({ path: ".env.local" })
-const prisma = new PrismaClient()
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
+const prisma = new PrismaClient({ adapter })
 
 async function main() {
   const completedShows = await prisma.show.findMany({
