@@ -11,8 +11,7 @@
     {
       "description": "Next.js ecosystem - group major updates for testing together",
       "groupName": "Next.js ecosystem",
-      "matchPackageNames": ["next", "eslint-config-next"],
-      "matchPackagePatterns": ["^@next/"],
+      "matchPackageNames": ["next", "eslint-config-next", "/^@next//"],
       "automerge": false,
       "schedule": ["before 10am on monday"]
     },
@@ -44,8 +43,7 @@
     {
       "description": "NextAuth beta - needs careful review",
       "groupName": "NextAuth",
-      "matchPackageNames": ["next-auth"],
-      "matchPackagePatterns": ["^@auth/"],
+      "matchPackageNames": ["next-auth", "/^@auth//"],
       "automerge": false,
       "labels": ["dependencies", "authentication"],
       "schedule": ["before 10am on monday"],
@@ -64,8 +62,7 @@
     {
       "description": "TypeScript and type definitions - group minor/patch",
       "groupName": "TypeScript and types",
-      "matchPackageNames": ["typescript", "tsx"],
-      "matchPackagePatterns": ["^@types/"],
+      "matchPackageNames": ["typescript", "tsx", "/^@types//"],
       "automerge": true,
       "automergeType": "pr",
       "matchUpdateTypes": ["minor", "patch"]
@@ -73,8 +70,14 @@
     {
       "description": "Linting and formatting - automerge minor/patch",
       "groupName": "Linting and formatting",
-      "matchPackageNames": ["eslint", "prettier", "lint-staged", "husky"],
-      "matchPackagePatterns": ["^eslint-", "^@typescript-eslint/"],
+      "matchPackageNames": [
+        "eslint",
+        "prettier",
+        "lint-staged",
+        "husky",
+        "/^eslint-/",
+        "/^@typescript-eslint//"
+      ],
       "automerge": true,
       "automergeType": "pr",
       "matchUpdateTypes": ["minor", "patch"]
@@ -106,10 +109,10 @@
     {
       "description": "Vercel packages - automerge minor/patch",
       "groupName": "Vercel",
-      "matchPackagePatterns": ["^@vercel/"],
       "automerge": true,
       "automergeType": "pr",
-      "matchUpdateTypes": ["minor", "patch"]
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchPackageNames": ["/^@vercel//"]
     },
     {
       "description": "Email service - manual review for API changes",
@@ -159,7 +162,7 @@
   },
   "ignorePresets": [":prHourlyLimit2"],
   "prHourlyLimit": 0,
-  "stabilityDays": 1,
+  "minimumReleaseAge": "1 day",
   "dependencyDashboard": true,
   "dependencyDashboardTitle": "Dependency Updates Dashboard",
   "dependencyDashboardHeader": "This dashboard provides an overview of all pending dependency updates. Updates are grouped by category and checked frequently throughout the week.",
