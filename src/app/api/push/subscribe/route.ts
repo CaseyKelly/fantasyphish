@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { withRetry } from "@/lib/db-retry"
+import { awardSongPickAchievement } from "@/lib/achievement-awards"
 import { z } from "zod"
 
 const subscribeSchema = z.object({
@@ -44,6 +45,8 @@ export async function POST(request: NextRequest) {
         }),
       { operationName: "save push subscription" }
     )
+
+    await awardSongPickAchievement(session.user.id, "ICCULUS")
 
     return NextResponse.json({ success: true })
   } catch (error) {

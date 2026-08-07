@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { withRetry } from "@/lib/db-retry"
+import { awardSongPickAchievement } from "@/lib/achievement-awards"
 import { z } from "zod"
 import { updatePreferencesSchema } from "./schema"
 
@@ -73,6 +74,10 @@ export async function PATCH(request: NextRequest) {
         }),
       { operationName: "update user preferences" }
     )
+
+    if (data.emailPickReminders) {
+      await awardSongPickAchievement(session.user.id, "ICCULUS")
+    }
 
     return NextResponse.json({ success: true, ...data })
   } catch (error) {

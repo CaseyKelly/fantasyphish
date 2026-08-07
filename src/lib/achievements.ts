@@ -60,6 +60,13 @@ export const ACHIEVEMENT_DEFINITIONS = {
       venue: "Madison Square Garden",
     },
   },
+  ICCULUS: {
+    slug: "icculus",
+    name: "Helping Friendly Book",
+    description: "You summoned Icculus by signing up for notifications",
+    icon: "Book",
+    category: "PARTICIPATION" as AchievementCategory,
+  },
   // Future achievement examples:
   // SUMMER_TOUR_2025_CHAMPION: {
   //   slug: "summer-tour-2025-champion",
