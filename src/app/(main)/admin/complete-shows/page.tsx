@@ -1,6 +1,8 @@
 import { auth } from "@/lib/auth"
 import { redirect, notFound } from "next/navigation"
 import { Metadata } from "next"
+import Link from "next/link"
+import { ArrowLeft } from "lucide-react"
 import { prisma } from "@/lib/prisma"
 import { withRetry } from "@/lib/db-retry"
 import CompleteShowsClient from "./CompleteShowsClient"
@@ -61,7 +63,14 @@ export default async function AdminCompleteShowsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold font-display text-white">
+        <Link
+          href="/admin"
+          className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-white"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Admin
+        </Link>
+        <h1 className="mt-2 text-3xl font-bold font-display text-white">
           In-Progress Shows
         </h1>
         <p className="mt-1 text-gray-400">
