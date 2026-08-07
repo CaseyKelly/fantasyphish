@@ -131,6 +131,12 @@
       ]
     },
     {
+      "description": "TypeScript major - blocked until @typescript-eslint supports TS 7 (peerDependencies still cap at <6.1.0 as of typescript-eslint 8.66.x)",
+      "matchPackageNames": ["typescript"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
       "description": "GitHub Actions - weekly updates, automerge minor/patch",
       "matchManagers": ["github-actions"],
       "automerge": true,
