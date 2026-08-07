@@ -86,6 +86,7 @@ jobs:
           echo "NEON_BRANCH_DATABASE_URL=$POOLED_URL" >> "$GITHUB_ENV"
 
           echo "⏳ Waiting for branch compute endpoint to become ready..."
+          STATE="unknown"
           for i in $(seq 1 30); do
             STATE=$(curl -s "https://console.neon.tech/api/v2/projects/$NEON_PROJECT_ID/branches/$BRANCH_ID" \
               -H "Authorization: Bearer $NEON_API_KEY" \
@@ -95,6 +96,11 @@ jobs:
             fi
             sleep 2
           done
+
+          if [ "$STATE" != "ready" ]; then
+            echo "✗ Branch '$BRANCH_NAME' did not become ready in time (last state: $STATE)"
+            exit 1
+          fi
 
           echo "✓ Created database branch '$BRANCH_NAME' ($BRANCH_ID)"
 
@@ -151,15 +157,26 @@ jobs:
           set -uo pipefail
 
           BRANCH_ID="${NEON_BRANCH_ID:-}"
-          BRANCH_NAME="${NEON_BRANCH_NAME:-}"
 
           if [ -z "$BRANCH_ID" ]; then
             echo "No database branch was created for this run - nothing to clean up"
             exit 0
           fi
 
-          # Safety check: never delete a protected/shared branch, no matter
-          # what NEON_BRANCH_ID/NEON_BRANCH_NAME ended up containing.
+          # Safety check: don't trust the $NEON_BRANCH_NAME env var carried
+          # over from the create step - look up what Neon currently has
+          # this branch ID named, and only delete if that name is one of
+          # ours. This guards against deleting a protected/shared branch
+          # even if $NEON_BRANCH_ID ended up pointing at the wrong branch.
+          BRANCH_NAME=$(curl -s "https://console.neon.tech/api/v2/projects/$NEON_PROJECT_ID/branches/$BRANCH_ID" \
+            -H "Authorization: Bearer $NEON_API_KEY" \
+            -H "Accept: application/json" | jq -r '.branch.name // empty')
+
+          if [ -z "$BRANCH_NAME" ]; then
+            echo "⚠️  SAFETY CHECK: Could not look up branch $BRANCH_ID by ID - skipping deletion for safety."
+            exit 0
+          fi
+
           PROTECTED_BRANCHES=("main" "dev" "test" "production" "staging")
           for protected in "${PROTECTED_BRANCHES[@]}"; do
             if [ "$BRANCH_NAME" == "$protected" ]; then
@@ -168,6 +185,12 @@ jobs:
               exit 0
             fi
           done
+
+          if [[ "$BRANCH_NAME" != ci/e2e-* ]]; then
+            echo "⚠️  SAFETY CHECK: Branch $BRANCH_ID is named '$BRANCH_NAME', not a ci/e2e-* branch this workflow created."
+            echo "Skipping deletion for safety."
+            exit 0
+          fi
 
           echo "Deleting ephemeral database branch: $BRANCH_NAME ($BRANCH_ID)"
 
