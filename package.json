@@ -26,6 +26,8 @@
     "db:list-branches": "npx tsx scripts/neon-branch.ts list",
     "db:update-env": "npx tsx scripts/update-env-with-branch.ts",
     "test": "playwright test",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
@@ -70,7 +72,8 @@
     "prettier": "^3.9.6",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.9",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   },
   "overrides": {
     "minimatch": "10.2.6",

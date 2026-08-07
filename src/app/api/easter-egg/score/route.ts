@@ -4,13 +4,10 @@ import { prisma } from "@/lib/prisma"
 import { withRetry } from "@/lib/db-retry"
 import { awardSongPickAchievement } from "@/lib/achievement-awards"
 import { z } from "zod"
+import { submitScoreSchema } from "./schema"
 
 const LEADERBOARD_SIZE = 10
 const DONUT_DEVOTEE_THRESHOLD = 20
-
-const submitScoreSchema = z.object({
-  score: z.number().int().min(0).max(100_000),
-})
 
 // GET - Top Donut Catch scores, plus the current user's personal best
 export async function GET() {

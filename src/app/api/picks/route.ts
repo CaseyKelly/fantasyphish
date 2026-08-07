@@ -5,16 +5,7 @@ import { hasShowStarted } from "@/lib/phishnet"
 import { z } from "zod"
 import { PickType } from "@prisma/client"
 import { withRetry } from "@/lib/db-retry"
-
-const submitPicksSchema = z.object({
-  showId: z.string(),
-  picks: z.array(
-    z.object({
-      songId: z.string(),
-      pickType: z.enum(["OPENER", "ENCORE", "REGULAR"]),
-    })
-  ),
-})
+import { submitPicksSchema } from "./schema"
 
 // GET - Get user's submission for a show
 export async function GET(request: NextRequest) {

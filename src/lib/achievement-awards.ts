@@ -243,7 +243,7 @@ export async function processPickAchievements(
 /**
  * Sanitize a tour name into a URL-friendly slug
  */
-function sanitizeTourName(tourName: string): string {
+export function sanitizeTourName(tourName: string): string {
   return tourName
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
@@ -253,7 +253,7 @@ function sanitizeTourName(tourName: string): string {
 /**
  * Get placement suffix for achievement slug
  */
-function getPlacementSuffix(placement: 1 | 2 | 3): string {
+export function getPlacementSuffix(placement: 1 | 2 | 3): string {
   const suffixes = {
     1: "champion",
     2: "runner-up",
