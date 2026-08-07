@@ -61,7 +61,7 @@ export async function POST(request: Request) {
         `[AwardAchievements:POST] Skipping tour-dependent achievements: ${reason}`
       )
       return NextResponse.json(
-        { skipped: true, reason, results },
+        { success: true, tourAchievementsSkipped: true, reason, results },
         { status: 200 }
       )
     }
@@ -315,7 +315,7 @@ async function awardNotificationsAchievement() {
             { pushSubscriptions: { some: {} } },
           ],
         },
-        select: { id: true, username: true },
+        select: { id: true },
       }),
     { operationName: "find users with notifications enabled" }
   )
@@ -332,47 +332,31 @@ async function awardNotificationsAchievement() {
     }
   }
 
-  // 3. Award achievement to each user (skip if already awarded)
-  let awarded = 0
-  let skipped = 0
+  // 3. Award achievement to all qualifying users in one batch, skipping
+  // anyone who already has it (avoids a per-user round trip + relying on
+  // catching unique-constraint errors one at a time)
+  const { count: awarded } = await withRetry(
+    () =>
+      prisma.userAchievement.createMany({
+        data: users.map((user) => ({
+          userId: user.id,
+          achievementId: achievement.id,
+        })),
+        skipDuplicates: true,
+      }),
+    { operationName: `award ${achievementDef.slug} to ${users.length} users` }
+  )
+  const skipped = users.length - awarded
 
-  for (const user of users) {
-    try {
-      await withRetry(
-        () =>
-          prisma.userAchievement.create({
-            data: {
-              userId: user.id,
-              achievementId: achievement.id,
-            },
-          }),
-        { operationName: `award ${achievementDef.slug} to user ${user.id}` }
-      )
-      awarded++
-      console.log(`[AwardAchievements:POST]   ✓ Awarded to ${user.username}`)
-    } catch (error: unknown) {
-      // User already has this achievement (unique constraint violation)
-      if (
-        error &&
-        typeof error === "object" &&
-        "code" in error &&
-        error.code === "P2002"
-      ) {
-        skipped++
-      } else {
-        console.error(
-          `[AwardAchievements:POST] Error awarding achievement to user ${user.username}:`,
-          error
-        )
-      }
-    }
-  }
+  console.log(
+    `[AwardAchievements:POST]   ✓ Awarded to ${awarded} user(s), skipped ${skipped} already-awarded`
+  )
 
   return {
     achievement: achievementDef.name,
     awarded,
     skipped,
-    total: awarded + skipped,
+    total: users.length,
   }
 }
 
