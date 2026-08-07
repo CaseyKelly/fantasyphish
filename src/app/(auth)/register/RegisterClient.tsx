@@ -98,7 +98,7 @@ export default function RegisterClient() {
                   Didn&apos;t receive the email? Check your spam folder or{" "}
                   <button
                     onClick={() => setSuccess(false)}
-                    className="text-[#c23a3a] hover:text-[#d64545]"
+                    className="text-red-300 hover:text-[#d64545]"
                   >
                     try again
                   </button>
@@ -127,23 +127,33 @@ export default function RegisterClient() {
             <h1 className="text-2xl font-bold font-display text-white text-center">
               Create your account
             </h1>
-            <p className="text-gray-400 text-center">
+            <p className="text-gray-300 text-center">
               Start predicting setlists today
             </p>
           </CardHeader>
           <CardContent>
             {error && (
-              <div className="mb-6 p-4 bg-[#c23a3a]/20 border border-[#c23a3a]/30 rounded-lg flex items-start space-x-3">
-                <AlertCircle className="h-5 w-5 text-[#d64545] flex-shrink-0 mt-0.5" />
+              <div
+                role="alert"
+                className="mb-6 p-4 bg-[#c23a3a]/20 border border-[#c23a3a]/30 rounded-lg flex items-start space-x-3"
+              >
+                <AlertCircle
+                  aria-hidden="true"
+                  className="h-5 w-5 text-[#d64545] flex-shrink-0 mt-0.5"
+                />
                 <p className="text-sm text-[#d64545]">{error}</p>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <User
+                  aria-hidden="true"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"
+                />
                 <Input
                   type="text"
+                  aria-label="Username"
                   placeholder="Username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -155,9 +165,13 @@ export default function RegisterClient() {
               </div>
 
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Mail
+                  aria-hidden="true"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"
+                />
                 <Input
                   type="email"
+                  aria-label="Email address"
                   placeholder="Email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -167,9 +181,13 @@ export default function RegisterClient() {
               </div>
 
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Lock
+                  aria-hidden="true"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"
+                />
                 <Input
                   type="password"
+                  aria-label="Password (minimum 8 characters)"
                   placeholder="Password (min 8 characters)"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -180,9 +198,13 @@ export default function RegisterClient() {
               </div>
 
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Lock
+                  aria-hidden="true"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"
+                />
                 <Input
                   type="password"
+                  aria-label="Confirm password"
                   placeholder="Confirm password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -201,11 +223,11 @@ export default function RegisterClient() {
               </Button>
             </form>
 
-            <p className="mt-6 text-center text-sm text-gray-400">
+            <p className="mt-6 text-center text-sm text-gray-300">
               Already have an account?{" "}
               <Link
                 href="/login"
-                className="text-[#c23a3a] hover:text-[#d64545] font-medium"
+                className="text-red-300 hover:text-[#d64545] font-medium"
               >
                 Sign in
               </Link>

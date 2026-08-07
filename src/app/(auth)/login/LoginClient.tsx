@@ -124,11 +124,14 @@ function LoginForm() {
         <h1 className="text-2xl font-bold font-display text-white text-center">
           Welcome back
         </h1>
-        <p className="text-gray-400 text-center">Sign in to your account</p>
+        <p className="text-gray-300 text-center">Sign in to your account</p>
       </CardHeader>
       <CardContent>
         {verified && (
-          <div className="mb-6 p-4 bg-green-500/20 border border-green-500/30 rounded-lg">
+          <div
+            role="status"
+            className="mb-6 p-4 bg-green-500/20 border border-green-500/30 rounded-lg"
+          >
             <p className="text-sm text-green-400">
               Your email has been verified! You can now log in.
             </p>
@@ -136,17 +139,27 @@ function LoginForm() {
         )}
 
         {error && (
-          <div className="mb-6 p-4 bg-[#c23a3a]/20 border border-[#c23a3a]/30 rounded-lg flex items-start space-x-3">
-            <AlertCircle className="h-5 w-5 text-[#d64545] flex-shrink-0 mt-0.5" />
+          <div
+            role="alert"
+            className="mb-6 p-4 bg-[#c23a3a]/20 border border-[#c23a3a]/30 rounded-lg flex items-start space-x-3"
+          >
+            <AlertCircle
+              aria-hidden="true"
+              className="h-5 w-5 text-[#d64545] flex-shrink-0 mt-0.5"
+            />
             <p className="text-sm text-[#d64545]">{error}</p>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Mail
+              aria-hidden="true"
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"
+            />
             <Input
               type="email"
+              aria-label="Email address"
               placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -156,10 +169,14 @@ function LoginForm() {
           </div>
 
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Lock
+              aria-hidden="true"
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"
+            />
             <Input
               id="password-input"
               type="password"
+              aria-label="Password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -178,11 +195,11 @@ function LoginForm() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-gray-400">
+        <p className="mt-6 text-center text-sm text-gray-300">
           Don&apos;t have an account?{" "}
           <Link
             href="/register"
-            className="text-[#c23a3a] hover:text-[#d64545] font-medium"
+            className="text-red-300 hover:text-[#d64545] font-medium"
           >
             Sign up
           </Link>
@@ -191,7 +208,7 @@ function LoginForm() {
         <p className="mt-4 text-center text-sm">
           <Link
             href="/forgot-password"
-            className="text-[#c23a3a] hover:text-[#d64545] font-medium"
+            className="text-red-300 hover:text-[#d64545] font-medium"
           >
             Forgot password?
           </Link>

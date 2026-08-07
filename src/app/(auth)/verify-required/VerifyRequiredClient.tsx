@@ -99,7 +99,7 @@ export default function VerifyRequiredClient() {
             <h1 className="text-2xl font-bold font-display text-white text-center">
               Please Verify Your Email
             </h1>
-            <p className="text-gray-400 text-center">
+            <p className="text-gray-300 text-center">
               We need to verify your email before you can sign in
             </p>
           </CardHeader>

@@ -193,7 +193,10 @@ export default function ResultsClient({
           <CardContent className="pt-6">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-orange-500/20 rounded-lg">
-                <Trophy className="h-5 w-5 text-orange-500" />
+                <Trophy
+                  aria-hidden="true"
+                  className="h-5 w-5 text-orange-500"
+                />
               </div>
               <div>
                 <p className="text-2xl font-bold text-white">
@@ -209,7 +212,7 @@ export default function ResultsClient({
           <CardContent className="pt-6">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-blue-500/20 rounded-lg">
-                <Target className="h-5 w-5 text-blue-500" />
+                <Target aria-hidden="true" className="h-5 w-5 text-blue-500" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-white">
@@ -225,7 +228,10 @@ export default function ResultsClient({
           <CardContent className="pt-6">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-green-500/20 rounded-lg">
-                <Percent className="h-5 w-5 text-green-500" />
+                <Percent
+                  aria-hidden="true"
+                  className="h-5 w-5 text-green-500"
+                />
               </div>
               <div>
                 <p className="text-2xl font-bold text-white">
@@ -241,7 +247,10 @@ export default function ResultsClient({
           <CardContent className="pt-6">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-purple-500/20 rounded-lg">
-                <Calendar className="h-5 w-5 text-purple-500" />
+                <Calendar
+                  aria-hidden="true"
+                  className="h-5 w-5 text-purple-500"
+                />
               </div>
               <div>
                 <p className="text-2xl font-bold text-white">
@@ -258,7 +267,10 @@ export default function ResultsClient({
       {submissions.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <Calendar className="h-12 w-12 text-slate-500 mx-auto mb-4" />
+            <Calendar
+              aria-hidden="true"
+              className="h-12 w-12 text-slate-500 mx-auto mb-4"
+            />
             <p className="text-slate-400">
               You haven&apos;t made any picks yet. Head to the dashboard to get
               started!
@@ -272,22 +284,22 @@ export default function ResultsClient({
               <CardHeader>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <h3 className="font-semibold text-white text-lg">
+                    <h2 className="font-semibold text-white text-lg">
                       {submission.show.venue}
                       {submission.show.venue.includes("Test Venue") && (
                         <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30">
                           Test
                         </span>
                       )}
-                    </h3>
+                    </h2>
                     <div className="flex items-center space-x-4 text-sm text-slate-400 mt-1">
                       <span className="flex items-center">
-                        <MapPin className="h-4 w-4 mr-1" />
+                        <MapPin aria-hidden="true" className="h-4 w-4 mr-1" />
                         {submission.show.city},{" "}
                         {submission.show.state || submission.show.country}
                       </span>
                       <span className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-1" />
+                        <Calendar aria-hidden="true" className="h-4 w-4 mr-1" />
                         {formatShowDate(
                           submission.show.showDate,
                           "MMM d, yyyy"
@@ -312,7 +324,7 @@ export default function ResultsClient({
                       </div>
                     ) : (
                       <span className="flex items-center text-slate-400">
-                        <Clock className="h-4 w-4 mr-1" />
+                        <Clock aria-hidden="true" className="h-4 w-4 mr-1" />
                         Awaiting results
                       </span>
                     )}
@@ -321,7 +333,7 @@ export default function ResultsClient({
                         href={`/results_detail/${submission.show.id}`}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 hover:text-blue-300 rounded-lg border-2 border-blue-500/30 hover:border-blue-500/50 transition-all font-medium"
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye aria-hidden="true" className="h-4 w-4" />
                         View Details
                       </Link>
                       {isAdmin && (
@@ -339,7 +351,7 @@ export default function ResultsClient({
                           {deletingSubmission === submission.id ? (
                             <LoadingDonut size="xs" color="currentColor" />
                           ) : (
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 aria-hidden="true" className="h-4 w-4" />
                           )}
                           Delete
                         </button>
@@ -408,7 +420,12 @@ export default function ResultsClient({
                             }`}
                           >
                             <span>{pick.song.name}</span>
-                            {pick.wasPlayed && <Check className="h-3 w-3" />}
+                            {pick.wasPlayed !== null &&
+                              (pick.wasPlayed ? (
+                                <Check aria-hidden="true" className="h-3 w-3" />
+                              ) : (
+                                <X aria-hidden="true" className="h-3 w-3" />
+                              ))}
                           </span>
                         ))}
                     </div>

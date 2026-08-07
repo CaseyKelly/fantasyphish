@@ -82,7 +82,7 @@ function ResetPasswordForm() {
               <p className="text-white font-medium">{error}</p>
               <Link
                 href="/forgot-password"
-                className="text-[#c23a3a] hover:text-[#d64545] font-medium text-sm mt-4 inline-block"
+                className="text-red-300 hover:text-[#d64545] font-medium text-sm mt-4 inline-block"
               >
                 Request a new reset link
               </Link>
@@ -99,7 +99,7 @@ function ResetPasswordForm() {
         <h1 className="text-2xl font-bold font-display text-white text-center">
           Set new password
         </h1>
-        <p className="text-gray-400 text-center">
+        <p className="text-gray-300 text-center">
           Enter your new password below
         </p>
       </CardHeader>
@@ -168,11 +168,11 @@ function ResetPasswordForm() {
               </Button>
             </form>
 
-            <p className="mt-6 text-center text-sm text-gray-400">
+            <p className="mt-6 text-center text-sm text-gray-300">
               Remember your password?{" "}
               <Link
                 href="/login"
-                className="text-[#c23a3a] hover:text-[#d64545] font-medium"
+                className="text-red-300 hover:text-[#d64545] font-medium"
               >
                 Sign in
               </Link>

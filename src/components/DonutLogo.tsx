@@ -17,6 +17,7 @@ export function DonutLogo({ size = "md", className = "" }: DonutLogoProps) {
       className={`${sizes[size]} ${className}`}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
     >
       {/* Outer circle (donut) - thicker stroke */}
       <circle

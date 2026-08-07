@@ -339,22 +339,31 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
         <Card className="border-l-4 border-l-cyan-500 border-2 border-[#4a6b7d]/60">
           <button
             onClick={() => setShowNotesOpen((open) => !open)}
+            aria-expanded={showNotesOpen}
+            aria-controls="show-notes-panel"
             className="w-full flex items-center justify-between p-4 sm:p-6 text-left"
           >
             <div className="flex items-center gap-2">
-              <ScrollText className="h-5 w-5 text-cyan-400" />
+              <ScrollText
+                aria-hidden="true"
+                className="h-5 w-5 text-cyan-400"
+              />
               <h2 className="text-lg font-bold font-display text-white">
                 Show Notes
               </h2>
             </div>
             <ChevronDown
+              aria-hidden="true"
               className={`h-5 w-5 text-slate-400 transition-transform ${
                 showNotesOpen ? "rotate-180" : ""
               }`}
             />
           </button>
           {showNotesOpen && (
-            <div className="px-4 pb-4 sm:px-6 sm:pb-6 -mt-2">
+            <div
+              id="show-notes-panel"
+              className="px-4 pb-4 sm:px-6 sm:pb-6 -mt-2"
+            >
               <p className="text-sm text-slate-300 whitespace-pre-line leading-relaxed">
                 {setlist.setlistNotes}
               </p>
@@ -464,7 +473,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
                   </>
                 ) : (
                   <>
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 aria-hidden="true" className="h-4 w-4" />
                     Delete Submission
                   </>
                 )}

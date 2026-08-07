@@ -521,8 +521,20 @@ function LeaderboardTable({
                 }`}
               >
                 <div
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={isExpanded}
                   className="grid grid-cols-12 items-center gap-2 cursor-pointer hover:bg-[#4a6b7d]/20 -mx-3 sm:-mx-6 px-3 sm:px-6 py-2 rounded-lg transition-colors"
                   onClick={() => onToggle(user.userId)}
+                  onKeyDown={(e) => {
+                    if (
+                      (e.key === "Enter" || e.key === " ") &&
+                      e.target === e.currentTarget
+                    ) {
+                      e.preventDefault()
+                      onToggle(user.userId)
+                    }
+                  }}
                 >
                   <div className="col-span-1 flex justify-center">
                     {getRankIcon(user.rank)}

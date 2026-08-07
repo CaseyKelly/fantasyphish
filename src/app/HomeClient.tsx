@@ -436,7 +436,7 @@ export function HomeClient() {
                 href="https://phish.net"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#c23a3a] hover:text-[#d64545]"
+                className="text-red-400 underline hover:text-[#d64545]"
               >
                 phish.net
               </a>
