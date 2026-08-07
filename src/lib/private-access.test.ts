@@ -37,7 +37,16 @@ describe("isPrivateViewerOwner", () => {
   })
 
   it("fails closed (returns false for every input) when the env var is unset", async () => {
+    // Importing with the env var unset logs a module-level console.error by
+    // design (see private-access.ts); stub it here so that expected warning
+    // doesn't pollute test output, and assert it actually fired.
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
     const { isPrivateViewerOwner } = await loadWithEnv(undefined)
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("PRIVATE_VIEWER_EMAIL is not set")
+    )
+    errorSpy.mockRestore()
+
     expect(isPrivateViewerOwner("owner@example.com")).toBe(false)
     expect(isPrivateViewerOwner(null)).toBe(false)
     expect(isPrivateViewerOwner(undefined)).toBe(false)

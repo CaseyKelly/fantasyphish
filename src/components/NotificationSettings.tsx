@@ -27,10 +27,12 @@ export function NotificationSettings({
 
   useEffect(() => {
     if (!isPushSupported() || !isStandalonePwa()) return
-    setPushAvailable(true)
     navigator.serviceWorker.ready
       .then((registration) => registration.pushManager.getSubscription())
-      .then((subscription) => setPushEnabled(!!subscription))
+      .then((subscription) => {
+        setPushAvailable(true)
+        setPushEnabled(!!subscription)
+      })
       .catch(() => {})
   }, [])
 
