@@ -1,11 +1,14 @@
 import { PrismaClient } from "@prisma/client"
+import { PrismaPg } from "@prisma/adapter-pg"
 import { config } from "dotenv"
 
 // Load environment variables from .env.local (with override to take precedence over .env)
 config({ path: ".env.local", override: true })
 config({ path: ".env" })
 
-const prisma = new PrismaClient()
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
+
+const prisma = new PrismaClient({ adapter })
 
 const PHISHNET_API_BASE = "https://api.phish.net/v5"
 const YEARS_TO_INCLUDE = 5

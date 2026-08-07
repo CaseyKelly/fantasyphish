@@ -8,6 +8,7 @@
  */
 
 import { PrismaClient } from "@prisma/client"
+import { PrismaPg } from "@prisma/adapter-pg"
 import { config } from "dotenv"
 import { ACHIEVEMENT_DEFINITIONS } from "../src/lib/achievements"
 
@@ -15,7 +16,9 @@ import { ACHIEVEMENT_DEFINITIONS } from "../src/lib/achievements"
 config({ path: ".env.local" })
 config({ path: ".env" })
 
-const prisma = new PrismaClient()
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
+
+const prisma = new PrismaClient({ adapter })
 
 async function awardAchievement(
   achievementSlug: "PERFECT_OPENER" | "PERFECT_CLOSER",

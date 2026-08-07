@@ -1,5 +1,6 @@
 import { test as base } from "@playwright/test"
 import { PrismaClient } from "@prisma/client"
+import { PrismaPg } from "@prisma/adapter-pg"
 import crypto from "crypto"
 import { hash } from "bcryptjs"
 
@@ -71,7 +72,8 @@ export const test = base.extend<{
 }>({
   // Provide a Prisma client for tests
   prisma: async ({}, use) => {
-    const prisma = new PrismaClient()
+    const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
+    const prisma = new PrismaClient({ adapter })
     await use(prisma)
     await prisma.$disconnect()
   },

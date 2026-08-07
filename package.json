@@ -36,6 +36,7 @@
     "watch:scoring": "npx tsx scripts/watch-scoring.ts"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.0.0",
     "@sentry/nextjs": "^10.69.0",
     "@serwist/turbopack": "^9.5.12",
@@ -47,6 +48,7 @@
     "lucide-react": "^1.0.0",
     "next": "16.3.0",
     "next-auth": "^5.0.0-beta.32",
+    "pg": "^8.22.0",
     "prisma": "^7.0.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -60,6 +62,7 @@
     "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^24",
+    "@types/pg": "^8.20.4",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@types/web-push": "^3.6.4",
