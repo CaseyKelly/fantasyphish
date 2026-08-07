@@ -39,7 +39,7 @@
     "@prisma/client": "^6.19.3",
     "@serwist/turbopack": "^9.5.12",
     "@swc/helpers": "^0.5.17",
-    "@vercel/analytics": "^1.6.1",
+    "@vercel/analytics": "^2.0.0",
     "bcryptjs": "^3.0.3",
     "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",
