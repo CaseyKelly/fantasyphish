@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/nextjs"
 
-export async function register() {
+export function register(): void {
   if (
     process.env.NEXT_RUNTIME === "nodejs" ||
     process.env.NEXT_RUNTIME === "edge"
