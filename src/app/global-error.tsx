@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
+import * as Sentry from "@sentry/nextjs"
 
 // Global-error replaces the root layout entirely when it throws, so it
 // renders its own <html>/<body> and avoids relying on providers, fonts,
@@ -14,6 +15,7 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     console.error("[GlobalErrorBoundary]", error)
+    Sentry.captureException(error)
   }, [error])
 
   return (

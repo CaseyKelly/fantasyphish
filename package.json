@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
+    "@sentry/nextjs": "^10.69.0",
     "@serwist/turbopack": "^9.5.12",
     "@swc/helpers": "^0.5.17",
     "@vercel/analytics": "^2.0.0",
