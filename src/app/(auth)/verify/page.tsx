@@ -18,25 +18,28 @@ function VerifyContent() {
   )
   const [message, setMessage] = useState("")
   const token = searchParams.get("token")
-  const hasStartedVerification = useRef(false)
+  const verifiedTokenRef = useRef<string | null>(null)
 
   useEffect(() => {
-    // The verify endpoint consumes the token (nulling it on success), so it
-    // isn't safe to call twice. Guard with a ref (rather than relying on
-    // effect cleanup) because React's StrictMode double-invokes this effect
-    // in dev, and both invocations would otherwise race real requests
-    // against that non-idempotent endpoint.
-    if (hasStartedVerification.current) {
-      return
-    }
-    hasStartedVerification.current = true
-
     const verifyEmail = async () => {
       if (!token) {
         setStatus("error")
         setMessage("No verification token provided")
         return
       }
+
+      // The verify endpoint consumes the token (nulling it on success), so
+      // it isn't safe to call twice for the same token. Guard per-token
+      // (rather than relying on effect cleanup) because React's StrictMode
+      // double-invokes this effect in dev, and both invocations would
+      // otherwise race real requests against that non-idempotent endpoint.
+      // Tracking the token itself (not just a boolean) means a client-side
+      // navigation to a new verify link still triggers a fresh check.
+      if (verifiedTokenRef.current === token) {
+        return
+      }
+      verifiedTokenRef.current = token
+
       try {
         const response = await fetch(`/api/auth/verify?token=${token}`)
         const data = await response.json()

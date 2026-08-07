@@ -26,7 +26,7 @@ export async function sendVerificationEmail(
   const verificationUrl = `${appUrl}/verify?token=${token}`
 
   if (SKIP_EMAIL_SEND) {
-    console.log(`SKIP_EMAIL_SEND set - skipping verification email to ${email}`)
+    console.log("SKIP_EMAIL_SEND set - skipping verification email")
     return { success: true }
   }
 
