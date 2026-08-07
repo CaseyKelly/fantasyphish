@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=24"
   },
   "scripts": {
     "dev": "next dev",
@@ -34,42 +34,41 @@
     "watch:scoring": "npx tsx scripts/watch-scoring.ts"
   },
   "dependencies": {
-    "@prisma/client": "^6.19.1",
+    "@prisma/client": "^6.19.3",
     "@serwist/turbopack": "^9.5.12",
     "@vercel/analytics": "^1.6.1",
-    "@vercel/postgres": "^0.10.0",
     "bcryptjs": "^3.0.3",
-    "date-fns": "^4.1.0",
+    "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",
     "lucide-react": "^0.561.0",
-    "next": "16.2.12",
+    "next": "16.3.0",
     "next-auth": "^5.0.0-beta.32",
     "prisma": "^6.19.3",
-    "react": "19.2.1",
-    "react-dom": "19.2.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
     "resend": "^6.18.1",
     "serwist": "^9.5.12",
     "sonner": "^2.0.7",
     "web-push": "^3.6.7",
-    "zod": "^4.2.1"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@playwright/test": "^1.57.0",
-    "@tailwindcss/postcss": "^4",
+    "@playwright/test": "^1.62.1",
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/bcryptjs": "^2.4.6",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/node": "^24",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
     "@types/web-push": "^3.6.4",
-    "dotenv": "^17.2.3",
-    "esbuild": "^0.27.2",
+    "dotenv": "^17.4.2",
+    "esbuild": "^0.28.1",
     "eslint": "^9",
-    "eslint-config-next": "16.0.10",
+    "eslint-config-next": "16.3.0",
     "husky": "^9.1.7",
     "lint-staged": "^15.5.2",
-    "prettier": "^3.7.4",
-    "tailwindcss": "^4",
-    "tsx": "^4.21.0",
+    "prettier": "^3.9.6",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.9",
     "typescript": "^5"
   },
   "overrides": {
