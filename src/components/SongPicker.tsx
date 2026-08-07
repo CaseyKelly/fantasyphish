@@ -760,7 +760,7 @@ export function SongPicker({
                   <h3 className="font-semibold text-white text-sm sm:text-base truncate">
                     {title}
                   </h3>
-                  <p className="text-xs sm:text-sm text-gray-400 truncate">
+                  <p className="text-xs sm:text-sm text-gray-300 truncate">
                     {subtitle}
                   </p>
                 </div>
@@ -772,7 +772,7 @@ export function SongPicker({
                       Complete
                     </span>
                   ) : (
-                    <span className="text-gray-500 text-sm whitespace-nowrap">
+                    <span className="text-gray-300 text-sm whitespace-nowrap">
                       {11 - (pickCount || 0)} more needed
                     </span>
                   )
@@ -781,7 +781,7 @@ export function SongPicker({
                     {currentPick.songName}
                   </span>
                 ) : (
-                  <span className="text-gray-500 text-sm whitespace-nowrap">
+                  <span className="text-gray-300 text-sm whitespace-nowrap">
                     Not selected
                   </span>
                 )}
@@ -982,7 +982,7 @@ export function SongPicker({
                           : "Ready to submit!"
                     : "Complete your picks"}
                 </p>
-                <p className="text-xs sm:text-sm text-gray-400">
+                <p className="text-xs sm:text-sm text-gray-300">
                   {isComplete
                     ? hasUnsavedChanges
                       ? "Click update to save your changes"
