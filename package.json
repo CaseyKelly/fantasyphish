@@ -36,6 +36,7 @@
   "dependencies": {
     "@prisma/client": "^6.19.1",
     "@serwist/turbopack": "^9.5.12",
+    "@swc/helpers": "^0.5.17",
     "@vercel/analytics": "^1.6.1",
     "@vercel/postgres": "^0.10.0",
     "bcryptjs": "^3.0.3",
@@ -62,7 +63,7 @@
     "@types/react-dom": "^19",
     "@types/web-push": "^3.6.4",
     "dotenv": "^17.2.3",
-    "esbuild": "^0.27.2",
+    "esbuild": "^0.28.1",
     "eslint": "^9",
     "eslint-config-next": "16.0.10",
     "husky": "^9.1.7",
@@ -75,7 +76,8 @@
   "overrides": {
     "minimatch": "10.2.6",
     "postcss": "8.5.24",
-    "sharp": "0.35.3"
+    "sharp": "0.35.3",
+    "eslint-plugin-react-hooks": "7.0.1"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
