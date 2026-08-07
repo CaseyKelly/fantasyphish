@@ -21,7 +21,7 @@ jobs:
           # Vite (a Vitest dependency) requires node ^20.19.0 || >=22.12.0;
           # pin to a compatible 20.x minor instead of the "20" major alone
           # so CI doesn't silently drift onto an incompatible earlier patch.
-          node-version: "20.19.0"
+          node-version: "24.19.0"
           cache: "npm"
 
       - name: Install dependencies
