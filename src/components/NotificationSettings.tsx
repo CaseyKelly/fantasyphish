@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Bell, Smartphone } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -24,6 +25,8 @@ export function NotificationSettings({
   const [pushAvailable, setPushAvailable] = useState(false)
   const [pushEnabled, setPushEnabled] = useState(false)
   const [savingPush, setSavingPush] = useState(false)
+
+  const router = useRouter()
 
   useEffect(() => {
     if (!isPushSupported() || !isStandalonePwa()) return
@@ -55,6 +58,7 @@ export function NotificationSettings({
           ? "You'll get an email reminder on show days"
           : "Show-day email reminders turned off"
       )
+      router.refresh()
     } catch {
       toast.error("Couldn't save your preference. Try again.")
     } finally {
@@ -73,6 +77,7 @@ export function NotificationSettings({
         toast.success("Push notifications turned off")
       }
       setPushEnabled(next)
+      router.refresh()
     } catch (error) {
       console.error("Push toggle failed:", error)
       toast.error(
