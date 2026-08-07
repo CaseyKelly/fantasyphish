@@ -1,4 +1,4 @@
-name: E2E Tests
+name: CI
 
 on:
   pull_request:
@@ -211,3 +211,55 @@ jobs:
             # cleanup workflow will catch anything left behind.
             exit 0
           fi
+
+  lint-typecheck-build:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          # Use TEST_DATABASE_URL in CI to avoid touching production
+          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        # This job's build runs `prisma migrate deploy` against the shared
+        # TEST_DATABASE_URL (the `test` job now migrates its own ephemeral
+        # Neon branch instead, so it no longer races this). A concurrent run
+        # of this same job (e.g. another PR's push) could still contend for
+        # Prisma's migration advisory lock (P1002), so retry rather than add
+        # a `needs:` dependency that would slow down feedback.
+        run: |
+          for attempt in 1 2 3; do
+            if npm run build; then
+              exit 0
+            fi
+            echo "Build attempt $attempt failed (possibly a migration advisory-lock race with the test job) — retrying in 10s..." >&2
+            sleep 10
+          done
+          exit 1
+        env:
+          # Build runs `prisma migrate deploy` internally, so it needs a real DB.
+          # Use TEST_DATABASE_URL/TEST_DIRECT_URL in CI to avoid touching production
+          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.TEST_DIRECT_URL }}
+          # next build evaluates route modules while collecting page data, and
+          # src/app/api/inbound-email/route.ts constructs a Resend client at
+          # module scope, which throws if this is unset
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
