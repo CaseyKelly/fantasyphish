@@ -36,6 +36,7 @@
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "@serwist/turbopack": "^9.5.12",
+    "@swc/helpers": "^0.5.17",
     "@vercel/analytics": "^1.6.1",
     "bcryptjs": "^3.0.3",
     "date-fns": "^4.4.0",
@@ -74,7 +75,8 @@
   "overrides": {
     "minimatch": "10.2.6",
     "postcss": "8.5.24",
-    "sharp": "0.35.3"
+    "sharp": "0.35.3",
+    "eslint-plugin-react-hooks": "7.0.1"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
