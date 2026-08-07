@@ -8,12 +8,12 @@ const FEEDBACK_MAILTO =
 export function FeedbackPanel({ className = "" }: FeedbackPanelProps) {
   return (
     <p
-      className={`text-center text-xs text-gray-500 sm:text-left ${className}`}
+      className={`text-center text-xs text-gray-400 sm:text-left ${className}`}
     >
       Got an idea to make the site better?{" "}
       <a
         href={FEEDBACK_MAILTO}
-        className="font-medium text-[#c23a3a] transition-colors hover:text-[#d64545]"
+        className="font-medium text-red-400 underline transition-colors hover:text-[#d64545]"
       >
         Email Chalupa
       </a>

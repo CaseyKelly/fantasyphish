@@ -315,7 +315,7 @@ export function GuestRegistrationModal({
                 <button
                   type="button"
                   onClick={() => setMode("signin")}
-                  className="text-sm text-[#c23a3a] hover:text-[#d64545] transition-colors"
+                  className="text-sm text-red-300 hover:text-[#d64545] transition-colors"
                 >
                   Already have an account? Sign in
                 </button>
@@ -387,7 +387,7 @@ export function GuestRegistrationModal({
                 <button
                   type="button"
                   onClick={() => setMode("register")}
-                  className="text-sm text-[#c23a3a] hover:text-[#d64545] transition-colors"
+                  className="text-sm text-red-300 hover:text-[#d64545] transition-colors"
                 >
                   Don&apos;t have an account? Create one
                 </button>

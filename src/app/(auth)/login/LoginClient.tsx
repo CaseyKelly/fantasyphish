@@ -124,7 +124,7 @@ function LoginForm() {
         <h1 className="text-2xl font-bold font-display text-white text-center">
           Welcome back
         </h1>
-        <p className="text-gray-400 text-center">Sign in to your account</p>
+        <p className="text-gray-300 text-center">Sign in to your account</p>
       </CardHeader>
       <CardContent>
         {verified && (
@@ -195,11 +195,11 @@ function LoginForm() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-gray-400">
+        <p className="mt-6 text-center text-sm text-gray-300">
           Don&apos;t have an account?{" "}
           <Link
             href="/register"
-            className="text-[#c23a3a] hover:text-[#d64545] font-medium"
+            className="text-red-300 hover:text-[#d64545] font-medium"
           >
             Sign up
           </Link>
@@ -208,7 +208,7 @@ function LoginForm() {
         <p className="mt-4 text-center text-sm">
           <Link
             href="/forgot-password"
-            className="text-[#c23a3a] hover:text-[#d64545] font-medium"
+            className="text-red-300 hover:text-[#d64545] font-medium"
           >
             Forgot password?
           </Link>

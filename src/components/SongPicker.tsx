@@ -436,14 +436,16 @@ export function SongPicker({
 
     return (
       <div
-        ref={mobileModalRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="mobile-picker-modal-title"
         className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
         style={{ minHeight: "100dvh" }}
       >
-        <div className="bg-[#233d4d] w-full max-w-2xl rounded-lg max-h-[90dvh] flex flex-col border-2 border-[#4a6b7d]/60">
+        <div
+          ref={mobileModalRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="mobile-picker-modal-title"
+          className="bg-[#233d4d] w-full max-w-2xl rounded-lg max-h-[90dvh] flex flex-col border-2 border-[#4a6b7d]/60"
+        >
           {/* Modal Header */}
           <div className="flex items-center justify-between p-4 border-b-2 border-[#4a6b7d]/60">
             <h2

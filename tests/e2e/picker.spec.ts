@@ -1,4 +1,4 @@
-import { test, expect } from "./helpers/fixtures"
+import { test, expect, uniqueUsername } from "./helpers/fixtures"
 import AxeBuilder from "@axe-core/playwright"
 
 test.describe.configure({ mode: "serial" })
@@ -9,8 +9,8 @@ test.describe("Song Picker Flow", () => {
     createUser,
     prisma,
   }) => {
-    const userEmail = `picker-a11y-${Date.now()}@example.com`
-    const userUsername = `pickera11y${Date.now()}`
+    const userUsername = uniqueUsername("pickera11y")
+    const userEmail = `${userUsername}@example.com`
     const userPassword = "PickerPassword123!"
 
     await createUser({
@@ -33,21 +33,23 @@ test.describe("Song Picker Flow", () => {
       },
     })
 
-    await page.goto("/login")
-    await page.getByPlaceholder("Email address").fill(userEmail)
-    await page.getByPlaceholder("Password").fill(userPassword)
-    await page.click('button[type="submit"]')
-    await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
+    try {
+      await page.goto("/login")
+      await page.getByPlaceholder("Email address").fill(userEmail)
+      await page.getByPlaceholder("Password").fill(userPassword)
+      await page.click('button[type="submit"]')
+      await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
 
-    await page.goto(`/pick/${show.id}`)
-    await expect(page.getByText("Opener Pick")).toBeVisible()
+      await page.goto(`/pick/${show.id}`)
+      await expect(page.getByText("Opener Pick")).toBeVisible()
 
-    const results = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa"])
-      .analyze()
-    expect(results.violations).toEqual([])
-
-    await prisma.show.delete({ where: { id: show.id } })
+      const results = await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa"])
+        .analyze()
+      expect(results.violations).toEqual([])
+    } finally {
+      await prisma.show.delete({ where: { id: show.id } })
+    }
   })
 
   test("should allow user to submit picks for a show", async ({

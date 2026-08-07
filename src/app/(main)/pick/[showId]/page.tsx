@@ -169,7 +169,7 @@ export default async function PickPage({ params }: PickPageProps) {
           Set your notification preferences on{" "}
           <Link
             href={`/user/${session.user.username}`}
-            className="text-[#c23a3a] hover:underline"
+            className="text-red-400 underline"
           >
             your profile
           </Link>

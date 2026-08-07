@@ -197,17 +197,17 @@ export function UsageOverview({
         // Backdrop dismisses the modal on click; Escape-to-close and focus
         // trapping are handled by useFocusTrap above, so the backdrop and
         // its content wrapper don't need their own keyboard handlers.
-        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events
+        // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
         <div
-          ref={modalRef}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="usage-overview-modal-title"
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
           onClick={() => setSelectedMetric(null)}
         >
-          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
+          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events */}
           <div
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="usage-overview-modal-title"
             className="flex max-h-[80vh] w-full max-w-2xl flex-col rounded-lg bg-[#2d4654] shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >

@@ -98,7 +98,7 @@ export default function RegisterClient() {
                   Didn&apos;t receive the email? Check your spam folder or{" "}
                   <button
                     onClick={() => setSuccess(false)}
-                    className="text-[#c23a3a] hover:text-[#d64545]"
+                    className="text-red-300 hover:text-[#d64545]"
                   >
                     try again
                   </button>
@@ -127,7 +127,7 @@ export default function RegisterClient() {
             <h1 className="text-2xl font-bold font-display text-white text-center">
               Create your account
             </h1>
-            <p className="text-gray-400 text-center">
+            <p className="text-gray-300 text-center">
               Start predicting setlists today
             </p>
           </CardHeader>
@@ -223,11 +223,11 @@ export default function RegisterClient() {
               </Button>
             </form>
 
-            <p className="mt-6 text-center text-sm text-gray-400">
+            <p className="mt-6 text-center text-sm text-gray-300">
               Already have an account?{" "}
               <Link
                 href="/login"
-                className="text-[#c23a3a] hover:text-[#d64545] font-medium"
+                className="text-red-300 hover:text-[#d64545] font-medium"
               >
                 Sign in
               </Link>

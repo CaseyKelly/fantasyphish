@@ -60,7 +60,7 @@ export default function ForgotPasswordClient() {
             <h1 className="text-2xl font-bold font-display text-white text-center">
               Reset your password
             </h1>
-            <p className="text-gray-400 text-center">
+            <p className="text-gray-300 text-center">
               Enter your email and we&apos;ll send you a reset link
             </p>
           </CardHeader>
@@ -83,7 +83,7 @@ export default function ForgotPasswordClient() {
                 <div className="text-center">
                   <Link
                     href="/login"
-                    className="text-[#c23a3a] hover:text-[#d64545] font-medium text-sm"
+                    className="text-red-300 hover:text-[#d64545] font-medium text-sm"
                   >
                     Back to login
                   </Link>
@@ -121,11 +121,11 @@ export default function ForgotPasswordClient() {
                   </Button>
                 </form>
 
-                <p className="mt-6 text-center text-sm text-gray-400">
+                <p className="mt-6 text-center text-sm text-gray-300">
                   Remember your password?{" "}
                   <Link
                     href="/login"
-                    className="text-[#c23a3a] hover:text-[#d64545] font-medium"
+                    className="text-red-300 hover:text-[#d64545] font-medium"
                   >
                     Sign in
                   </Link>
