@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, Suspense } from "react"
+import { useEffect, useRef, useState, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 
 import Link from "next/link"
@@ -18,6 +18,7 @@ function VerifyContent() {
   )
   const [message, setMessage] = useState("")
   const token = searchParams.get("token")
+  const verifiedTokenRef = useRef<string | null>(null)
 
   useEffect(() => {
     const verifyEmail = async () => {
@@ -26,6 +27,19 @@ function VerifyContent() {
         setMessage("No verification token provided")
         return
       }
+
+      // The verify endpoint consumes the token (nulling it on success), so
+      // it isn't safe to call twice for the same token. Guard per-token
+      // (rather than relying on effect cleanup) because React's StrictMode
+      // double-invokes this effect in dev, and both invocations would
+      // otherwise race real requests against that non-idempotent endpoint.
+      // Tracking the token itself (not just a boolean) means a client-side
+      // navigation to a new verify link still triggers a fresh check.
+      if (verifiedTokenRef.current === token) {
+        return
+      }
+      verifiedTokenRef.current = token
+
       try {
         const response = await fetch(`/api/auth/verify?token=${token}`)
         const data = await response.json()
