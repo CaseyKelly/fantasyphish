@@ -3,6 +3,13 @@ import { Resend } from "resend"
 const FROM_EMAIL =
   process.env.FROM_EMAIL || "FantasyPhish <noreply@fantasyphish.com>"
 
+// Lets e2e runs skip the real Resend API call for verification emails so
+// CI doesn't burn Resend's daily send quota. The verification token is
+// already persisted to the DB before this is called, so tests can read it
+// there instead of polling a real inbox. A separate scheduled workflow
+// runs without this flag to confirm the real Resend integration still works.
+const SKIP_EMAIL_SEND = process.env.SKIP_EMAIL_SEND === "true"
+
 function getResendClient() {
   const apiKey = process.env.RESEND_API_KEY
   if (!apiKey) {
@@ -17,6 +24,11 @@ export async function sendVerificationEmail(
 ): Promise<{ success: boolean; error?: string }> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
   const verificationUrl = `${appUrl}/verify?token=${token}`
+
+  if (SKIP_EMAIL_SEND) {
+    console.log(`SKIP_EMAIL_SEND set - skipping verification email to ${email}`)
+    return { success: true }
+  }
 
   try {
     const resend = getResendClient()

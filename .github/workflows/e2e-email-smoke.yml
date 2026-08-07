@@ -1,27 +1,29 @@
-name: CI
+name: Email Smoke Test
+
+# Runs only the registration test that sends a real verification email
+# through Resend, so we notice if the Resend integration itself breaks.
+# Routine e2e-tests.yml runs set SKIP_EMAIL_SEND=true and never touch
+# Resend, so this is the only thing exercising the real send path -
+# scheduled (rather than on every PR) to stay well within Resend's daily
+# send quota. GitHub notifies watchers by email when a scheduled workflow
+# run fails, so a broken integration surfaces without extra alerting setup.
 
 on:
-  pull_request:
-    branches: [main]
-  push:
-    branches: [main]
+  schedule:
+    - cron: "0 13 * * *" # Daily at 13:00 UTC
+  workflow_dispatch: {} # Allow manual runs from the Actions tab
 
 jobs:
-  test:
-    timeout-minutes: 20
+  email-smoke:
+    timeout-minutes: 10
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      # Each workflow run gets its own ephemeral Neon branch (child of the
-      # shared "test" branch, so it inherits its Prisma migration history
-      # and needs no P3005 baseline step). This replaces the old setup of
-      # every run sharing one static TEST_DATABASE_URL/TEST_DIRECT_URL
-      # database, which relied on tests/global-setup.ts deleting rows by
-      # name convention for isolation and caused cross-run flakiness when
-      # multiple PRs' suites ran concurrently.
+      # Same ephemeral-Neon-branch approach as e2e-tests.yml, so this run
+      # never touches the shared test database or production.
       - name: Create Neon test branch
         env:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
@@ -29,7 +31,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          BRANCH_NAME="ci/e2e-${{ github.run_id }}-${{ github.run_attempt }}"
+          BRANCH_NAME="ci/e2e-email-smoke-${{ github.run_id }}-${{ github.run_attempt }}"
           echo "Creating ephemeral Neon branch: $BRANCH_NAME"
 
           PARENT_BRANCH_ID=$(curl -s "https://console.neon.tech/api/v2/projects/$NEON_PROJECT_ID/branches" \
@@ -68,15 +70,12 @@ jobs:
             exit 1
           fi
 
-          # Prefer the pooled (pgbouncer) host for app traffic, same
-          # substitution scripts/neon-branch.ts does for local dev branches.
           POOLED_URL="$DIRECT_URL"
           if [ -n "$POOLER_HOST" ]; then
             POOLER_SUBDOMAIN=$(echo "$POOLER_HOST" | cut -d. -f1)
             POOLED_URL=$(echo "$DIRECT_URL" | sed -E "s/ep-[^.]+\./${POOLER_SUBDOMAIN}./")
           fi
 
-          # Mask before these ever hit a log line or $GITHUB_ENV
           echo "::add-mask::$DIRECT_URL"
           echo "::add-mask::$POOLED_URL"
 
@@ -124,18 +123,13 @@ jobs:
           DATABASE_URL: ${{ env.NEON_BRANCH_DATABASE_URL }}
           DIRECT_URL: ${{ env.NEON_BRANCH_DIRECT_URL }}
 
-      - name: Run E2E tests
-        run: npm test
+      - name: Run registration email smoke test
+        run: npm test -- -g "full registration flow"
         env:
           CI: true
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          # Skip the real Resend send in the registration e2e test (reads the
-          # verification token from the DB instead) so routine CI/PR runs
-          # don't burn the daily Resend quota. The scheduled
-          # e2e-email-smoke.yml workflow runs without this flag to verify
-          # the real Resend integration still works.
-          SKIP_EMAIL_SEND: "true"
-          # Playwright config will override DATABASE_URL with TEST_DATABASE_URL
+          # Deliberately unset - this is the one run that should hit the
+          # real Resend API instead of reading the token from the DB.
           TEST_DATABASE_URL: ${{ env.NEON_BRANCH_DATABASE_URL }}
           DIRECT_URL: ${{ env.NEON_BRANCH_DIRECT_URL }}
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
@@ -143,11 +137,11 @@ jobs:
           NEXT_PUBLIC_APP_URL: http://localhost:3000
           PHISHNET_API_KEY: ${{ secrets.PHISHNET_API_KEY }}
 
-      - name: Upload Playwright report and test results
+      - name: Upload Playwright report
         uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: playwright-results
+          name: email-smoke-playwright-report
           path: |
             playwright-report/
             test-results/
@@ -169,11 +163,6 @@ jobs:
             exit 0
           fi
 
-          # Safety check: don't trust the $NEON_BRANCH_NAME env var carried
-          # over from the create step - look up what Neon currently has
-          # this branch ID named, and only delete if that name is one of
-          # ours. This guards against deleting a protected/shared branch
-          # even if $NEON_BRANCH_ID ended up pointing at the wrong branch.
           BRANCH_NAME=$(curl -s "https://console.neon.tech/api/v2/projects/$NEON_PROJECT_ID/branches/$BRANCH_ID" \
             -H "Authorization: Bearer $NEON_API_KEY" \
             -H "Accept: application/json" | jq -r '.branch.name // empty')
@@ -192,8 +181,8 @@ jobs:
             fi
           done
 
-          if [[ "$BRANCH_NAME" != ci/e2e-* ]]; then
-            echo "⚠️  SAFETY CHECK: Branch $BRANCH_ID is named '$BRANCH_NAME', not a ci/e2e-* branch this workflow created."
+          if [[ "$BRANCH_NAME" != ci/e2e-email-smoke-* ]]; then
+            echo "⚠️  SAFETY CHECK: Branch $BRANCH_ID is named '$BRANCH_NAME', not a ci/e2e-email-smoke-* branch this workflow created."
             echo "Skipping deletion for safety."
             exit 0
           fi
@@ -213,59 +202,5 @@ jobs:
           else
             echo "✗ Failed to delete database branch. HTTP status: $HTTP_CODE"
             echo "Response: $BODY"
-            # Don't fail the job over cleanup - the weekly orphaned-branch
-            # cleanup workflow will catch anything left behind.
             exit 0
           fi
-
-  lint-typecheck-build:
-    timeout-minutes: 10
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: "24"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-        env:
-          # Use TEST_DATABASE_URL in CI to avoid touching production
-          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Build
-        # This job's build runs `prisma migrate deploy` against the shared
-        # TEST_DATABASE_URL (the `test` job now migrates its own ephemeral
-        # Neon branch instead, so it no longer races this). A concurrent run
-        # of this same job (e.g. another PR's push) could still contend for
-        # Prisma's migration advisory lock (P1002), so retry rather than add
-        # a `needs:` dependency that would slow down feedback.
-        run: |
-          for attempt in 1 2 3; do
-            if npm run build; then
-              exit 0
-            fi
-            echo "Build attempt $attempt failed (possibly a migration advisory-lock race with the test job) — retrying in 10s..." >&2
-            sleep 10
-          done
-          exit 1
-        env:
-          # Build runs `prisma migrate deploy` internally, so it needs a real DB.
-          # Use TEST_DATABASE_URL/TEST_DIRECT_URL in CI to avoid touching production
-          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
-          DIRECT_URL: ${{ secrets.TEST_DIRECT_URL }}
-          # next build evaluates route modules while collecting page data, and
-          # src/app/api/inbound-email/route.ts constructs a Resend client at
-          # module scope, which throws if this is unset
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}

@@ -7,14 +7,22 @@ import {
 
 test.describe.configure({ mode: "serial" }) // Run tests sequentially to avoid rate limiting
 
+// Regular CI/local runs skip the real Resend send (see src/lib/email.ts)
+// to avoid burning the daily send quota; a separate scheduled workflow
+// runs with SKIP_EMAIL_SEND unset to exercise the real Resend integration.
+const skipEmailSend = process.env.SKIP_EMAIL_SEND === "true"
+
 /**
  * Email sending strategy:
- * - Test 1 (full registration flow): Sends real email via Resend to test end-to-end flow
+ * - Test 1 (full registration flow): Sends a real email via Resend to test the
+ *   end-to-end flow, unless SKIP_EMAIL_SEND is set, in which case it reads the
+ *   verification token straight from the database instead.
  * - All other tests: Use direct database creation to avoid hitting email quota
  */
 test.describe("User Authentication", () => {
   test("should complete full registration flow with email verification", async ({
     page,
+    prisma,
     cleanupEmail,
   }) => {
     const testEmail = generateTestEmail("register-flow")
@@ -40,18 +48,44 @@ test.describe("User Authentication", () => {
       timeout: 10000,
     })
 
-    // Wait for verification email and extract token
-    const email = await waitForEmail(testEmail, {
-      subject: "Verify your FantasyPhish account",
-      timeout: 30000,
-    })
+    let verificationToken: string | null
 
-    // Verify email content
-    expect(email.html).toContain("Verify your email address")
-    expect(email.html).toContain("FantasyPhish")
-    expect(email.from).toContain("FantasyPhish")
+    if (skipEmailSend) {
+      // No real email was sent - read the token the registration route
+      // already persisted to the database.
+      await expect
+        .poll(
+          async () => {
+            const user = await prisma.user.findUnique({
+              where: { email: testEmail.toLowerCase() },
+              select: { verificationToken: true },
+            })
+            return user?.verificationToken ?? null
+          },
+          { timeout: 10000 }
+        )
+        .toBeTruthy()
 
-    const verificationToken = extractVerificationToken(email.html)
+      const user = await prisma.user.findUnique({
+        where: { email: testEmail.toLowerCase() },
+        select: { verificationToken: true },
+      })
+      verificationToken = user?.verificationToken ?? null
+    } else {
+      // Wait for the real verification email and extract the token
+      const email = await waitForEmail(testEmail, {
+        subject: "Verify your FantasyPhish account",
+        timeout: 30000,
+      })
+
+      // Verify email content
+      expect(email.html).toContain("Verify your email address")
+      expect(email.html).toContain("FantasyPhish")
+      expect(email.from).toContain("FantasyPhish")
+
+      verificationToken = extractVerificationToken(email.html)
+    }
+
     expect(verificationToken).toBeTruthy()
     expect(verificationToken).toHaveLength(64)
 
