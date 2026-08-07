@@ -2,6 +2,7 @@
 
 import { useEffect } from "react"
 import Link from "next/link"
+import * as Sentry from "@sentry/nextjs"
 import { RotateCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DonutLogo } from "@/components/DonutLogo"
@@ -32,6 +33,7 @@ export default function Error({
 }) {
   useEffect(() => {
     console.error("[ErrorBoundary]", error)
+    Sentry.captureException(error)
   }, [error])
 
   const excuse = pickExcuse(error.digest || error.message || "")
