@@ -108,11 +108,18 @@ jobs:
 
           echo "✓ Created database branch '$BRANCH_NAME' ($BRANCH_ID)"
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
+      - name: Setup mise (Node.js)
+        uses: jdx/mise-action@v4
+        # Node version comes from mise.toml (kept current by Renovate), so
+        # this workflow and local/agent dev can never drift apart.
+
+      - name: Cache npm
+        uses: actions/cache@v6
         with:
-          node-version: "24"
-          cache: "npm"
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            npm-${{ runner.os }}-
 
       - name: Cache node_modules
         id: node-modules-cache
@@ -261,11 +268,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
+      - name: Setup mise (Node.js)
+        uses: jdx/mise-action@v4
+        # Node version comes from mise.toml (kept current by Renovate), so
+        # this workflow and local/agent dev can never drift apart.
+
+      - name: Cache npm
+        uses: actions/cache@v6
         with:
-          node-version: "24"
-          cache: "npm"
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            npm-${{ runner.os }}-
 
       - name: Cache node_modules
         id: node-modules-cache
