@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
   /* config options here */
   compress: true,
   poweredByHeader: false,
+  crossOrigin: "anonymous",
   async headers() {
     return [
       {
