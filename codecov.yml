@@ -1,0 +1,17 @@
+coverage:
+  status:
+    # No coverage baseline exists yet, so start both checks in informational
+    # mode (report on PRs without failing the check). Once coverage has run
+    # on main for a while and the team picks real thresholds, flip these to
+    # `informational: false` and set explicit `target`/`threshold` values.
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
+
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+  require_changes: false

@@ -1,0 +1,42 @@
+name: Claude Code Review
+
+# Runs this repo's own /code-review skill against every PR and posts findings
+# as inline PR comments, via https://github.com/anthropics/claude-code-action.
+#
+# Requires an ANTHROPIC_API_KEY repository secret (Settings > Secrets and
+# variables > Actions) - see .github/GITHUB_ACTIONS_SETUP.md.
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    if: github.event.pull_request.draft == false
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Run /code-review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # medium: fewer, high-confidence findings - tuned for unattended
+          # per-PR runs so this doesn't flood every PR with low-confidence
+          # noise. --comment posts findings as inline PR review comments
+          # instead of just replying in chat.
+          prompt: "/code-review medium --comment"

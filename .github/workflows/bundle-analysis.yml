@@ -1,0 +1,121 @@
+name: Bundle Size Analysis
+
+# Tracks Next.js production bundle size per PR using hashicorp/nextjs-bundle-analysis
+# (https://github.com/hashicorp/nextjs-bundle-analysis), which reads `.next` build
+# output directly - no next.config.ts changes needed. Comparison against the base
+# branch requires this workflow to have already run on `main` at least once, so the
+# first PR after this lands won't get a diff comment (see "Check for base bundle
+# stats" below) - every PR after that will.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Cache node_modules
+        id: node-modules-cache
+        uses: actions/cache@v6
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-node24-${{ hashFiles('package-lock.json', 'prisma/schema.prisma') }}
+
+      - name: Install dependencies
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: npm ci
+        env:
+          # Use TEST_DATABASE_URL in CI to avoid touching production
+          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+
+      - name: Build
+        # Same retry as e2e-tests.yml's lint-typecheck-build job: `npm run build`
+        # runs `prisma migrate deploy` against the shared TEST_DATABASE_URL, which
+        # can race that job's own migrate deploy for Prisma's advisory lock (P1002).
+        run: |
+          for attempt in 1 2 3; do
+            if npm run build; then
+              exit 0
+            fi
+            echo "Build attempt $attempt failed (possibly a migration advisory-lock race) - retrying in 10s..." >&2
+            sleep 10
+          done
+          exit 1
+        env:
+          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.TEST_DIRECT_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+
+      - name: Analyze bundle
+        run: npx -p nextjs-bundle-analysis report
+
+      - name: Upload bundle analysis artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: bundle
+          path: .next/analyze/__bundle_analysis.json
+          retention-days: 30
+
+      - name: Download base branch bundle stats
+        uses: dawidd6/action-download-artifact@v21
+        if: success() && github.event.number
+        continue-on-error: true
+        with:
+          workflow: bundle-analysis.yml
+          branch: ${{ github.event.pull_request.base.ref }}
+          path: .next/analyze/base
+          if_no_artifact_found: warn
+
+      - name: Check for base bundle stats
+        id: base-check
+        if: success() && github.event.number
+        run: |
+          if [ -f .next/analyze/base/bundle/__bundle_analysis.json ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No baseline bundle stats found for '${{ github.event.pull_request.base.ref }}' yet - skipping comparison. This resolves itself once this workflow has run on that branch."
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compare with base branch bundle
+        if: success() && github.event.number && steps.base-check.outputs.exists == 'true'
+        run: npx -p nextjs-bundle-analysis compare
+
+      - name: Find bundle size comment
+        uses: peter-evans/find-comment@v4
+        if: success() && github.event.number && steps.base-check.outputs.exists == 'true'
+        id: fc-bundle
+        with:
+          issue-number: ${{ github.event.number }}
+          body-includes: "<!-- __NEXTJS_BUNDLE -->"
+
+      - name: Comment bundle size diff
+        uses: peter-evans/create-or-update-comment@v5
+        if: success() && github.event.number && steps.base-check.outputs.exists == 'true'
+        with:
+          issue-number: ${{ github.event.number }}
+          comment-id: ${{ steps.fc-bundle.outputs.comment-id }}
+          edit-mode: replace
+          body-path: .next/analyze/__bundle_analysis_comment.txt

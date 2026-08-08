@@ -39,7 +39,11 @@ export default defineConfig({
   // deterministic output during interactive debugging.
   workers: process.env.CI ? 4 : 1,
   reporter: process.env.CI
-    ? [["html"], ["github"]] // In CI: HTML report + GitHub annotations
+    ? [
+        ["html"],
+        ["github"], // In CI: HTML report + GitHub annotations
+        ["json", { outputFile: "playwright-report/report.json" }], // + machine-readable results for the PR comment
+      ]
     : "list", // Locally: just list output
   globalSetup: "./tests/global-setup.ts", // Clean up test data before tests run
 

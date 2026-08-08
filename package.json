@@ -28,6 +28,7 @@
     "test": "playwright test",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
+    "test:unit:coverage": "vitest run --coverage",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
@@ -62,6 +63,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
     "@playwright/test": "^1.62.1",
+    "@vitest/coverage-v8": "^4.1.10",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^24",
     "@types/pg": "^8.20.4",
