@@ -37,9 +37,10 @@ jobs:
         uses: actions/cache@v6
         with:
           path: node_modules
-          # node-version-pinned suffix so this never shares a cache entry with
-          # e2e-tests.yml's version if the two ever diverge
-          key: node-modules-${{ runner.os }}-node24.19.0-${{ hashFiles('package-lock.json', 'prisma/schema.prisma') }}
+          # Keyed on mise.toml (not a hardcoded Node version string) so a
+          # Renovate-driven Node bump automatically busts this cache instead
+          # of silently reusing node_modules built against a different patch
+          key: node-modules-${{ runner.os }}-${{ hashFiles('mise.toml', 'package-lock.json', 'prisma/schema.prisma') }}
 
       - name: Install dependencies
         if: steps.node-modules-cache.outputs.cache-hit != 'true'

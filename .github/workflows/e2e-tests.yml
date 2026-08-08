@@ -126,10 +126,12 @@ jobs:
         uses: actions/cache@v6
         with:
           path: node_modules
-          # Keyed on the schema too, since node_modules bundles the
-          # generated Prisma client - a schema-only change must still
-          # bust the cache even if package-lock.json didn't move.
-          key: node-modules-${{ runner.os }}-node24-${{ hashFiles('package-lock.json', 'prisma/schema.prisma') }}
+          # Keyed on mise.toml (not a hardcoded Node version string) so a
+          # Renovate-driven Node bump automatically busts this cache, and
+          # on the schema too, since node_modules bundles the generated
+          # Prisma client - a schema-only change must still bust the cache
+          # even if package-lock.json didn't move.
+          key: node-modules-${{ runner.os }}-${{ hashFiles('mise.toml', 'package-lock.json', 'prisma/schema.prisma') }}
 
       - name: Install dependencies
         if: steps.node-modules-cache.outputs.cache-hit != 'true'
@@ -286,7 +288,9 @@ jobs:
         uses: actions/cache@v6
         with:
           path: node_modules
-          key: node-modules-${{ runner.os }}-node24-${{ hashFiles('package-lock.json', 'prisma/schema.prisma') }}
+          # Keyed on mise.toml (not a hardcoded Node version string) so a
+          # Renovate-driven Node bump automatically busts this cache.
+          key: node-modules-${{ runner.os }}-${{ hashFiles('mise.toml', 'package-lock.json', 'prisma/schema.prisma') }}
 
       - name: Install dependencies
         if: steps.node-modules-cache.outputs.cache-hit != 'true'
