@@ -4,10 +4,34 @@
 // a table of failing/flaky tests, so reviewers see results without opening
 // the Actions run. Consumed by e2e-tests.yml via peter-evans/find-comment +
 // peter-evans/create-or-update-comment.
-import { readFileSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import { dirname } from "node:path"
 
 const REPORT_PATH = "playwright-report/report.json"
 const OUTPUT_PATH = "playwright-report/pr-comment.md"
+
+// This step runs with `if: always()`, so an earlier step (e.g. installing
+// dependencies or starting the app) can fail before Playwright ever writes
+// report.json. Fall back to a short comment instead of throwing, so this
+// step doesn't itself mask the real failure or block the PR comment.
+if (!existsSync(REPORT_PATH)) {
+  mkdirSync(dirname(OUTPUT_PATH), { recursive: true })
+  const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
+  writeFileSync(
+    OUTPUT_PATH,
+    [
+      "<!-- playwright-report-comment -->",
+      "### \u{1F3AD} Playwright test results",
+      "",
+      `⚠️ No test report was produced (an earlier step likely failed before tests ran). See [this run](${runUrl}) for details.`,
+      "",
+    ].join("\n")
+  )
+  console.log(
+    `No ${REPORT_PATH} found - wrote fallback PR comment body to ${OUTPUT_PATH}`
+  )
+  process.exit(0)
+}
 
 const report = JSON.parse(readFileSync(REPORT_PATH, "utf8"))
 const {

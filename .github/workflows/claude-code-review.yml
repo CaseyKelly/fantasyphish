@@ -25,7 +25,10 @@ permissions:
 
 jobs:
   review:
-    if: github.event.pull_request.draft == false
+    # Skip (not fail) when the repo secret hasn't been configured yet, so
+    # this workflow degrades gracefully rather than showing a permanently
+    # red required check until ANTHROPIC_API_KEY is added.
+    if: github.event.pull_request.draft == false && secrets.ANTHROPIC_API_KEY != ''
     timeout-minutes: 15
     runs-on: ubuntu-latest
 
