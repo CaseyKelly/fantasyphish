@@ -69,6 +69,28 @@ Your Neon project ID.
 - Find it in: https://console.neon.tech/app/projects
 - Format: `proj-xxxxx-xxxxxx-xxxxx`
 
+### Optional Secrets (code quality workflows)
+
+#### `CODECOV_TOKEN`
+
+Upload token for [Codecov](https://codecov.io), used by `unit-tests.yml` to post
+coverage on PRs.
+
+- Get it from: https://app.codecov.io/gh/caseykelly/fantasyphish/settings (after
+  connecting the repo to a Codecov account)
+- Without this secret, the coverage upload step still runs but fails quietly
+  (`fail_ci_if_error: false`) - tests aren't blocked, you just won't get coverage
+  comments until it's set
+
+#### `ANTHROPIC_API_KEY`
+
+Anthropic API key used by `claude-code-review.yml` to run this repo's `/code-review`
+skill against every PR and post findings as inline comments.
+
+- Get it from: https://console.anthropic.com/settings/keys
+- Without this secret, the review job fails auth and no review comment is posted -
+  other workflows are unaffected
+
 ## Workflows
 
 ### E2E Tests (`e2e-tests.yml`)
@@ -86,6 +108,33 @@ What it does:
 4. **Setup database** (runs Prisma migrations)
 5. **Run E2E tests**
 6. **Upload artifacts** (if tests fail)
+7. **Comment on the PR** with a pass/fail/flaky summary table and a link to the
+   trace-enabled HTML report artifact
+
+### Unit Tests (`unit-tests.yml`)
+
+Runs on pull requests and pushes to `main`. Runs Vitest with coverage enabled and
+uploads the result to Codecov, which comments the coverage diff on the PR.
+
+### CodeQL (`codeql.yml`)
+
+Runs on pull requests and pushes to `main`, plus a weekly schedule so newly
+disclosed query rules get applied to unchanged code too. Static analysis for
+security vulnerabilities (injection, unsafe regex, auth issues, etc.) - findings
+show up as PR annotations and in the repo's Security tab.
+
+### Bundle Size Analysis (`bundle-analysis.yml`)
+
+Runs on pull requests and pushes to `main`. Builds the app and diffs the
+production JS bundle size per route against the PR's base branch, commenting the
+diff on the PR. The first PR after this workflow is added won't get a diff
+comment (no baseline on `main` yet) - every PR after that will.
+
+### Claude Code Review (`claude-code-review.yml`)
+
+Runs on pull requests to `main` (skips drafts). Runs this repo's `/code-review`
+skill and posts findings as inline PR review comments. Requires `ANTHROPIC_API_KEY`
+(see above).
 
 ### Database Cleanup (`cleanup-db-branches.yml`)
 

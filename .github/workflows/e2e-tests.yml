@@ -14,6 +14,9 @@ jobs:
   test:
     timeout-minutes: 20
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout code
@@ -197,6 +200,27 @@ jobs:
             test-results/
           retention-days: 1
           compression-level: 9
+
+      - name: Build PR comment from Playwright results
+        if: always() && github.event_name == 'pull_request'
+        run: node scripts/playwright-pr-comment.mjs
+
+      - name: Find existing Playwright results comment
+        uses: peter-evans/find-comment@v4
+        if: always() && github.event_name == 'pull_request'
+        id: fc-playwright
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-includes: "<!-- playwright-report-comment -->"
+
+      - name: Comment PR with Playwright results
+        uses: peter-evans/create-or-update-comment@v5
+        if: always() && github.event_name == 'pull_request'
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-id: ${{ steps.fc-playwright.outputs.comment-id }}
+          edit-mode: replace
+          body-path: playwright-report/pr-comment.md
 
       - name: Delete Neon test branch
         if: always()
