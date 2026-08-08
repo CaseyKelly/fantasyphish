@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 FantasyPhish is a fantasy game for Phish fans. Users pick 13 songs before each show, score points when they play their picks, and compete on tour leaderboards. The app uses progressive scoring with timezone-aware locking, achievements, and real-time updates during shows.
 
+## Node Version (mise)
+
+This repo requires exactly the Node version pinned in `mise.toml` (kept current by Renovate) — CI (`jdx/mise-action` in every workflow) enforces this exact pin. `package.json`'s `engines.node` (`>=24`) is only a floor, not the source of truth. **Before running `npm install` in any session — including agent/sandbox sessions whose default Node version may not match** — run `mise install` and use that Node version (e.g. `mise exec -- npm install`, or activate mise in the shell). Installing dependencies with the wrong Node version produces a `package-lock.json` that resolves differently than CI's, and `npm ci` then fails on the first push with "Missing X from lock file" even though `npm install` succeeded locally.
+
 ## Common Commands
 
 ### Development

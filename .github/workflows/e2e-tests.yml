@@ -108,21 +108,30 @@ jobs:
 
           echo "✓ Created database branch '$BRANCH_NAME' ($BRANCH_ID)"
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
+      - name: Setup mise (Node.js)
+        uses: jdx/mise-action@v4
+        # Node version comes from mise.toml (kept current by Renovate), so
+        # this workflow and local/agent dev can never drift apart.
+
+      - name: Cache npm
+        uses: actions/cache@v6
         with:
-          node-version: "24"
-          cache: "npm"
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            npm-${{ runner.os }}-
 
       - name: Cache node_modules
         id: node-modules-cache
         uses: actions/cache@v6
         with:
           path: node_modules
-          # Keyed on the schema too, since node_modules bundles the
-          # generated Prisma client - a schema-only change must still
-          # bust the cache even if package-lock.json didn't move.
-          key: node-modules-${{ runner.os }}-node24-${{ hashFiles('package-lock.json', 'prisma/schema.prisma') }}
+          # Keyed on mise.toml (not a hardcoded Node version string) so a
+          # Renovate-driven Node bump automatically busts this cache, and
+          # on the schema too, since node_modules bundles the generated
+          # Prisma client - a schema-only change must still bust the cache
+          # even if package-lock.json didn't move.
+          key: node-modules-${{ runner.os }}-${{ hashFiles('mise.toml', 'package-lock.json', 'prisma/schema.prisma') }}
 
       - name: Install dependencies
         if: steps.node-modules-cache.outputs.cache-hit != 'true'
@@ -261,18 +270,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
+      - name: Setup mise (Node.js)
+        uses: jdx/mise-action@v4
+        # Node version comes from mise.toml (kept current by Renovate), so
+        # this workflow and local/agent dev can never drift apart.
+
+      - name: Cache npm
+        uses: actions/cache@v6
         with:
-          node-version: "24"
-          cache: "npm"
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            npm-${{ runner.os }}-
 
       - name: Cache node_modules
         id: node-modules-cache
         uses: actions/cache@v6
         with:
           path: node_modules
-          key: node-modules-${{ runner.os }}-node24-${{ hashFiles('package-lock.json', 'prisma/schema.prisma') }}
+          # Keyed on mise.toml (not a hardcoded Node version string) so a
+          # Renovate-driven Node bump automatically busts this cache.
+          key: node-modules-${{ runner.os }}-${{ hashFiles('mise.toml', 'package-lock.json', 'prisma/schema.prisma') }}
 
       - name: Install dependencies
         if: steps.node-modules-cache.outputs.cache-hit != 'true'

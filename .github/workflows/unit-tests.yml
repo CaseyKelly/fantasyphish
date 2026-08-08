@@ -19,23 +19,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
+      - name: Setup mise (Node.js)
+        uses: jdx/mise-action@v4
+        # Node version comes from mise.toml (kept current by Renovate), so
+        # this workflow and local/agent dev can never drift apart.
+
+      - name: Cache npm
+        uses: actions/cache@v6
         with:
-          # Vite (a Vitest dependency) requires node ^20.19.0 || >=22.12.0;
-          # pin to an exact patch (kept current by Renovate) instead of just
-          # the "24" major so CI doesn't silently drift onto an incompatible patch.
-          node-version: "24.19.0"
-          cache: "npm"
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            npm-${{ runner.os }}-
 
       - name: Cache node_modules
         id: node-modules-cache
         uses: actions/cache@v6
         with:
           path: node_modules
-          # node-version-pinned suffix so this never shares a cache entry with
-          # e2e-tests.yml's floating "24" version if the two ever diverge
-          key: node-modules-${{ runner.os }}-node24.19.0-${{ hashFiles('package-lock.json', 'prisma/schema.prisma') }}
+          # Keyed on mise.toml (not a hardcoded Node version string) so a
+          # Renovate-driven Node bump automatically busts this cache instead
+          # of silently reusing node_modules built against a different patch
+          key: node-modules-${{ runner.os }}-${{ hashFiles('mise.toml', 'package-lock.json', 'prisma/schema.prisma') }}
 
       - name: Install dependencies
         if: steps.node-modules-cache.outputs.cache-hit != 'true'
