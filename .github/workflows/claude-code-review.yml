@@ -18,6 +18,10 @@ concurrency:
 permissions:
   contents: read
   pull-requests: write
+  # claude-code-action needs this to mint its GitHub token via OIDC, even
+  # when auth to the Anthropic API itself is via anthropic_api_key below -
+  # without it the action fails before ever reaching the Anthropic call.
+  id-token: write
 
 jobs:
   review:
