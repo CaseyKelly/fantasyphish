@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Lock, AlertCircle, CheckCircle } from "lucide-react"
@@ -18,18 +18,12 @@ function ResetPasswordForm() {
   const router = useRouter()
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-  const [error, setError] = useState("")
+  const token = searchParams.get("token")
+  const [error, setError] = useState(() =>
+    token ? "" : "Invalid reset link. Please request a new password reset."
+  )
   const [success, setSuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [token, setToken] = useState<string | null>(null)
-
-  useEffect(() => {
-    const tokenParam = searchParams.get("token")
-    if (!tokenParam) {
-      setError("Invalid reset link. Please request a new password reset.")
-    }
-    setToken(tokenParam)
-  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
