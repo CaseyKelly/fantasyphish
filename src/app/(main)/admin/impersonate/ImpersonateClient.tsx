@@ -19,6 +19,17 @@ export default function ImpersonateClient() {
   const [users, setUsers] = useState<UserForImpersonation[]>([])
   const [loadingUsers, setLoadingUsers] = useState(true)
   const [impersonating, setImpersonating] = useState(false)
+  const [impersonateRedirect, setImpersonateRedirect] = useState(false)
+
+  useEffect(() => {
+    if (impersonateRedirect) {
+      // Force a full page reload to refresh the session with the new JWT token
+      // (NextAuth stores the session in an HTTP-only cookie, so a client-side
+      // route change alone won't pick up the new token) and land somewhere
+      // useful now that we're viewing the app as the impersonated user.
+      window.location.href = "/picks"
+    }
+  }, [impersonateRedirect])
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -66,11 +77,7 @@ export default function ImpersonateClient() {
         },
       })
 
-      // Force a full page reload to refresh the session with the new JWT token
-      // (NextAuth stores the session in an HTTP-only cookie, so a client-side
-      // route change alone won't pick up the new token) and land somewhere
-      // useful now that we're viewing the app as the impersonated user.
-      window.location.href = "/picks"
+      setImpersonateRedirect(true)
     } catch (error) {
       console.error("Failed to impersonate:", error)
       toast.error("Failed to impersonate user. Please try again.")

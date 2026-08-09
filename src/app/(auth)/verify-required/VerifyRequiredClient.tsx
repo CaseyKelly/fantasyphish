@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Mail, AlertCircle, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -12,24 +12,24 @@ import { LoadingDonut } from "@/components/LoadingDonut"
 const COOLDOWN_SECONDS = 60
 
 export default function VerifyRequiredClient() {
-  const searchParams = useSearchParams()
   const router = useRouter()
-  const [email, setEmail] = useState("")
+  // Get email from sessionStorage instead of URL parameter
+  const [email] = useState(() =>
+    typeof window === "undefined"
+      ? ""
+      : (sessionStorage.getItem("unverified-email") ?? "")
+  )
   const [isResending, setIsResending] = useState(false)
   const [resendSuccess, setResendSuccess] = useState(false)
   const [resendError, setResendError] = useState("")
   const [cooldownRemaining, setCooldownRemaining] = useState(0)
 
+  // If no email was in session, redirect to login
   useEffect(() => {
-    // Get email from sessionStorage instead of URL parameter
-    const storedEmail = sessionStorage.getItem("unverified-email")
-    if (storedEmail) {
-      setEmail(storedEmail)
-    } else {
-      // If no email in session, redirect to login
+    if (!email) {
       router.push("/login")
     }
-  }, [router])
+  }, [email, router])
 
   // Cooldown timer
   useEffect(() => {

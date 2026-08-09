@@ -133,7 +133,9 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
 
   // Initial fetch
   useEffect(() => {
-    fetchResults()
+    ;(async () => {
+      await fetchResults()
+    })()
   }, [showId, fetchResults])
 
   // Poll every 60 seconds if show is not complete
