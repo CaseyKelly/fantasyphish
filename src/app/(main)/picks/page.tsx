@@ -237,6 +237,7 @@ export default function PicksPage() {
         isLocked={isLocked}
         hideHeader={true}
         onSubmitSuccess={fetchData}
+        userId={session?.user?.id}
       />
       {session?.user?.username && notificationsEnabled === false && (
         <p className="text-center text-sm text-gray-400">

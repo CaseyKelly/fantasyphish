@@ -624,4 +624,159 @@ test.describe("Song Picker Flow", () => {
     // Cleanup
     await prisma.show.delete({ where: { id: show.id } })
   })
+
+  test("should restore an in-progress draft after reloading the page", async ({
+    page,
+    createUser,
+    prisma,
+  }) => {
+    const userUsername = uniqueUsername("pickerdraft")
+    const userEmail = `${userUsername}@example.com`
+    const userPassword = "PickerPassword123!"
+
+    await createUser({
+      email: userEmail,
+      username: userUsername,
+      password: userPassword,
+      verified: true,
+    })
+
+    const futureDate = new Date()
+    futureDate.setDate(futureDate.getDate() + 32)
+
+    const show = await prisma.show.create({
+      data: {
+        venue: "Test Venue Draft Restore",
+        city: "Test City",
+        state: "NY",
+        showDate: futureDate,
+        isComplete: false,
+      },
+    })
+
+    try {
+      const songs = await prisma.song.findMany({ take: 4 })
+      if (songs.length < 4) throw new Error("Not enough songs in database")
+
+      await page.goto("/login")
+      await page.getByPlaceholder("Email address").fill(userEmail)
+      await page.getByPlaceholder("Password").fill(userPassword)
+      await page.click('button[type="submit"]')
+      await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
+
+      await page.goto(`/pick/${show.id}`)
+      await expect(page.getByText("Opener Pick")).toBeVisible()
+
+      const search = page.getByLabel("Search songs")
+
+      // Opener
+      await search.fill(songs[0].name)
+      await page.getByRole("button", { name: songs[0].name }).first().click()
+
+      // Encore (panel auto-expands after the opener pick)
+      await search.fill(songs[1].name)
+      await page.getByRole("button", { name: songs[1].name }).first().click()
+
+      // Two regular picks (panel auto-expands after the encore pick)
+      await search.fill(songs[2].name)
+      await page.getByRole("button", { name: songs[2].name }).first().click()
+      await search.fill(songs[3].name)
+      await page.getByRole("button", { name: songs[3].name }).first().click()
+
+      await expect(page.getByText("9 more needed")).toBeVisible()
+
+      await page.reload()
+
+      await expect(
+        page.getByText("Restored your unsaved picks from last time")
+      ).toBeVisible()
+      await expect(page.getByText(songs[0].name).first()).toBeVisible()
+      await expect(page.getByText(songs[1].name).first()).toBeVisible()
+      await expect(page.getByText("9 more needed")).toBeVisible()
+    } finally {
+      await prisma.show.delete({ where: { id: show.id } })
+    }
+  })
+
+  test("should clear the localStorage draft after successfully submitting picks", async ({
+    page,
+    createUser,
+    prisma,
+  }) => {
+    const userUsername = uniqueUsername("pickerdraftclear")
+    const userEmail = `${userUsername}@example.com`
+    const userPassword = "PickerPassword123!"
+
+    await createUser({
+      email: userEmail,
+      username: userUsername,
+      password: userPassword,
+      verified: true,
+    })
+
+    const futureDate = new Date()
+    futureDate.setDate(futureDate.getDate() + 33)
+
+    const show = await prisma.show.create({
+      data: {
+        venue: "Test Venue Draft Clear",
+        city: "Test City",
+        state: "NY",
+        showDate: futureDate,
+        isComplete: false,
+      },
+    })
+
+    try {
+      const songs = await prisma.song.findMany({ take: 13 })
+      if (songs.length < 13) throw new Error("Not enough songs in database")
+
+      await page.goto("/login")
+      await page.getByPlaceholder("Email address").fill(userEmail)
+      await page.getByPlaceholder("Password").fill(userPassword)
+      await page.click('button[type="submit"]')
+      await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
+
+      await page.goto(`/pick/${show.id}`)
+      await expect(page.getByText("Opener Pick")).toBeVisible()
+
+      const search = page.getByLabel("Search songs")
+      for (const song of songs) {
+        await search.fill(song.name)
+        await page.getByRole("button", { name: song.name }).first().click()
+      }
+
+      await expect(page.getByText("Complete")).toBeVisible()
+
+      // Draft should exist in localStorage before submit.
+      const keysBeforeSubmit = await page.evaluate(() =>
+        Object.keys(window.localStorage).filter((k) =>
+          k.startsWith("fp:draft-picks")
+        )
+      )
+      expect(keysBeforeSubmit.length).toBeGreaterThan(0)
+
+      await page.getByRole("button", { name: /Submit Picks/ }).click()
+      await expect(
+        page.getByText("Picks submitted successfully!")
+      ).toBeVisible()
+
+      const keysAfterSubmit = await page.evaluate(() =>
+        Object.keys(window.localStorage).filter((k) =>
+          k.startsWith("fp:draft-picks")
+        )
+      )
+      expect(keysAfterSubmit).toEqual([])
+
+      // Cleanup the submission this test created.
+      const submission = await prisma.submission.findFirst({
+        where: { showId: show.id },
+      })
+      if (submission) {
+        await prisma.submission.delete({ where: { id: submission.id } })
+      }
+    } finally {
+      await prisma.show.delete({ where: { id: show.id } })
+    }
+  })
 })

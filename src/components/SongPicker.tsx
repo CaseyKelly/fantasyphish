@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { LiveBadge } from "@/components/LiveBadge"
 import { useFocusTrap } from "@/hooks/useFocusTrap"
+import { readPickDraft, writePickDraft, clearPickDraft } from "@/lib/pickDraft"
 
 interface Song {
   id: string
@@ -63,6 +64,7 @@ interface SongPickerProps {
   hideHeader?: boolean
   onGuestSubmit?: (picks: Pick[]) => void
   onSubmitSuccess?: () => void
+  userId?: string
 }
 
 export function SongPicker({
@@ -75,6 +77,7 @@ export function SongPicker({
   hideHeader = false,
   onGuestSubmit,
   onSubmitSuccess,
+  userId,
 }: SongPickerProps) {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
@@ -175,6 +178,68 @@ export function SongPicker({
   const [regularPicks, setRegularPicks] = useState<Pick[]>(
     existingPicks?.filter((p) => p.pickType === "REGULAR") || []
   )
+
+  const restoredDraftKeyRef = useRef<string | null>(null)
+  const [draftHydrated, setDraftHydrated] = useState(false)
+
+  // Restore an unsaved draft from localStorage once per (userId, show) pair.
+  // This runs post-mount rather than in the useState initializers above
+  // because those also run during SSR (no `window`) - reading localStorage
+  // there would make the client's first hydration render disagree with the
+  // server-rendered markup. Doing it here means one extra render right
+  // after mount (a brief flash to the restored picks), which is an
+  // acceptable tradeoff for avoiding hydration mismatches.
+  useEffect(() => {
+    const restoreDraft = () => {
+      if (guestMode || isLocked || !userId) return
+
+      const key = `${userId}:${show.id}`
+      if (restoredDraftKeyRef.current === key) return
+      restoredDraftKeyRef.current = key
+
+      const validSongIds = new Set(songs.map((s) => s.id))
+      const draft = readPickDraft(userId, show.id, validSongIds)
+
+      if (draft) {
+        const draftRegularIds = new Set(draft.regularPicks.map((p) => p.songId))
+        const currentRegularIds = new Set(regularPicks.map((p) => p.songId))
+        const changed =
+          (draft.openerPick?.songId ?? null) !== (openerPick?.songId ?? null) ||
+          (draft.encorePick?.songId ?? null) !== (encorePick?.songId ?? null) ||
+          draftRegularIds.size !== currentRegularIds.size ||
+          [...draftRegularIds].some((id) => !currentRegularIds.has(id))
+
+        if (changed) {
+          setOpenerPick(draft.openerPick)
+          setEncorePick(draft.encorePick)
+          setRegularPicks(draft.regularPicks)
+          toast.info("Restored your unsaved picks from last time")
+        }
+      }
+
+      setDraftHydrated(true)
+    }
+
+    restoreDraft()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, show.id, guestMode, isLocked])
+
+  // Persist every pick change once the initial restore pass has run.
+  // Gated on `draftHydrated` so this effect doesn't overwrite the
+  // just-restored draft with the stale pre-restore values on mount.
+  useEffect(() => {
+    if (guestMode || isLocked || !userId || !draftHydrated) return
+    writePickDraft(userId, show.id, { openerPick, encorePick, regularPicks })
+  }, [
+    userId,
+    show.id,
+    guestMode,
+    isLocked,
+    draftHydrated,
+    openerPick,
+    encorePick,
+    regularPicks,
+  ])
 
   // Auto-clear justSaved state after a delay to avoid showing both icons
   useEffect(() => {
@@ -343,6 +408,7 @@ export function SongPicker({
       } else {
         // Set justSaved state to show success feedback
         setJustSaved(true)
+        if (userId) clearPickDraft(userId, show.id)
 
         toast.success(data.message || "Picks submitted successfully!")
 
