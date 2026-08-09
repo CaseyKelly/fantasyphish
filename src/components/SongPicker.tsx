@@ -297,17 +297,10 @@ export function SongPicker({
   // server - true both for edits to an already-submitted set, and for a
   // first-time selection that's never been submitted at all.
   const hasUnsavedChanges = useMemo(() => {
-    const hasSelection = !!openerPick || !!encorePick || regularPicks.length > 0
-    if (!hasSelection) return false
-
-    if (!existingPicks || existingPicks.length === 0) return true
-
-    // Check if all current picks match existing picks
-    const existingOpener = existingPicks.find((p) => p.pickType === "OPENER")
-    const existingEncore = existingPicks.find((p) => p.pickType === "ENCORE")
-    const existingRegular = existingPicks.filter(
-      (p) => p.pickType === "REGULAR"
-    )
+    const existingOpener = existingPicks?.find((p) => p.pickType === "OPENER")
+    const existingEncore = existingPicks?.find((p) => p.pickType === "ENCORE")
+    const existingRegular =
+      existingPicks?.filter((p) => p.pickType === "REGULAR") ?? []
 
     if (openerPick?.songId !== existingOpener?.songId) return true
     if (encorePick?.songId !== existingEncore?.songId) return true
