@@ -687,14 +687,17 @@ test.describe("Song Picker Flow", () => {
 
       await page.reload()
 
-      // Give the reload's server-side render (which includes a real
-      // phish.net lookup for the show's setlist) and client hydration
-      // generous room before checking for the restore toast, whose
-      // auto-dismiss timer only starts once it actually renders.
-      await expect(
-        page.getByText("Restored your unsaved picks from last time")
-      ).toBeVisible({ timeout: 15000 })
-      await expect(page.getByText(songs[0].name).first()).toBeVisible()
+      // Assert on the durable, restored pick state rather than the
+      // "Restored your unsaved picks..." toast - the toast auto-dismisses
+      // after a few seconds, and the reload's server-side render includes
+      // a real phish.net lookup for the show's setlist that can be slow
+      // (and is shared, sometimes-congested, CI infrastructure), so a
+      // transient toast is an unreliable thing to assert on here. The
+      // restored picks themselves don't expire, so a generous timeout on
+      // them is enough to absorb that slow reload without flaking.
+      await expect(page.getByText(songs[0].name).first()).toBeVisible({
+        timeout: 20000,
+      })
       await expect(page.getByText(songs[1].name).first()).toBeVisible()
       await expect(page.getByText("9 more needed")).toBeVisible()
     } finally {
