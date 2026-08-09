@@ -1017,51 +1017,54 @@ export function SongPicker({
         )}
       </div>
 
-      {/* Submit Button */}
+      {/* Submit Button / Save Status */}
       {!isLocked && (
         <div
-          className={`bg-[#233d4d]/95 backdrop-blur-sm p-3 sm:p-4 rounded-xl border-2 transition-colors ${
-            hasUnsavedChanges && isComplete
-              ? "border-yellow-500/50 bg-yellow-500/5"
-              : justSaved && isComplete
+          className={`sticky bottom-2 sm:bottom-4 z-30 bg-[#233d4d]/95 backdrop-blur-sm p-3 sm:p-4 rounded-xl border-2 shadow-lg transition-colors ${
+            hasUnsavedChanges
+              ? "border-yellow-500/50 bg-yellow-500/10"
+              : justSaved
                 ? "border-green-500/50 bg-green-500/5"
                 : "border-[#4a6b7d]/60"
           }`}
         >
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1 flex items-center gap-2">
-              {isComplete && justSaved && !hasUnsavedChanges && (
-                <CheckCircle
-                  aria-hidden="true"
-                  className="h-5 w-5 text-green-500 flex-shrink-0"
-                />
-              )}
-              {isComplete && hasUnsavedChanges && (
+              {hasUnsavedChanges ? (
                 <AlertCircle
                   aria-hidden="true"
                   className="h-5 w-5 text-yellow-500 flex-shrink-0"
                 />
+              ) : (
+                (justSaved || (isComplete && existingPicks)) && (
+                  <CheckCircle
+                    aria-hidden="true"
+                    className="h-5 w-5 text-green-500 flex-shrink-0"
+                  />
+                )
               )}
               <div className="min-w-0">
                 <p className="font-medium text-white text-sm sm:text-base">
-                  {isComplete
-                    ? hasUnsavedChanges
-                      ? "Unsaved changes"
-                      : justSaved
-                        ? "Picks saved!"
-                        : existingPicks
+                  {hasUnsavedChanges
+                    ? "Unsaved changes"
+                    : justSaved
+                      ? "Picks saved!"
+                      : isComplete
+                        ? existingPicks
                           ? "Picks saved"
                           : "Ready to submit!"
-                    : "Complete your picks"}
+                        : "Complete your picks"}
                 </p>
                 <p className="text-xs sm:text-sm text-gray-300">
-                  {isComplete
-                    ? hasUnsavedChanges
+                  {hasUnsavedChanges
+                    ? isComplete
                       ? "Click update to save your changes"
-                      : justSaved
-                        ? "Your picks have been saved successfully"
-                        : "All picks completed"
-                    : `${13 - selectedSongIds.size} picks remaining`}
+                      : `${13 - selectedSongIds.size} picks remaining — not yet saved`
+                    : justSaved
+                      ? "Your picks have been saved successfully"
+                      : isComplete
+                        ? "All picks completed"
+                        : `${13 - selectedSongIds.size} picks remaining`}
                 </p>
               </div>
             </div>
