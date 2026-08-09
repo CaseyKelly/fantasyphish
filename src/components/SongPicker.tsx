@@ -192,6 +192,12 @@ export function SongPicker({
   useEffect(() => {
     const restoreDraft = () => {
       if (guestMode || isLocked || !userId) return
+      // Wait for the song catalog to actually load before restoring - an
+      // empty `songs` list (e.g. a transient fetch failure on the client
+      // picks page, which starts `songs` at []) would make every stored
+      // pick look invalid and mark the draft hydrated with nothing
+      // restored, letting the persist effect below wipe a real draft.
+      if (songs.length === 0) return
 
       const key = `${userId}:${show.id}`
       if (restoredDraftKeyRef.current === key) return
@@ -222,7 +228,7 @@ export function SongPicker({
 
     restoreDraft()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, show.id, guestMode, isLocked])
+  }, [userId, show.id, guestMode, isLocked, songs.length])
 
   // Persist every pick change once the initial restore pass has run.
   // Gated on `draftHydrated` so this effect doesn't overwrite the

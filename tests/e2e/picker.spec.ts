@@ -687,9 +687,13 @@ test.describe("Song Picker Flow", () => {
 
       await page.reload()
 
+      // Give the reload's server-side render (which includes a real
+      // phish.net lookup for the show's setlist) and client hydration
+      // generous room before checking for the restore toast, whose
+      // auto-dismiss timer only starts once it actually renders.
       await expect(
         page.getByText("Restored your unsaved picks from last time")
-      ).toBeVisible()
+      ).toBeVisible({ timeout: 15000 })
       await expect(page.getByText(songs[0].name).first()).toBeVisible()
       await expect(page.getByText(songs[1].name).first()).toBeVisible()
       await expect(page.getByText("9 more needed")).toBeVisible()
