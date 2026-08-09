@@ -104,9 +104,10 @@ export default function PicksPage() {
   }
 
   useEffect(() => {
-    ;(async () => {
+    async function load() {
       await fetchData()
-    })()
+    }
+    load()
   }, [])
 
   useEffect(() => {
