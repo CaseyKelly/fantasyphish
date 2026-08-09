@@ -705,6 +705,83 @@ test.describe("Song Picker Flow", () => {
     }
   })
 
+  test("should flag clearing every pick from a saved submission as unsaved", async ({
+    page,
+    createUser,
+    prisma,
+  }) => {
+    const userUsername = uniqueUsername("pickerclearall")
+    const userEmail = `${userUsername}@example.com`
+    const userPassword = "PickerPassword123!"
+
+    await createUser({
+      email: userEmail,
+      username: userUsername,
+      password: userPassword,
+      verified: true,
+    })
+
+    const user = await prisma.user.findUnique({
+      where: { email: userEmail.toLowerCase() },
+    })
+
+    const futureDate = new Date()
+    futureDate.setDate(futureDate.getDate() + 34)
+
+    const show = await prisma.show.create({
+      data: {
+        venue: "Test Venue Clear All",
+        city: "Test City",
+        state: "NY",
+        showDate: futureDate,
+        isComplete: false,
+      },
+    })
+
+    try {
+      const songs = await prisma.song.findMany({ take: 1 })
+      if (songs.length < 1) throw new Error("Not enough songs in database")
+
+      // A saved submission with just an opener pick is enough to reproduce
+      // the bug: removing it drops the on-screen selection to nothing,
+      // which must still register as unsaved relative to the server.
+      const submission = await prisma.submission.create({
+        data: {
+          userId: user!.id,
+          showId: show.id,
+          picks: {
+            create: [{ songId: songs[0].id, pickType: "OPENER" }],
+          },
+        },
+      })
+
+      await page.goto("/login")
+      await page.getByPlaceholder("Email address").fill(userEmail)
+      await page.getByPlaceholder("Password").fill(userPassword)
+      await page.click('button[type="submit"]')
+      await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
+
+      await page.goto(`/pick/${show.id}`)
+      const removeOpenerButton = page
+        .getByRole("button", { name: `Remove: ${songs[0].name}` })
+        .first()
+      await expect(removeOpenerButton).toBeVisible()
+
+      // No edits yet - the saved opener pick should read as saved, not
+      // unsaved.
+      await expect(page.getByText("Unsaved changes")).not.toBeVisible()
+
+      await removeOpenerButton.click()
+
+      await expect(page.getByText("Unsaved changes")).toBeVisible()
+
+      // Cleanup the submission this test created.
+      await prisma.submission.delete({ where: { id: submission.id } })
+    } finally {
+      await prisma.show.delete({ where: { id: show.id } })
+    }
+  })
+
   test("should clear the localStorage draft after successfully submitting picks", async ({
     page,
     createUser,

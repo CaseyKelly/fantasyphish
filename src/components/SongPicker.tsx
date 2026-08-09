@@ -293,16 +293,14 @@ export function SongPicker({
     return ids
   }, [openerPick, encorePick, regularPicks])
 
-  // Track if current picks differ from existing picks (unsaved changes)
+  // Track if the current on-screen picks differ from what's saved on the
+  // server - true both for edits to an already-submitted set, and for a
+  // first-time selection that's never been submitted at all.
   const hasUnsavedChanges = useMemo(() => {
-    if (!existingPicks || existingPicks.length === 0) return false
-
-    // Check if all current picks match existing picks
-    const existingOpener = existingPicks.find((p) => p.pickType === "OPENER")
-    const existingEncore = existingPicks.find((p) => p.pickType === "ENCORE")
-    const existingRegular = existingPicks.filter(
-      (p) => p.pickType === "REGULAR"
-    )
+    const existingOpener = existingPicks?.find((p) => p.pickType === "OPENER")
+    const existingEncore = existingPicks?.find((p) => p.pickType === "ENCORE")
+    const existingRegular =
+      existingPicks?.filter((p) => p.pickType === "REGULAR") ?? []
 
     if (openerPick?.songId !== existingOpener?.songId) return true
     if (encorePick?.songId !== existingEncore?.songId) return true
@@ -1017,51 +1015,57 @@ export function SongPicker({
         )}
       </div>
 
-      {/* Submit Button */}
+      {/* Submit Button / Save Status */}
       {!isLocked && (
         <div
-          className={`bg-[#233d4d]/95 backdrop-blur-sm p-3 sm:p-4 rounded-xl border-2 transition-colors ${
-            hasUnsavedChanges && isComplete
-              ? "border-yellow-500/50 bg-yellow-500/5"
-              : justSaved && isComplete
-                ? "border-green-500/50 bg-green-500/5"
+          className={`sticky bottom-2 sm:bottom-4 z-30 bg-[#233d4d]/95 backdrop-blur-sm p-3 sm:p-4 rounded-xl border-2 shadow-lg transition-colors ${
+            justSaved
+              ? "border-green-500/50 bg-green-500/5"
+              : hasUnsavedChanges
+                ? "border-yellow-500/50 bg-yellow-500/10"
                 : "border-[#4a6b7d]/60"
           }`}
         >
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1 flex items-center gap-2">
-              {isComplete && justSaved && !hasUnsavedChanges && (
+              {justSaved ||
+              (isComplete && existingPicks && !hasUnsavedChanges) ? (
                 <CheckCircle
                   aria-hidden="true"
                   className="h-5 w-5 text-green-500 flex-shrink-0"
                 />
-              )}
-              {isComplete && hasUnsavedChanges && (
-                <AlertCircle
-                  aria-hidden="true"
-                  className="h-5 w-5 text-yellow-500 flex-shrink-0"
-                />
+              ) : (
+                hasUnsavedChanges && (
+                  <AlertCircle
+                    aria-hidden="true"
+                    className="h-5 w-5 text-yellow-500 flex-shrink-0"
+                  />
+                )
               )}
               <div className="min-w-0">
                 <p className="font-medium text-white text-sm sm:text-base">
-                  {isComplete
-                    ? hasUnsavedChanges
+                  {justSaved
+                    ? "Picks saved!"
+                    : hasUnsavedChanges
                       ? "Unsaved changes"
-                      : justSaved
-                        ? "Picks saved!"
-                        : existingPicks
+                      : isComplete
+                        ? existingPicks
                           ? "Picks saved"
                           : "Ready to submit!"
-                    : "Complete your picks"}
+                        : "Complete your picks"}
                 </p>
                 <p className="text-xs sm:text-sm text-gray-300">
-                  {isComplete
-                    ? hasUnsavedChanges
-                      ? "Click update to save your changes"
-                      : justSaved
-                        ? "Your picks have been saved successfully"
-                        : "All picks completed"
-                    : `${13 - selectedSongIds.size} picks remaining`}
+                  {justSaved
+                    ? "Your picks have been saved successfully"
+                    : hasUnsavedChanges
+                      ? isComplete
+                        ? existingPicks
+                          ? "Click update to save your changes"
+                          : "Click submit to save your picks"
+                        : `${13 - selectedSongIds.size} picks remaining — not yet saved`
+                      : isComplete
+                        ? "All picks completed"
+                        : `${13 - selectedSongIds.size} picks remaining`}
                 </p>
               </div>
             </div>
