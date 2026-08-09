@@ -118,7 +118,11 @@ jobs:
         id: fc-bundle
         with:
           issue-number: ${{ github.event.number }}
-          body-includes: "<!-- __NEXTJS_BUNDLE -->"
+          # nextjs-bundle-analysis tags its comment with `__NEXTJS_BUNDLE_<package.json name>`
+          # (see compare.js), not the bare `__NEXTJS_BUNDLE` from its own template.yml example -
+          # match the real marker or this never finds the prior comment and a new one gets
+          # created on every push.
+          body-includes: "<!-- __NEXTJS_BUNDLE_fantasyphish -->"
 
       - name: Comment bundle size diff
         uses: peter-evans/create-or-update-comment@v5
