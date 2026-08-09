@@ -162,6 +162,7 @@ export default async function PickPage({ params }: PickPageProps) {
         existingPicks={existingPicks}
         totalPoints={existingSubmission?.totalPoints}
         isLocked={isLocked}
+        userId={session.user.id}
       />
       {!notificationsEnabled && (
         <p className="text-center text-sm text-gray-400 mt-6">
