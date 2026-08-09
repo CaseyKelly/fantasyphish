@@ -753,7 +753,7 @@ test.describe("Song Picker Flow", () => {
         await page.getByRole("button", { name: song.name }).first().click()
       }
 
-      await expect(page.getByText("Complete")).toBeVisible()
+      await expect(page.getByText("Complete", { exact: true })).toBeVisible()
 
       // Draft should exist in localStorage before submit.
       const keysBeforeSubmit = await page.evaluate(() =>
