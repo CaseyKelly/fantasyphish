@@ -293,9 +293,14 @@ export function SongPicker({
     return ids
   }, [openerPick, encorePick, regularPicks])
 
-  // Track if current picks differ from existing picks (unsaved changes)
+  // Track if the current on-screen picks differ from what's saved on the
+  // server - true both for edits to an already-submitted set, and for a
+  // first-time selection that's never been submitted at all.
   const hasUnsavedChanges = useMemo(() => {
-    if (!existingPicks || existingPicks.length === 0) return false
+    const hasSelection = !!openerPick || !!encorePick || regularPicks.length > 0
+    if (!hasSelection) return false
+
+    if (!existingPicks || existingPicks.length === 0) return true
 
     // Check if all current picks match existing picks
     const existingOpener = existingPicks.find((p) => p.pickType === "OPENER")
@@ -1021,34 +1026,35 @@ export function SongPicker({
       {!isLocked && (
         <div
           className={`sticky bottom-2 sm:bottom-4 z-30 bg-[#233d4d]/95 backdrop-blur-sm p-3 sm:p-4 rounded-xl border-2 shadow-lg transition-colors ${
-            hasUnsavedChanges
-              ? "border-yellow-500/50 bg-yellow-500/10"
-              : justSaved
-                ? "border-green-500/50 bg-green-500/5"
+            justSaved
+              ? "border-green-500/50 bg-green-500/5"
+              : hasUnsavedChanges
+                ? "border-yellow-500/50 bg-yellow-500/10"
                 : "border-[#4a6b7d]/60"
           }`}
         >
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1 flex items-center gap-2">
-              {hasUnsavedChanges ? (
-                <AlertCircle
+              {justSaved ||
+              (isComplete && existingPicks && !hasUnsavedChanges) ? (
+                <CheckCircle
                   aria-hidden="true"
-                  className="h-5 w-5 text-yellow-500 flex-shrink-0"
+                  className="h-5 w-5 text-green-500 flex-shrink-0"
                 />
               ) : (
-                (justSaved || (isComplete && existingPicks)) && (
-                  <CheckCircle
+                hasUnsavedChanges && (
+                  <AlertCircle
                     aria-hidden="true"
-                    className="h-5 w-5 text-green-500 flex-shrink-0"
+                    className="h-5 w-5 text-yellow-500 flex-shrink-0"
                   />
                 )
               )}
               <div className="min-w-0">
                 <p className="font-medium text-white text-sm sm:text-base">
-                  {hasUnsavedChanges
-                    ? "Unsaved changes"
-                    : justSaved
-                      ? "Picks saved!"
+                  {justSaved
+                    ? "Picks saved!"
+                    : hasUnsavedChanges
+                      ? "Unsaved changes"
                       : isComplete
                         ? existingPicks
                           ? "Picks saved"
@@ -1056,12 +1062,14 @@ export function SongPicker({
                         : "Complete your picks"}
                 </p>
                 <p className="text-xs sm:text-sm text-gray-300">
-                  {hasUnsavedChanges
-                    ? isComplete
-                      ? "Click update to save your changes"
-                      : `${13 - selectedSongIds.size} picks remaining — not yet saved`
-                    : justSaved
-                      ? "Your picks have been saved successfully"
+                  {justSaved
+                    ? "Your picks have been saved successfully"
+                    : hasUnsavedChanges
+                      ? isComplete
+                        ? existingPicks
+                          ? "Click update to save your changes"
+                          : "Click submit to save your picks"
+                        : `${13 - selectedSongIds.size} picks remaining — not yet saved`
                       : isComplete
                         ? "All picks completed"
                         : `${13 - selectedSongIds.size} picks remaining`}
