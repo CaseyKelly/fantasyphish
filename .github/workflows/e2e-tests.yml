@@ -171,6 +171,26 @@ jobs:
           DATABASE_URL: ${{ env.NEON_BRANCH_DATABASE_URL }}
           DIRECT_URL: ${{ env.NEON_BRANCH_DIRECT_URL }}
 
+      # Playwright's webServer runs `next start` against this build (see
+      # playwright.config.ts) instead of `next dev`, so every route is
+      # compiled upfront rather than lazily on first request - the lazy
+      # on-demand compile in dev mode was racing test assertion timeouts on
+      # routes only one test hits, causing recurring flaky-on-first-try
+      # reports under CI's 4-worker parallelism. Uses `next build` directly
+      # rather than `npm run build`, which would needlessly re-run
+      # `prisma migrate deploy` (already done above) via
+      # scripts/migrate-deploy-with-lock-recovery.ts.
+      - name: Build for E2E
+        run: npx next build
+        env:
+          DATABASE_URL: ${{ env.NEON_BRANCH_DATABASE_URL }}
+          DIRECT_URL: ${{ env.NEON_BRANCH_DIRECT_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          PHISHNET_API_KEY: ${{ secrets.PHISHNET_API_KEY }}
+
       - name: Run E2E tests
         run: npm test
         env:

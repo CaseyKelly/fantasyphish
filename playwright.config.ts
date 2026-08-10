@@ -63,7 +63,16 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: "npm run dev",
+    // In CI, run the production server against a build made by the
+    // "Build for E2E" workflow step, not `next dev`. Dev mode compiles each
+    // route lazily on its first request, and that compile can take several
+    // seconds - under CI's 4-worker parallelism, whichever route is least
+    // exercised elsewhere in the suite (e.g. an admin-only API route hit by
+    // only one test) risks being the one that's still cold when a test's
+    // assertion timeout runs out, which is what was causing recurring
+    // flaky-but-passes-on-retry reports on rarely-hit routes. A production
+    // build compiles everything upfront, removing that race entirely.
+    command: process.env.CI ? "npm run start" : "npm run dev",
     url: "http://localhost:3000",
     reuseExistingServer: true, // Always reuse existing server
     timeout: 120000,
