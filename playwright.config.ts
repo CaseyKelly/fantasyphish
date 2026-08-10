@@ -37,7 +37,13 @@ export default defineConfig({
   // sensitive, and it's a single test gated by SKIP_EMAIL_SEND, so raising
   // this doesn't multiply Resend calls. Single worker locally for simpler,
   // deterministic output during interactive debugging.
-  workers: process.env.CI ? 4 : 1,
+  // Dropped from 4 to 2 in CI when the webServer switched from `next dev` to
+  // a real production build (`next start`): 4 concurrent Chromium instances
+  // plus the production server's own footprint on the standard 2 vCPU/7GB
+  // GitHub-hosted runner was causing renderer "Page crashed"/"Target
+  // crashed" failures across the suite, not just the routes the build
+  // switch was meant to fix.
+  workers: process.env.CI ? 2 : 1,
   reporter: process.env.CI
     ? [
         ["html"],
