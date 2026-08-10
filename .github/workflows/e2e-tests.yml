@@ -195,6 +195,13 @@ jobs:
         run: npm test
         env:
           CI: true
+          # NextAuth v5 only auto-trusts the request Host header when
+          # NODE_ENV !== "production" or VERCEL is set (real prod deploys
+          # get VERCEL=1 for free). `next start` sets NODE_ENV=production,
+          # and neither is true here, so without this every login redirects
+          # to /api/auth/error?error=Configuration ("Host must be trusted").
+          # See src/lib/auth.ts, which doesn't set trustHost explicitly.
+          AUTH_TRUST_HOST: "true"
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           # Skip the real Resend send in the registration e2e test (reads the
           # verification token from the DB instead) so routine CI/PR runs
