@@ -5,7 +5,7 @@ Sentry.init({
   tracesSampleRate: 0,
   ignoreErrors: [
     // Browser extension noise (e.g. Safari's extension bridge), not app code
-    "Invalid call to runtime.sendMessage(). Tab not found.",
+    /Invalid call to runtime\.sendMessage\(\)\.? *Tab not found\.?/,
   ],
 })
 
