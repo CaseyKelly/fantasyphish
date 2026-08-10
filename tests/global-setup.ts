@@ -5,6 +5,98 @@ import dotenv from "dotenv"
 // Load environment variables
 dotenv.config({ path: ".env.local" })
 
+// next dev compiles each route lazily on its first request, which can take
+// several seconds - under CI's 4-worker parallelism, whichever spec file
+// happens to be first (across the whole run) to hit a route that's rarely
+// exercised elsewhere in the suite risked losing the race against that
+// test's assertion timeout, causing recurring flaky-but-passes-on-retry
+// reports (see e.g. admin.spec.ts:6, picker.spec.ts:7, admin-shows.spec.ts:14).
+// Hitting each of these paths once here - single-threaded, before any worker
+// starts - pays that one-time compile cost upfront instead of racing a test
+// timeout for it. Requests are unauthenticated and mostly expected to
+// 401/404/redirect - that's fine, the route module still has to compile
+// before it can produce that response.
+const WARMUP_PATHS = [
+  "/",
+  "/login",
+  "/register",
+  "/admin",
+  "/admin/shows",
+  "/admin/complete-shows",
+  "/admin/usage",
+  "/submissions",
+  "/pick/warmup-nonexistent-show-id",
+]
+
+const WARMUP_API_REQUESTS: { path: string; init: RequestInit }[] = [
+  { path: "/api/admin/delete-submission/warmup", init: { method: "DELETE" } },
+  {
+    path: "/api/admin/reset-show",
+    init: {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ showId: "warmup" }),
+    },
+  },
+  {
+    path: "/api/admin/complete-show",
+    init: {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ showId: "warmup" }),
+    },
+  },
+]
+
+// Playwright's docs don't give a hard guarantee that webServer has finished
+// starting by the time globalSetup runs (and there's open discussion in
+// Playwright's own issue tracker about this), so don't assume it - poll
+// until the server actually responds before firing the real warm-up
+// requests. Without this, the warm-up would silently no-op via failed
+// fetches on a cold server and provide zero benefit.
+async function waitForServer(
+  baseUrl: string,
+  timeoutMs = 60000
+): Promise<boolean> {
+  const start = Date.now()
+  while (Date.now() - start < timeoutMs) {
+    try {
+      await fetch(baseUrl)
+      return true
+    } catch {
+      await new Promise((resolve) => setTimeout(resolve, 500))
+    }
+  }
+  return false
+}
+
+async function warmUpRoutes() {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+
+  if (!(await waitForServer(baseUrl))) {
+    console.warn(
+      "⚠️  Dev server didn't respond in time - skipping route warm-up"
+    )
+    return
+  }
+
+  console.log("🔥 Warming up rarely-hit routes...")
+
+  const requests = [
+    ...WARMUP_PATHS.map((path) => fetch(`${baseUrl}${path}`)),
+    ...WARMUP_API_REQUESTS.map(({ path, init }) =>
+      fetch(`${baseUrl}${path}`, init)
+    ),
+  ]
+
+  const results = await Promise.allSettled(requests)
+  const failed = results.filter((r) => r.status === "rejected").length
+  console.log(
+    `✓ Warmed up ${results.length - failed}/${results.length} routes` +
+      (failed > 0 ? ` (${failed} request(s) failed - non-fatal)` : "")
+  )
+}
+
 async function globalSetup() {
   const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
   const prisma = new PrismaClient({ adapter })
@@ -28,6 +120,8 @@ async function globalSetup() {
   } finally {
     await prisma.$disconnect()
   }
+
+  await warmUpRoutes()
 }
 
 export default globalSetup

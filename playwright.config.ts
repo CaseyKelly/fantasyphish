@@ -37,13 +37,7 @@ export default defineConfig({
   // sensitive, and it's a single test gated by SKIP_EMAIL_SEND, so raising
   // this doesn't multiply Resend calls. Single worker locally for simpler,
   // deterministic output during interactive debugging.
-  // Dropped from 4 to 2 in CI when the webServer switched from `next dev` to
-  // a real production build (`next start`): 4 concurrent Chromium instances
-  // plus the production server's own footprint on the standard 2 vCPU/7GB
-  // GitHub-hosted runner was causing renderer "Page crashed"/"Target
-  // crashed" failures across the suite, not just the routes the build
-  // switch was meant to fix.
-  workers: process.env.CI ? 2 : 1,
+  workers: process.env.CI ? 4 : 1,
   reporter: process.env.CI
     ? [
         ["html"],
@@ -51,7 +45,9 @@ export default defineConfig({
         ["json", { outputFile: "playwright-report/report.json" }], // + machine-readable results for the PR comment
       ]
     : "list", // Locally: just list output
-  globalSetup: "./tests/global-setup.ts", // Clean up test data before tests run
+  // Cleans up test data AND warms up rarely-hit routes - see
+  // tests/global-setup.ts for why.
+  globalSetup: "./tests/global-setup.ts",
 
   use: {
     baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
@@ -69,16 +65,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    // In CI, run the production server against a build made by the
-    // "Build for E2E" workflow step, not `next dev`. Dev mode compiles each
-    // route lazily on its first request, and that compile can take several
-    // seconds - under CI's 4-worker parallelism, whichever route is least
-    // exercised elsewhere in the suite (e.g. an admin-only API route hit by
-    // only one test) risks being the one that's still cold when a test's
-    // assertion timeout runs out, which is what was causing recurring
-    // flaky-but-passes-on-retry reports on rarely-hit routes. A production
-    // build compiles everything upfront, removing that race entirely.
-    command: process.env.CI ? "npm run start" : "npm run dev",
+    command: "npm run dev",
     url: "http://localhost:3000",
     reuseExistingServer: true, // Always reuse existing server
     timeout: 120000,
