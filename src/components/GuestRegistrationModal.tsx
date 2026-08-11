@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { signIn } from "next-auth/react"
 import { toast } from "sonner"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -10,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { LoadingDonut } from "@/components/LoadingDonut"
 import { useFocusTrap } from "@/hooks/useFocusTrap"
+import { signInWithRetry } from "@/lib/auth-client"
 
 interface Pick {
   songId: string
@@ -77,11 +77,7 @@ export function GuestRegistrationModal({
       }
 
       // Sign in
-      const result = await signIn("credentials", {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
-      })
+      const result = await signInWithRetry(formData.email, formData.password)
 
       if (result?.error) {
         toast.error("Incorrect password")

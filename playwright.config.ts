@@ -45,7 +45,9 @@ export default defineConfig({
         ["json", { outputFile: "playwright-report/report.json" }], // + machine-readable results for the PR comment
       ]
     : "list", // Locally: just list output
-  globalSetup: "./tests/global-setup.ts", // Clean up test data before tests run
+  // Cleans up test data AND warms up rarely-hit routes - see
+  // tests/global-setup.ts for why.
+  globalSetup: "./tests/global-setup.ts",
 
   use: {
     baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",

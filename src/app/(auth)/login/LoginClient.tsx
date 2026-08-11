@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, Suspense } from "react"
-import { signIn } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Mail, Lock, AlertCircle } from "lucide-react"
@@ -10,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { DonutLogo } from "@/components/DonutLogo"
 import { LoadingDonut } from "@/components/LoadingDonut"
+import { signInWithRetry } from "@/lib/auth-client"
 
 // Map NextAuth error codes to friendly messages
 function getErrorMessage(errorCode: string | null) {
@@ -93,11 +93,7 @@ function LoginForm() {
       }
 
       // Now attempt to sign in
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      })
+      const result = await signInWithRetry(email, password)
 
       if (result?.error) {
         setError("Incorrect password. Please try again.")
