@@ -3,8 +3,8 @@
   "extends": ["config:recommended", ":semanticCommits", ":dependencyDashboard"],
   "timezone": "America/New_York",
   "labels": ["dependencies"],
-  "prConcurrentLimit": 20,
-  "branchConcurrentLimit": 5,
+  "prConcurrentLimit": 0,
+  "branchConcurrentLimit": 0,
   "prCreation": "not-pending",
   "rebaseWhen": "behind-base-branch",
   "packageRules": [
@@ -12,8 +12,7 @@
       "description": "Next.js ecosystem - group major updates for testing together",
       "groupName": "Next.js ecosystem",
       "matchPackageNames": ["next", "eslint-config-next", "/^@next//"],
-      "automerge": false,
-      "schedule": ["before 10am on monday"]
+      "automerge": false
     },
     {
       "description": "React ecosystem - pin versions, manual updates only",
@@ -25,8 +24,7 @@
         "@types/react-dom"
       ],
       "automerge": false,
-      "rangeStrategy": "pin",
-      "schedule": ["before 10am on monday"]
+      "rangeStrategy": "pin"
     },
     {
       "description": "Prisma - requires schema review and potential migrations",
@@ -34,7 +32,6 @@
       "matchPackageNames": ["prisma", "@prisma/client"],
       "automerge": false,
       "labels": ["dependencies", "database"],
-      "schedule": ["before 10am on monday"],
       "prBodyNotes": [
         "⚠️ **Database Migration Required:** Review schema changes and run `npm run db:migrate` before merging.",
         "Test with: `npm run db:push` locally, then run E2E tests."
@@ -46,7 +43,6 @@
       "matchPackageNames": ["next-auth", "/^@auth//"],
       "automerge": false,
       "labels": ["dependencies", "authentication"],
-      "schedule": ["before 10am on monday"],
       "prBodyNotes": [
         "⚠️ **Breaking Changes Possible:** NextAuth is in beta. Review changelog carefully.",
         "Test authentication flows: registration, login, email verification, password reset."
@@ -56,8 +52,7 @@
       "description": "Testing tools - group together",
       "groupName": "Testing tools",
       "matchPackageNames": ["@playwright/test", "dotenv"],
-      "automerge": false,
-      "schedule": ["before 10am on monday"]
+      "automerge": false
     },
     {
       "description": "TypeScript and type definitions - group minor/patch",
@@ -144,8 +139,7 @@
       "matchManagers": ["github-actions"],
       "automerge": true,
       "automergeType": "pr",
-      "matchUpdateTypes": ["minor", "patch"],
-      "schedule": ["before 10am on monday"]
+      "matchUpdateTypes": ["minor", "patch"]
     }
   ],
   "vulnerabilityAlerts": {
