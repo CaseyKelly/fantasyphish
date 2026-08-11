@@ -2,9 +2,9 @@
 
 FantasyPhish uses Renovate for automated dependency updates.
 
-## Weekly Schedule
+## Schedule
 
-Updates run **Monday mornings before 10 AM ET**.
+Updates run **anytime** — there's no weekly window and no cap on concurrent PRs or branches (`prConcurrentLimit`/`branchConcurrentLimit` are both `0`). Renovate opens a PR as soon as an update clears the stability period below.
 
 ## Automerge Policy
 
@@ -54,11 +54,11 @@ Updates are grouped intelligently:
 
 ### Stability Period
 
-All updates wait **3 days** after a new version is published before creating a PR. This avoids bleeding-edge bugs.
+All updates wait **1 day** (`minimumReleaseAge`) after a new version is published before creating a PR. This avoids bleeding-edge bugs, even though PRs otherwise open anytime.
 
 ### Security Alerts
 
-Security vulnerability patches run **immediately** (override weekly schedule) and automerge after tests pass.
+Security vulnerability patches run **immediately**, bypassing the stability period, and automerge after tests pass.
 
 ### Lockfile Maintenance
 
@@ -102,22 +102,23 @@ On the **first Monday of each month**, Renovate updates `package-lock.json` to p
 
 ### Too Many PRs
 
-If you're getting overwhelmed with PRs, reduce the concurrent limit:
+PRs and branches are currently unlimited (`prConcurrentLimit`/`branchConcurrentLimit` set to `0`). If you're getting overwhelmed, cap them:
 
 Edit `renovate.json`:
 
 ```json
-"prConcurrentLimit": 2  // Down from 3
+"prConcurrentLimit": 20,
+"branchConcurrentLimit": 5
 ```
 
 ### Updates Too Frequent
 
-Change to monthly updates:
+There's no schedule restriction on package rules by default. To batch updates again, add a `schedule` back to a `packageRules` entry (or to the top level for everything):
 
 Edit `renovate.json`:
 
 ```json
-"schedule": ["on the first monday of the month"]
+"schedule": ["before 10am on monday"]
 ```
 
 ### Automerge Not Working
@@ -138,9 +139,9 @@ Possible causes:
 3. Validate `renovate.json` syntax with `jsonlint`
 4. Check schedule hasn't been missed
 
-## Weekly Workflow
+## Workflow
 
-**Monday morning:**
+**As PRs arrive (anytime):**
 
 1. Check dependency dashboard for new PRs
 2. Let automerge handle safe updates (types, linting, utilities)
@@ -170,7 +171,7 @@ If Renovate causes issues:
 
 - **Intelligent grouping** - Related packages updated together
 - **Conditional automerge** - Safe updates auto, critical manual
-- **Weekly batching** - Reduces notification noise
+- **Unlimited PRs anytime** - No weekly window, no concurrency caps
 - **Custom warnings** - Reminds you to test migrations, auth, email
 - **Stability period** - Avoids bleeding-edge bugs
 - **Security patches** - Immediate fixes for vulnerabilities
