@@ -11,7 +11,7 @@ dotenv.config({ path: ".env.local" })
 // exercised elsewhere in the suite risked losing the race against that
 // test's assertion timeout, causing recurring flaky-but-passes-on-retry
 // reports (see e.g. admin.spec.ts:6, picker.spec.ts:7, admin-shows.spec.ts:14).
-// Hitting each of these paths once here - single-threaded, before any worker
+// Hitting each of these paths once here - before any Playwright worker
 // starts - pays that one-time compile cost upfront instead of racing a test
 // timeout for it. Requests are unauthenticated and mostly expected to
 // 401/404/redirect - that's fine, the route module still has to compile
@@ -48,6 +48,21 @@ const WARMUP_API_REQUESTS: { path: string; init: RequestInit }[] = [
   },
 ]
 
+// Bounds a single fetch with an AbortController so one hung/slow route
+// can't stall globalSetup (and therefore the whole test run) indefinitely -
+// there's no per-request timeout on a plain fetch() otherwise.
+function fetchWithTimeout(
+  url: string,
+  init: RequestInit = {},
+  timeoutMs = 15000
+): Promise<Response> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  return fetch(url, { ...init, signal: controller.signal }).finally(() =>
+    clearTimeout(timer)
+  )
+}
+
 // Playwright's docs don't give a hard guarantee that webServer has finished
 // starting by the time globalSetup runs (and there's open discussion in
 // Playwright's own issue tracker about this), so don't assume it - poll
@@ -61,7 +76,7 @@ async function waitForServer(
   const start = Date.now()
   while (Date.now() - start < timeoutMs) {
     try {
-      await fetch(baseUrl)
+      await fetchWithTimeout(baseUrl, {}, 5000)
       return true
     } catch {
       await new Promise((resolve) => setTimeout(resolve, 500))
@@ -83,9 +98,9 @@ async function warmUpRoutes() {
   console.log("🔥 Warming up rarely-hit routes...")
 
   const requests = [
-    ...WARMUP_PATHS.map((path) => fetch(`${baseUrl}${path}`)),
+    ...WARMUP_PATHS.map((path) => fetchWithTimeout(`${baseUrl}${path}`)),
     ...WARMUP_API_REQUESTS.map(({ path, init }) =>
-      fetch(`${baseUrl}${path}`, init)
+      fetchWithTimeout(`${baseUrl}${path}`, init)
     ),
   ]
 
