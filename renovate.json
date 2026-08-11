@@ -135,7 +135,7 @@
       "enabled": false
     },
     {
-      "description": "GitHub Actions - weekly updates, automerge minor/patch",
+      "description": "GitHub Actions - automerge minor/patch",
       "matchManagers": ["github-actions"],
       "automerge": true,
       "automergeType": "pr",
