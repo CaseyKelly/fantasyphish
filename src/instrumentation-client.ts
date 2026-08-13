@@ -11,6 +11,11 @@ Sentry.init({
     // Scoped to this specific fetch-failure variant so real SW registration
     // regressions (bad MIME type, 404, etc.) still surface.
     /Failed to register a ServiceWorker.*An unknown error occurred when fetching the script/,
+    // WebKit's wording for the same class of failure (seen from Mobile Safari
+    // UI/WKWebView, i.e. in-app browsers / PWA containers with flaky SW
+    // support). Scoped to our own sw.js path so unrelated script load
+    // failures still surface.
+    /Script https?:\/\/[^/]+\/serwist\/sw\.js load failed/,
   ],
 })
 
