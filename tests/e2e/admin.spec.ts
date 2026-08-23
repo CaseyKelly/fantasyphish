@@ -94,6 +94,82 @@ test.describe("Admin Authorization", () => {
     await prisma.show.delete({ where: { id: show.id } })
   })
 
+  test("should redirect to /results after deleting a submission via the results detail UI", async ({
+    page,
+    createAdmin,
+    prisma,
+  }) => {
+    // Create admin user
+    const adminEmail = `admin-ui-delete-${Date.now()}@example.com`
+    const adminUsername = uniqueUsername("admin")
+    const adminPassword = "AdminPassword123!"
+
+    await createAdmin({
+      email: adminEmail,
+      username: adminUsername,
+      password: adminPassword,
+      verified: true,
+    })
+
+    const admin = await prisma.user.findUnique({
+      where: { email: adminEmail.toLowerCase() },
+    })
+
+    // Create a test show with unique date
+    const testDate = new Date()
+    testDate.setFullYear(2030)
+    testDate.setMonth(2) // Different month from other tests in this file
+    testDate.setMilliseconds(Date.now() % 1000)
+
+    const show = await prisma.show.create({
+      data: {
+        venue: "Test Venue",
+        city: "Test City",
+        state: "NY",
+        showDate: testDate,
+        isComplete: false,
+      },
+    })
+
+    // Get songs to use for picks
+    const songs = await prisma.song.findMany({ take: 2 })
+    if (songs.length < 2) throw new Error("Not enough songs in database")
+
+    // The admin submits their own picks so the results detail page has a
+    // submission to show/delete for the logged-in session
+    await prisma.submission.create({
+      data: {
+        userId: admin!.id,
+        showId: show.id,
+        picks: {
+          create: [
+            { songId: songs[0].id, pickType: "OPENER" },
+            { songId: songs[1].id, pickType: "ENCORE" },
+          ],
+        },
+      },
+    })
+
+    // Login as admin
+    await page.goto("/login")
+    await page.getByPlaceholder("Email address").fill(adminEmail)
+    await page.getByPlaceholder("Password").fill(adminPassword)
+    await page.click('button[type="submit"]')
+    await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
+
+    // Accept the browser confirm() dialog the delete button triggers
+    page.once("dialog", (dialog) => dialog.accept())
+
+    await page.goto(`/results_detail/${show.id}`)
+    await page.getByRole("button", { name: "Delete Submission" }).click()
+
+    // The delete handler redirects back to /results via router.push
+    await expect(page).toHaveURL(/\/results$/, { timeout: 10000 })
+
+    // Cleanup
+    await prisma.show.delete({ where: { id: show.id } })
+  })
+
   test("should prevent non-admin from deleting submissions", async ({
     page,
     createUser,
