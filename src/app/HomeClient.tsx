@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { format } from "date-fns"
+import * as Sentry from "@sentry/nextjs"
 import { Target, ArrowRight, Trophy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DonutLogo } from "@/components/DonutLogo"
@@ -118,8 +119,11 @@ export function HomeClient() {
           const userTimeStr = formatTimeOfDay(lockDate, userTz)
           return `${venueTimeStr} ${venueAbbr} (${userTimeStr} ${userAbbr}) on ${formattedDate}`
         }
-      } catch {
-        // Ignore and fall through to venue-only time below
+      } catch (err) {
+        // Fall through to venue-only time below, but still report unexpected
+        // failures so regressions beyond the known invalid-timezone case
+        // don't go unnoticed.
+        Sentry.captureException(err)
       }
 
       return `${venueTimeStr} ${venueAbbr} on ${formattedDate}`
