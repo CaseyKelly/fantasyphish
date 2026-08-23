@@ -7,7 +7,6 @@ import { Target, ArrowRight, Trophy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DonutLogo } from "@/components/DonutLogo"
 import { SongPicker } from "@/components/SongPicker"
-import { LoadingDonut } from "@/components/LoadingDonut"
 import { GuestRegistrationModal } from "@/components/GuestRegistrationModal"
 import { LiveBadge } from "@/components/LiveBadge"
 import {

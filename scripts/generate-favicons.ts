@@ -1,5 +1,4 @@
 import sharp from "sharp"
-import { writeFileSync } from "fs"
 import { join } from "path"
 
 // Donut SVG template with exact colors from DonutLogo component

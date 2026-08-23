@@ -42,7 +42,7 @@ async function updateEnvFile() {
     let envContent = ""
     try {
       envContent = await readFile(ENV_FILE_PATH, "utf-8")
-    } catch (error) {
+    } catch {
       console.error(`❌ Could not read ${ENV_FILE_PATH}`)
       console.error("Make sure the file exists")
       process.exit(1)

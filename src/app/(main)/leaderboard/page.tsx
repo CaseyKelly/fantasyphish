@@ -217,21 +217,6 @@ export default async function LeaderboardPage({
       )
     : []
 
-  // Check if there are any in-progress shows for this tour
-  const hasInProgressShows = await withRetry(
-    () =>
-      prisma.show.findFirst({
-        where: {
-          tourId: currentTourId,
-          isComplete: false,
-          lockTime: {
-            lte: new Date(),
-          },
-        },
-      }),
-    { operationName: "find in-progress shows" }
-  )
-
   // Show the tour info from the current tour being displayed in the leaderboard
   const showForDisplay =
     currentTour && currentTour.shows.length > 0

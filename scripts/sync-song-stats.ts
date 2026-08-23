@@ -123,7 +123,6 @@ export async function syncSongStats() {
       duration: `${duration}ms`,
     }
   } catch (error) {
-    const duration = Date.now() - startTime
     console.error("[Sync Song Stats] ✗ Sync failed:", error)
     throw error
   } finally {

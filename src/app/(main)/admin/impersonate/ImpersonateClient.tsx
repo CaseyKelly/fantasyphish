@@ -27,6 +27,7 @@ export default function ImpersonateClient() {
       // (NextAuth stores the session in an HTTP-only cookie, so a client-side
       // route change alone won't pick up the new token) and land somewhere
       // useful now that we're viewing the app as the impersonated user.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.href = "/picks"
     }
   }, [impersonateRedirect])

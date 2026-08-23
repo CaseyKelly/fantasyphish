@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { Navbar } from "@/components/Navbar"
 import { ImpersonationBanner } from "@/components/ImpersonationBanner"
