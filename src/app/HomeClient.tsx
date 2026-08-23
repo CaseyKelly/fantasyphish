@@ -106,14 +106,20 @@ export function HomeClient() {
       const venueTimeStr = formatTimeOfDay(lockDate, timezone)
       const venueAbbr = getTimezoneAbbr(timezone)
 
-      // Get user's timezone
-      const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone
-      const userAbbr = getTimezoneAbbr(userTz)
+      // Get user's timezone. Some browsers/WebViews resolve this to a
+      // bogus value (e.g. "Etc/Unknown") that date-fns-tz can't format,
+      // so fall back to venue-only time if it can't be used.
+      try {
+        const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone
+        const userAbbr = getTimezoneAbbr(userTz)
 
-      // Only show local time if different from venue time
-      if (userTz !== timezone) {
-        const userTimeStr = formatTimeOfDay(lockDate, userTz)
-        return `${venueTimeStr} ${venueAbbr} (${userTimeStr} ${userAbbr}) on ${formattedDate}`
+        // Only show local time if different from venue time
+        if (userTz !== timezone) {
+          const userTimeStr = formatTimeOfDay(lockDate, userTz)
+          return `${venueTimeStr} ${venueAbbr} (${userTimeStr} ${userAbbr}) on ${formattedDate}`
+        }
+      } catch {
+        // Ignore and fall through to venue-only time below
       }
 
       return `${venueTimeStr} ${venueAbbr} on ${formattedDate}`
