@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { LoadingDonut } from "@/components/LoadingDonut"
 import { format, parseISO } from "date-fns"
@@ -58,6 +59,7 @@ interface ResultsClientProps {
 }
 
 export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
+  const router = useRouter()
   const [data, setData] = useState<ResultsData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -96,7 +98,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
       }
 
       // Redirect back to results after deletion
-      window.location.href = "/results"
+      router.push("/results")
     } catch (err) {
       console.error("Delete error:", err)
       alert(err instanceof Error ? err.message : "Failed to delete submission")

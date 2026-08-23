@@ -9,7 +9,7 @@
     "dev": "next dev",
     "build": "prisma generate && npx tsx scripts/migrate-deploy-with-lock-recovery.ts && next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint --max-warnings 0",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
     "postinstall": "prisma generate",
