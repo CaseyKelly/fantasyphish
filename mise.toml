@@ -2,4 +2,4 @@
 # Vite (a Vitest dependency) requires node ^20.19.0 || >=22.12.0; pin to an
 # exact patch (kept current by Renovate) instead of just the "24" major so
 # local dev, agent sessions, and CI never drift onto an incompatible patch.
-node = "24.19.0"
+node = "24.20.0"
