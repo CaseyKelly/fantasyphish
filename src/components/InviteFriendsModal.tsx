@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { Mail, MessageCircle, Copy, Share2, X, Check } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -22,9 +22,16 @@ const INVITE_MESSAGE =
 
 export function InviteFriendsModal({ onClose }: InviteFriendsModalProps) {
   const modalRef = useRef<HTMLDivElement>(null)
+  const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [copied, setCopied] = useState(false)
 
   useFocusTrap(modalRef, true, onClose)
+
+  useEffect(() => {
+    return () => {
+      if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current)
+    }
+  }, [])
 
   const inviteUrl = getInviteUrl()
   const fullMessage = `${INVITE_MESSAGE} ${inviteUrl}`
@@ -46,7 +53,8 @@ export function InviteFriendsModal({ onClose }: InviteFriendsModalProps) {
       await navigator.clipboard.writeText(fullMessage)
       setCopied(true)
       toast.success("Invite link copied!")
-      setTimeout(() => setCopied(false), 2000)
+      if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current)
+      copiedTimeoutRef.current = setTimeout(() => setCopied(false), 2000)
     } catch {
       toast.error("Couldn't copy the link")
     }
