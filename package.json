@@ -85,7 +85,7 @@
   },
   "overrides": {
     "minimatch": "10.2.6",
-    "postcss": "8.5.26",
+    "postcss": "8.5.28",
     "sharp": "0.35.4",
     "eslint-plugin-react-hooks": "7.1.1",
     "eslint-plugin-jsx-a11y": {
