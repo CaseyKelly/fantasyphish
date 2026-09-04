@@ -13,13 +13,16 @@ import {
   LogOut,
   User,
   Shield,
+  UserPlus,
 } from "lucide-react"
 import { DonutLogo } from "./DonutLogo"
+import { InviteFriendsModal } from "./InviteFriendsModal"
 
 export function Navbar() {
   const pathname = usePathname()
   const { data: session } = useSession()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isInviteOpen, setIsInviteOpen] = useState(false)
 
   // Check if user is admin (original user if impersonating)
   const isAdmin = session?.impersonating
@@ -82,6 +85,16 @@ export function Navbar() {
             {/* User Menu (Desktop) */}
             {session && (
               <div className="hidden md:flex items-center space-x-4">
+                <button
+                  onClick={() => setIsInviteOpen(true)}
+                  className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50 transition-colors whitespace-nowrap"
+                >
+                  <UserPlus
+                    aria-hidden="true"
+                    className="h-4 w-4 flex-shrink-0"
+                  />
+                  <span>Invite Friends</span>
+                </button>
                 <Link
                   href="/profile"
                   className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50 transition-colors whitespace-nowrap"
@@ -170,6 +183,16 @@ export function Navbar() {
                   )
                 })}
                 <div className="pt-3 mt-3 border-t border-[#3d5a6c]/50">
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false)
+                      setIsInviteOpen(true)
+                    }}
+                    className="flex items-center space-x-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-[#3d5a6c]/50 transition-colors"
+                  >
+                    <UserPlus aria-hidden="true" className="h-5 w-5" />
+                    <span>Invite Friends</span>
+                  </button>
                   <Link
                     href="/profile"
                     onClick={() => setIsMenuOpen(false)}
@@ -191,6 +214,9 @@ export function Navbar() {
           </div>
         )}
       </nav>
+      {isInviteOpen && (
+        <InviteFriendsModal onClose={() => setIsInviteOpen(false)} />
+      )}
     </>
   )
 }
