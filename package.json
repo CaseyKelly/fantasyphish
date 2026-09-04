@@ -68,7 +68,7 @@
     "@types/node": "^24",
     "@types/pg": "^8.20.4",
     "@types/react": "19.2.18",
-    "@types/react-dom": "19.2.5",
+    "@types/react-dom": "19.2.7",
     "@types/web-push": "^3.6.4",
     "dotenv": "^17.4.2",
     "esbuild": "^0.28.1",
