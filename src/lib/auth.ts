@@ -77,6 +77,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             targetIsAdmin: boolean
           }
           stopImpersonating?: boolean
+          username?: string
+        }
+
+        if (updateSession.username) {
+          token.username = updateSession.username
         }
 
         if (updateSession.impersonating) {
