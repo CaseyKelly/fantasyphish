@@ -1,6 +1,19 @@
-import { test, expect, uniqueUsername } from "./helpers/fixtures"
+import crypto from "crypto"
+import { test, expect } from "./helpers/fixtures"
 
 test.describe.configure({ mode: "serial" })
+
+// uniqueUsername() from the shared fixtures produces names around 27
+// characters, well past the app's 20-char username limit - fine for the
+// other suites, which only ever pass it straight to direct DB creation, but
+// here we also type usernames into the edit form, where the input's
+// maxLength (and the server's Zod validation) would silently truncate
+// anything longer, breaking the assertions below. Keep this local rather
+// than shortening the shared helper, since callers elsewhere rely on its
+// current collision-safety margin.
+function shortUniqueUsername(prefix: string): string {
+  return `${prefix}${Date.now().toString(36)}${crypto.randomBytes(2).toString("hex")}`
+}
 
 test.describe("Username editing", () => {
   test("should let a user change their username to an available one", async ({
@@ -9,8 +22,8 @@ test.describe("Username editing", () => {
     prisma,
   }) => {
     const userEmail = `user-username-edit-${Date.now()}@example.com`
-    const userUsername = uniqueUsername("editme")
-    const newUsername = uniqueUsername("editedto")
+    const userUsername = shortUniqueUsername("editme")
+    const newUsername = shortUniqueUsername("editedto")
     const userPassword = "UserPassword123!"
 
     await createUser({
@@ -61,7 +74,7 @@ test.describe("Username editing", () => {
     page,
     createUser,
   }) => {
-    const takenUsername = uniqueUsername("taken")
+    const takenUsername = shortUniqueUsername("taken")
     await createUser({
       email: `user-username-taken-${Date.now()}@example.com`,
       username: takenUsername,
@@ -70,7 +83,7 @@ test.describe("Username editing", () => {
     })
 
     const userEmail = `user-username-conflict-${Date.now()}@example.com`
-    const userUsername = uniqueUsername("conflict")
+    const userUsername = shortUniqueUsername("conflict")
     const userPassword = "UserPassword123!"
 
     await createUser({
