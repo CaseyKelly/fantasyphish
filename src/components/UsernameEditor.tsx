@@ -83,6 +83,7 @@ export function UsernameEditor({ username }: { username: string }) {
           onChange={(e) => setValue(e.target.value)}
           disabled={saving}
           maxLength={20}
+          autoComplete="off"
           aria-label="Username"
           className="w-40 rounded border border-[#4a6b7d] bg-transparent px-2 py-1 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-[#c23a3a] disabled:opacity-50"
         />
