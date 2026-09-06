@@ -48,12 +48,13 @@ test.describe("Username editing", () => {
     })
     expect(updatedUser?.username).toBe(newUsername)
 
-    // Session cookie was refreshed, not just the visible page - the old
-    // username is no longer treated as "own profile" on a hard reload.
-    await page.goto(`/user/${userUsername}`)
+    // Session cookie was refreshed, not just client-side state - a hard
+    // reload of the new profile URL still resolves "own profile" from the
+    // session, so the edit control is still there.
+    await page.reload()
     await expect(
       page.getByRole("button", { name: "Edit username" })
-    ).toHaveCount(0)
+    ).toBeVisible()
   })
 
   test("should reject a username that is already taken", async ({
