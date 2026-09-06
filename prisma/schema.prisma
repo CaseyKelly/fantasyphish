@@ -12,6 +12,9 @@ datasource db {
 model User {
   id                    String    @id @default(cuid())
   email                 String    @unique
+  // Case-insensitive uniqueness is additionally enforced at the DB level by
+  // a `LOWER(username)` unique index (see migrations/..._username_case_insensitive_unique),
+  // which Prisma's schema syntax can't express directly.
   username              String    @unique @default("")
   passwordHash          String
   emailVerified         DateTime?

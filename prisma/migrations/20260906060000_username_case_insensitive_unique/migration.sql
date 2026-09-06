@@ -1,0 +1,13 @@
+-- Enforce case-insensitive username uniqueness at the database level.
+--
+-- `User.username` already has a plain (case-sensitive) unique constraint,
+-- which the application backstops with a case-insensitive check in
+-- POST /api/auth/register and PATCH /api/user/username. That app-level
+-- check isn't atomic with the write, so without this index two concurrent
+-- requests could still land usernames that differ only by case (e.g.
+-- "Bob" and "bob"). This unique index on the lowercased value closes that
+-- race without changing lookup semantics for existing exact-match queries.
+--
+-- NOTE: if any existing rows already collide case-insensitively, this
+-- migration will fail to apply until those rows are deduplicated by hand.
+CREATE UNIQUE INDEX "User_username_lower_key" ON "User" (LOWER("username"));

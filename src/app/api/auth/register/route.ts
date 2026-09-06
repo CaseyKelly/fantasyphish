@@ -4,7 +4,7 @@ import { randomBytes } from "crypto"
 import { prisma } from "@/lib/prisma"
 import { sendVerificationEmail } from "@/lib/email"
 import { z } from "zod"
-import { PickType } from "@prisma/client"
+import { PickType, Prisma } from "@prisma/client"
 import { registerSchema } from "./schema"
 
 export async function POST(request: NextRequest) {
@@ -112,6 +112,18 @@ export async function POST(request: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: error.issues[0].message },
+        { status: 400 }
+      )
+    }
+
+    // Guards against a race where two requests pass the username/email
+    // uniqueness checks before either has committed its create.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return NextResponse.json(
+        { error: "This username or email is already taken" },
         { status: 400 }
       )
     }
