@@ -254,7 +254,7 @@ async function main() {
   const { awardTourPlacementAchievement } =
     await import("../src/lib/achievement-awards.js")
 
-  const podiumWinners = standings.filter(
+  const podiumWinners = rankedStandings.filter(
     (entry) => entry.rank === 1 || entry.rank === 2 || entry.rank === 3
   )
 
