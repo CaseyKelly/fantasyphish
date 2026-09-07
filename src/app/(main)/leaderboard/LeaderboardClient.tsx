@@ -54,6 +54,7 @@ interface Show {
   city: string | null
   state: string | null
   showDate: Date
+  isComplete: boolean
   tour: {
     name: string
     startDate: Date
@@ -953,7 +954,8 @@ export default function LeaderboardClient({
                       </span>
                     </div>
                   ) : (
-                    nextShow.venue && (
+                    nextShow.venue &&
+                    !nextShow.isComplete && (
                       <div className="flex items-center space-x-2 text-sm text-slate-400">
                         <MapPin className="h-4 w-4" />
                         <span>
