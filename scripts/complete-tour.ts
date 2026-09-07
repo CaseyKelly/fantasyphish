@@ -186,9 +186,24 @@ async function main() {
     }
   }
 
-  const standings = Array.from(userScores.values())
-    .sort((a, b) => b.totalPoints - a.totalPoints)
-    .slice(0, 10) // Top 10
+  const sortedStandings = Array.from(userScores.values()).sort(
+    (a, b) => b.totalPoints - a.totalPoints
+  )
+
+  // Standard competition ranking (ties share a rank, next rank skips accordingly)
+  // - matches the rank grouping used by the live Podium UI (src/lib/leaderboard.ts)
+  let currentRank = 1
+  const rankedStandings = sortedStandings.map((entry, index) => {
+    if (
+      index > 0 &&
+      entry.totalPoints !== sortedStandings[index - 1].totalPoints
+    ) {
+      currentRank = index + 1
+    }
+    return { ...entry, rank: currentRank }
+  })
+
+  const standings = rankedStandings.slice(0, 10) // Top 10
 
   // Check if there are any participants
   if (standings.length === 0) {
@@ -217,16 +232,21 @@ async function main() {
   )
 
   console.log(`\n🏆 Final Leaderboard (Top 10):`)
-  standings.forEach((entry, index) => {
-    const rank = index + 1
+  standings.forEach((entry) => {
     const medal =
-      rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : "  "
+      entry.rank === 1
+        ? "🥇"
+        : entry.rank === 2
+          ? "🥈"
+          : entry.rank === 3
+            ? "🥉"
+            : "  "
     console.log(
-      `   ${medal} #${rank}: ${entry.username} - ${entry.totalPoints} pts (${entry.showsPlayed} shows)`
+      `   ${medal} #${entry.rank}: ${entry.username} - ${entry.totalPoints} pts (${entry.showsPlayed} shows)`
     )
   })
 
-  // Award achievements for top 3 placements
+  // Award achievements for top 3 placements (every user tied at a placement gets it)
   console.log(`\n🏅 Awarding placement achievements...`)
   let achievementsAwarded = 0
 
@@ -234,9 +254,12 @@ async function main() {
   const { awardTourPlacementAchievement } =
     await import("../src/lib/achievement-awards.js")
 
-  for (let i = 0; i < Math.min(3, standings.length); i++) {
-    const placement = (i + 1) as 1 | 2 | 3
-    const winner = standings[i]
+  const podiumWinners = standings.filter(
+    (entry) => entry.rank === 1 || entry.rank === 2 || entry.rank === 3
+  )
+
+  for (const winner of podiumWinners) {
+    const placement = winner.rank as 1 | 2 | 3
 
     const result = await awardTourPlacementAchievement(
       winner.userId,
