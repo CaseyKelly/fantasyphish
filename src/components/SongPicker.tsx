@@ -800,7 +800,10 @@ export function SongPicker({
 
     return (
       <Card className="overflow-hidden" blur={false}>
-        <CardHeader className="p-0">
+        {/* The button carries the padding; the divider only separates an open panel */}
+        <CardHeader
+          className={`p-0 sm:p-0 ${!isMobile && isExpanded ? "" : "border-b-0"}`}
+        >
           <button
             type="button"
             className="w-full text-left px-4 py-3 sm:px-6 cursor-pointer"

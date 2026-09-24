@@ -227,7 +227,8 @@ export default async function LeaderboardHistoryPage() {
                                 {medal} #{winner.rank} {winner.username}
                               </span>
                               <span className="font-semibold text-orange-400">
-                                {winner.totalPoints} pts
+                                {winner.totalPoints}{" "}
+                                {winner.totalPoints === 1 ? "pt" : "pts"}
                               </span>
                             </div>
                           )
