@@ -11,6 +11,7 @@ export interface LeaderboardPick {
 
 export interface LeaderboardShowPicks {
   show: {
+    id: string
     showDate: Date
     venue: string
     city: string | null
@@ -89,6 +90,7 @@ export async function getLeaderboard(
               totalPoints: true,
               show: {
                 select: {
+                  id: true,
                   showDate: true,
                   venue: true,
                   city: true,

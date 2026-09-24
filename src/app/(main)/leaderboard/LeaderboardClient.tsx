@@ -13,6 +13,7 @@ import {
   MapPin,
   Check,
   ChevronDown,
+  ChevronRight,
   Radio,
   ScrollText,
 } from "lucide-react"
@@ -29,6 +30,7 @@ interface Pick {
 
 interface ShowPicks {
   show: {
+    id: string
     showDate: Date
     venue: string
     city: string | null
@@ -285,10 +287,28 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
   )
 }
 
+function formatPoints(points: number): string {
+  return `${points} ${points === 1 ? "pt" : "pts"}`
+}
+
+// Expanded rows start with only the most recent shows so a full-tour
+// history (19+ shows) doesn't push the rest of the table thousands of
+// pixels down the page
+const INITIAL_SHOWS_VISIBLE = 3
+
 function ShowPickDetail({ picksByShow }: { picksByShow: ShowPicks[] }) {
+  const [showAll, setShowAll] = useState(false)
+  // Hiding a single show saves nothing over just showing it
+  const isCollapsible = picksByShow.length > INITIAL_SHOWS_VISIBLE + 1
+  const visibleShows =
+    showAll || !isCollapsible
+      ? picksByShow
+      : picksByShow.slice(0, INITIAL_SHOWS_VISIBLE)
+  const hiddenCount = picksByShow.length - visibleShows.length
+
   return (
     <div className="space-y-4">
-      {picksByShow.map((showPicks, showIdx) => {
+      {visibleShows.map((showPicks) => {
         const openerPick = showPicks.picks.find((p) => p.pickType === "OPENER")
         const encorePicks = showPicks.picks.filter(
           (p) => p.pickType === "ENCORE"
@@ -299,11 +319,14 @@ function ShowPickDetail({ picksByShow }: { picksByShow: ShowPicks[] }) {
 
         return (
           <div
-            key={showIdx}
+            key={showPicks.show.id}
             className="border-2 border-[#4a6b7d]/40 rounded-lg p-3 bg-[#233d4d]/30"
           >
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 pb-2 border-b-2 border-[#4a6b7d]/40">
-              <div className="text-xs text-slate-400">
+            <div className="flex items-start justify-between gap-3 mb-3 pb-2 border-b-2 border-[#4a6b7d]/40">
+              <Link
+                href={`/results_detail/${showPicks.show.id}`}
+                className="group min-w-0 text-xs text-slate-400 hover:text-white transition-colors"
+              >
                 {new Date(showPicks.show.showDate).toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
@@ -311,9 +334,13 @@ function ShowPickDetail({ picksByShow }: { picksByShow: ShowPicks[] }) {
                   timeZone: "UTC",
                 })}{" "}
                 • {locationLabel(showPicks.show)}
-              </div>
-              <div className="text-xs font-semibold text-orange-400">
-                {showPicks.totalPoints} pts
+                <span className="ml-1.5 inline-flex items-center gap-0.5 font-medium text-[#d64545] group-hover:underline whitespace-nowrap">
+                  Setlist
+                  <ChevronRight aria-hidden="true" className="h-3 w-3" />
+                </span>
+              </Link>
+              <div className="text-xs font-semibold text-orange-400 whitespace-nowrap">
+                {formatPoints(showPicks.totalPoints)}
               </div>
             </div>
 
@@ -383,6 +410,17 @@ function ShowPickDetail({ picksByShow }: { picksByShow: ShowPicks[] }) {
           </div>
         )
       })}
+      {isCollapsible && (
+        <button
+          type="button"
+          onClick={() => setShowAll((all) => !all)}
+          className="w-full py-2 rounded-lg border-2 border-[#4a6b7d]/40 text-sm font-medium text-slate-300 hover:text-white hover:bg-[#4a6b7d]/20 transition-colors"
+        >
+          {showAll
+            ? "Show fewer shows"
+            : `Show ${hiddenCount} earlier ${hiddenCount === 1 ? "show" : "shows"}`}
+        </button>
+      )}
     </div>
   )
 }
@@ -507,7 +545,7 @@ function LeaderboardTable({
           )}
         </div>
       </CardHeader>
-      <CardContent className="p-0 overflow-hidden">
+      <CardContent className="p-0 sm:p-0 overflow-hidden">
         <div className="divide-y divide-[#4a6b7d]/40">
           {entries.map((user) => {
             const isCurrentUser = currentUserId === user.userId
@@ -688,7 +726,9 @@ function YourRankCard({
           </div>
           <div className="text-right">
             <p className="text-3xl font-bold text-orange-500">#{entry.rank}</p>
-            <p className="text-sm text-slate-400">{entry.totalPoints} pts</p>
+            <p className="text-sm text-slate-400">
+              {formatPoints(entry.totalPoints)}
+            </p>
           </div>
         </div>
       </CardContent>
@@ -707,6 +747,11 @@ export default function LeaderboardClient({
 }: LeaderboardClientProps) {
   const router = useRouter()
   const isActiveTour = nextShow?.tour?.status === "ACTIVE"
+  // Past tours linked from History are CLOSED rather than COMPLETED; both
+  // mean final results, not an upcoming "Next" show
+  const isTourFinished =
+    nextShow?.tour?.status === "COMPLETED" ||
+    nextShow?.tour?.status === "CLOSED"
   const [view, setView] = useState<View>(isActiveTour ? "show" : "tour")
   const [expandedShow, setExpandedShow] = useState<Set<string>>(new Set())
   const [expandedTour, setExpandedTour] = useState<Set<string>>(new Set())
@@ -902,7 +947,7 @@ export default function LeaderboardClient({
           {nextShow?.tour && (
             <Card
               className={
-                nextShow.tour.status === "COMPLETED"
+                isTourFinished
                   ? "bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-2 border-yellow-500/50"
                   : "bg-[#233d4d]/90 border-2 border-[#4a6b7d]/60"
               }
@@ -912,12 +957,12 @@ export default function LeaderboardClient({
                   <div className="flex items-center space-x-4">
                     <div
                       className={
-                        nextShow.tour.status === "COMPLETED"
+                        isTourFinished
                           ? "p-2 bg-yellow-500/20 rounded-lg"
                           : "p-2 bg-orange-500/20 rounded-lg"
                       }
                     >
-                      {nextShow.tour.status === "COMPLETED" ? (
+                      {isTourFinished ? (
                         <Trophy className="h-5 w-5 text-yellow-500" />
                       ) : (
                         <Calendar className="h-5 w-5 text-orange-500" />
@@ -926,7 +971,7 @@ export default function LeaderboardClient({
                     <div>
                       <p
                         className={
-                          nextShow.tour.status === "COMPLETED"
+                          isTourFinished
                             ? "font-semibold text-yellow-400"
                             : "font-semibold text-white"
                         }
@@ -945,7 +990,7 @@ export default function LeaderboardClient({
                       </p>
                     </div>
                   </div>
-                  {nextShow.tour.status === "COMPLETED" ? (
+                  {isTourFinished ? (
                     <div className="flex items-center space-x-2 text-sm">
                       <Trophy className="h-4 w-4 text-yellow-500" />
                       <span className="font-semibold text-yellow-400">
@@ -969,8 +1014,9 @@ export default function LeaderboardClient({
           )}
 
           {/* Podium Display for Completed Tours */}
-          {nextShow?.tour?.status === "COMPLETED" &&
-            tourLeaderboard.length >= 3 && <Podium entries={tourLeaderboard} />}
+          {isTourFinished && tourLeaderboard.length >= 3 && (
+            <Podium entries={tourLeaderboard} />
+          )}
 
           {/* Current User Rank */}
           {currentUserTourEntry && (

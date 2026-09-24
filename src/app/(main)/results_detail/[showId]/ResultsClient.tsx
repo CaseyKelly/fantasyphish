@@ -299,7 +299,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
       </div>
 
       {/* Status Banner */}
-      <Card className="p-4 border-l-4 border-l-blue-500 border-2 border-[#4a6b7d]/60">
+      <Card className="p-4 border-2 border-[#4a6b7d]/60 border-l-4 border-l-blue-500">
         <div className="flex items-center justify-between">
           <div>
             {show.isComplete ? (
@@ -341,7 +341,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
 
       {/* Show Notes - collapsible, only when phish.net has notes for this show */}
       {setlist?.setlistNotes && setlist.setlistNotes.length > 0 && (
-        <Card className="border-l-4 border-l-cyan-500 border-2 border-[#4a6b7d]/60">
+        <Card className="border-2 border-[#4a6b7d]/60 border-l-4 border-l-cyan-500">
           <button
             onClick={() => setShowNotesOpen((open) => !open)}
             aria-expanded={showNotesOpen}

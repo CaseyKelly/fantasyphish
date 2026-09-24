@@ -1,5 +1,6 @@
 import { forwardRef, ButtonHTMLAttributes } from "react"
 import { LoadingDonut } from "@/components/LoadingDonut"
+import { cn } from "@/lib/cn"
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "outline" | "ghost" | "danger" | "success"
@@ -21,7 +22,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#2d4654] disabled:opacity-50 disabled:cursor-not-allowed"
+      "inline-flex items-center justify-center font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#2d4654] disabled:cursor-not-allowed"
 
     const variants = {
       primary:
@@ -37,6 +38,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         "bg-green-600 hover:bg-green-700 text-white focus:ring-green-600",
     }
 
+    // A washed-out colored button (the old opacity-50) still reads as
+    // clickable, especially the green success variant; use one neutral
+    // style for every variant so "not yet" is unambiguous
+    const disabledStyles =
+      "disabled:bg-[#3d5a6c]/60 disabled:border-transparent disabled:text-slate-400 disabled:shadow-none"
+
     const sizes = {
       sm: "px-3 py-1.5 text-sm",
       md: "px-4 py-2 text-base",
@@ -47,7 +54,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         disabled={disabled || isLoading}
-        className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+        className={cn(
+          baseStyles,
+          variants[variant],
+          sizes[size],
+          // While loading, keep the variant color so it reads as "working"
+          isLoading ? "disabled:opacity-75" : disabledStyles,
+          className
+        )}
         {...props}
       >
         {isLoading ? (
