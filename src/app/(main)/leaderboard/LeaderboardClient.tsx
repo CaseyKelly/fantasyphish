@@ -662,6 +662,10 @@ function LeaderboardTable({
                         ? "grid-rows-[1fr] opacity-100 mt-3"
                         : "grid-rows-[0fr] opacity-0"
                     }`}
+                    // Collapsed rows stay mounted for the height animation;
+                    // inert keeps their setlist links and buttons out of
+                    // the tab order and away from screen readers
+                    inert={!isExpanded}
                   >
                     <div className="overflow-hidden">
                       <ShowPickDetail picksByShow={user.picksByShow} />
