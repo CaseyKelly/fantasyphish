@@ -39,7 +39,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.0.0",
-    "@sentry/nextjs": "^10.69.0",
+    "@sentry/nextjs": "^11.0.0",
     "@serwist/turbopack": "^9.5.12",
     "@swc/helpers": "^0.5.17",
     "@vercel/analytics": "^2.0.0",
