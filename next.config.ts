@@ -1,6 +1,6 @@
 import type { NextConfig } from "next"
 import { withSerwist } from "@serwist/turbopack"
-import { withSentryConfig } from "@sentry/nextjs"
+import { withSentryConfig } from "@sentry/nextjs/config"
 
 const nextConfig: NextConfig = {
   /* config options here */
