@@ -17,13 +17,12 @@ import { Metadata } from "next"
 import { withRetry } from "@/lib/db-retry"
 import { auth } from "@/lib/auth"
 import { excludeTestShows } from "@/lib/test-filters"
-import { POINTS } from "@/lib/scoring"
 import { computePickTypeStats, computeShowStreaks } from "@/lib/profile-stats"
 
 const PICK_TYPE_ROWS = [
-  { type: "OPENER", label: "Opener", points: POINTS.OPENER },
-  { type: "ENCORE", label: "Encore", points: POINTS.ENCORE },
-  { type: "REGULAR", label: "Regular", points: POINTS.REGULAR },
+  { type: "OPENER", label: "Opener" },
+  { type: "ENCORE", label: "Encore" },
+  { type: "REGULAR", label: "Regular" },
 ] as const
 
 interface UserPageProps {
@@ -312,7 +311,7 @@ export default async function UserProfilePage({ params }: UserPageProps) {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-400">Scored</p>
+                <p className="text-sm text-gray-400">Completed</p>
                 <p className="text-lg font-semibold text-white">
                   {profile.stats.scoredShows}
                 </p>
@@ -325,14 +324,14 @@ export default async function UserProfilePage({ params }: UserPageProps) {
                   <TrendingUp className="h-5 w-5 text-green-500" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400">Accuracy</p>
+                  <p className="text-sm text-gray-400">Hit Rate</p>
                   <p className="text-2xl font-bold text-white">
                     {profile.stats.accuracy}%
                   </p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-400">Picks</p>
+                <p className="text-sm text-gray-400">Hits</p>
                 <p className="text-lg font-semibold text-white">
                   {profile.stats.correctPicks}/{profile.stats.totalPicks}
                 </p>
@@ -345,17 +344,14 @@ export default async function UserProfilePage({ params }: UserPageProps) {
                   <Flame className="h-5 w-5 text-orange-500" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400">Current Streak</p>
+                  <p className="text-sm text-gray-400">Show Streak</p>
                   <p className="text-2xl font-bold text-white">
-                    {profile.stats.currentStreak}{" "}
-                    <span className="text-base font-medium text-gray-400">
-                      {profile.stats.currentStreak === 1 ? "show" : "shows"}
-                    </span>
+                    {profile.stats.currentStreak}
                   </p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-400">Longest</p>
+                <p className="text-sm text-gray-400">Best</p>
                 <p className="text-lg font-semibold text-white">
                   {profile.stats.longestStreak}
                 </p>
@@ -365,33 +361,29 @@ export default async function UserProfilePage({ params }: UserPageProps) {
         </Card>
       </div>
 
-      {/* Pick Breakdown */}
+      {/* Hit Rate by Pick Type */}
       {profile.stats.totalShows > 0 && (
         <Card>
           <CardHeader>
-            <h2 className="text-xl font-semibold text-white">Pick Breakdown</h2>
+            <h2 className="text-xl font-semibold text-white">
+              Hit Rate by Pick
+            </h2>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-4">
-              {PICK_TYPE_ROWS.map(({ type, label, points }) => {
+            <div className="grid grid-cols-3 gap-3 sm:gap-4">
+              {PICK_TYPE_ROWS.map(({ type, label }) => {
                 const { hits, scored } = profile.pickTypeStats[type]
                 return (
                   <div
                     key={type}
-                    className="rounded-lg bg-white/5 p-4 text-center"
+                    className="rounded-lg bg-white/5 p-3 text-center sm:p-4"
                   >
                     <p className="text-sm text-gray-400">{label}</p>
                     <p className="text-2xl font-bold text-white">
-                      {hits}
-                      <span className="text-base font-medium text-gray-400">
-                        /{scored}
-                      </span>
-                    </p>
-                    <p className="text-sm font-semibold text-[#c23a3a]">
                       {scored > 0 ? Math.round((hits / scored) * 100) : 0}%
                     </p>
-                    <p className="mt-1 text-xs text-gray-500">
-                      {points} {points === 1 ? "pt" : "pts"} each
+                    <p className="text-xs text-gray-500">
+                      {hits} of {scored}
                     </p>
                   </div>
                 )
