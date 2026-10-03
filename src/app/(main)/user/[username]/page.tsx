@@ -134,7 +134,6 @@ async function getUserProfile(username: string) {
     (s) => s.isScored || (s.show.lockTime && s.show.lockTime <= now)
   )
 
-  const scoredSubmissions = user.submissions.filter((s) => s.isScored)
   const totalPoints = scoredOrLockedSubmissions.reduce(
     (sum, s) => sum + (s.totalPoints || 0),
     0
@@ -162,7 +161,6 @@ async function getUserProfile(username: string) {
     emailVerified,
     stats: {
       totalShows: scoredOrLockedSubmissions.length,
-      scoredShows: scoredSubmissions.length,
       totalPoints,
       avgPoints:
         scoredOrLockedSubmissions.length > 0
@@ -312,12 +310,6 @@ export default async function UserProfilePage({ params }: UserPageProps) {
                     {profile.stats.totalShows}
                   </p>
                 </div>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-400">Scored</p>
-                <p className="text-lg font-semibold text-white">
-                  {profile.stats.scoredShows}
-                </p>
               </div>
             </div>
 
