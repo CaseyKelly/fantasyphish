@@ -1,6 +1,15 @@
 import { prisma } from "@/lib/prisma"
 import { format } from "date-fns"
-import { User, Calendar, Trophy, Target, TrendingUp, Star } from "lucide-react"
+import Link from "next/link"
+import {
+  User,
+  Calendar,
+  Trophy,
+  Target,
+  TrendingUp,
+  Star,
+  Flame,
+} from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { AchievementBadge } from "@/components/AchievementBadge"
 import { NotificationSettings } from "@/components/NotificationSettings"
@@ -8,6 +17,11 @@ import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import { withRetry } from "@/lib/db-retry"
 import { auth } from "@/lib/auth"
+import { getStreaksForUsers } from "@/lib/streaks"
+
+// How far ahead an unlocked show counts as "tonight" for the keep-your-streak
+// prompt on your own profile.
+const STREAK_PROMPT_WINDOW_MS = 24 * 60 * 60 * 1000
 
 interface UserPageProps {
   params: Promise<{ username: string }>
@@ -86,6 +100,32 @@ async function getUserProfile(username: string) {
 
   if (!user) return null
 
+  const [streaks, nextShow] = await Promise.all([
+    getStreaksForUsers([user.id], now),
+    withRetry(
+      () =>
+        prisma.show.findFirst({
+          where: {
+            lockTime: {
+              gt: now,
+              lte: new Date(now.getTime() + STREAK_PROMPT_WINDOW_MS),
+            },
+            NOT: { venue: { contains: "Test Venue" } },
+          },
+          select: { id: true, venue: true },
+          orderBy: { lockTime: "asc" },
+        }),
+      { operationName: "find next show for streak prompt" }
+    ),
+  ])
+  const streak = streaks.get(user.id) ?? { current: 0, best: 0 }
+  const streakAtRiskShow =
+    streak.current > 0 &&
+    nextShow &&
+    !user.submissions.some((s) => s.showId === nextShow.id)
+      ? nextShow
+      : null
+
   const emailPickReminders = user.emailPickReminders
   const emailVerified = !!user.emailVerified
 
@@ -133,7 +173,10 @@ async function getUserProfile(username: string) {
         totalPicks > 0 ? Math.round((correctPicks / totalPicks) * 100) : 0,
       correctPicks,
       totalPicks,
+      currentStreak: streak.current,
+      bestStreak: streak.best,
     },
+    streakAtRiskShow,
     bestShow: bestShow
       ? {
           points: bestShow.totalPoints || 0,
@@ -297,6 +340,36 @@ export default async function UserProfilePage({ params }: UserPageProps) {
                 </p>
               </div>
             </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-orange-500/20 rounded-lg">
+                  <Flame className="h-5 w-5 text-orange-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">Show Streak</p>
+                  <p className="text-2xl font-bold text-white">
+                    {profile.stats.currentStreak}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-gray-400">Best</p>
+                <p className="text-lg font-semibold text-white">
+                  {profile.stats.bestStreak}
+                </p>
+              </div>
+            </div>
+
+            {isOwnProfile && profile.streakAtRiskShow && (
+              <Link
+                href={`/pick/${profile.streakAtRiskShow.id}`}
+                className="block text-sm text-orange-400 hover:text-orange-300"
+              >
+                🔥 Pick for {profile.streakAtRiskShow.venue} to keep your{" "}
+                {profile.stats.currentStreak}-show streak alive →
+              </Link>
+            )}
           </CardContent>
         </Card>
       </div>

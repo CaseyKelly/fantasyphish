@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { withRetry } from "@/lib/db-retry"
 import { sendShowReminderEmail } from "@/lib/email"
 import { sendPushNotification } from "@/lib/push"
+import { getStreaksForUsers, STREAK_REMINDER_MIN } from "@/lib/streaks"
 
 export interface ReminderRunResult {
   showsChecked: number
@@ -73,7 +74,16 @@ export async function sendPickReminders(options?: {
 
     result.eligibleUsers += eligibleUsers.length
 
+    const streaks = await getStreaksForUsers(
+      eligibleUsers.map((u) => u.id),
+      now
+    )
+
     for (const user of eligibleUsers) {
+      const currentStreak = streaks.get(user.id)?.current ?? 0
+      const streakAtRisk =
+        currentStreak >= STREAK_REMINDER_MIN ? currentStreak : undefined
+
       if (user.emailPickReminders && user.emailVerified) {
         const { success, error } = await sendShowReminderEmail(user.email, {
           venue: show.venue,
@@ -82,6 +92,7 @@ export async function sendPickReminders(options?: {
           showDate: show.showDate,
           lockTime: show.lockTime || show.showDate,
           timezone: show.timezone,
+          streakAtRisk,
         })
 
         if (success) {
@@ -94,8 +105,12 @@ export async function sendPickReminders(options?: {
 
       for (const subscription of user.pushSubscriptions) {
         const pushResult = await sendPushNotification(subscription, {
-          title: "Show tonight — pick your setlist",
-          body: `You haven't submitted picks for ${show.venue} yet.`,
+          title: streakAtRisk
+            ? `🔥 Keep your ${streakAtRisk}-show streak alive`
+            : "Show tonight — pick your setlist",
+          body: streakAtRisk
+            ? `Pick for ${show.venue} before lock or your streak resets.`
+            : `You haven't submitted picks for ${show.venue} yet.`,
           url: `/pick/${show.id}`,
         })
 
