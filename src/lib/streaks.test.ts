@@ -4,7 +4,7 @@ import { describe, it, expect, vi } from "vitest"
 // never touches it.
 vi.mock("@/lib/prisma", () => ({ prisma: {} }))
 
-import { computeStreaks } from "./streaks"
+import { computeStreaks, isTestVenue } from "./streaks"
 
 const shows = ["s1", "s2", "s3", "s4", "s5", "s6"]
 
@@ -49,5 +49,12 @@ describe("computeStreaks", () => {
       current: 2,
       best: 2,
     })
+  })
+})
+
+describe("isTestVenue", () => {
+  it("flags test-fixture venues and passes real ones", () => {
+    expect(isTestVenue("Test Venue 42")).toBe(true)
+    expect(isTestVenue("Madison Square Garden")).toBe(false)
   })
 })

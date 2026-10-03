@@ -2,7 +2,11 @@ import { prisma } from "@/lib/prisma"
 import { withRetry } from "@/lib/db-retry"
 import { sendShowReminderEmail } from "@/lib/email"
 import { sendPushNotification } from "@/lib/push"
-import { getStreaksForUsers, STREAK_REMINDER_MIN } from "@/lib/streaks"
+import {
+  getStreaksForUsers,
+  isTestVenue,
+  STREAK_REMINDER_MIN,
+} from "@/lib/streaks"
 
 export interface ReminderRunResult {
   showsChecked: number
@@ -74,10 +78,14 @@ export async function sendPickReminders(options?: {
 
     result.eligibleUsers += eligibleUsers.length
 
-    const streaks = await getStreaksForUsers(
-      eligibleUsers.map((u) => u.id),
-      now
-    )
+    // Test-venue shows never affect streaks, so don't warn that missing one
+    // would reset a streak.
+    const streaks = isTestVenue(show.venue)
+      ? new Map()
+      : await getStreaksForUsers(
+          eligibleUsers.map((u) => u.id),
+          now
+        )
 
     for (const user of eligibleUsers) {
       const currentStreak = streaks.get(user.id)?.current ?? 0

@@ -17,7 +17,7 @@ import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import { withRetry } from "@/lib/db-retry"
 import { auth } from "@/lib/auth"
-import { getStreaksForUsers } from "@/lib/streaks"
+import { getStreaksForUsers, TEST_VENUE_MARKER } from "@/lib/streaks"
 
 // How far ahead an unlocked show counts as "tonight" for the keep-your-streak
 // prompt on your own profile.
@@ -110,7 +110,7 @@ async function getUserProfile(username: string) {
               gt: now,
               lte: new Date(now.getTime() + STREAK_PROMPT_WINDOW_MS),
             },
-            NOT: { venue: { contains: "Test Venue" } },
+            NOT: { venue: { contains: TEST_VENUE_MARKER } },
           },
           select: { id: true, venue: true },
           orderBy: { lockTime: "asc" },

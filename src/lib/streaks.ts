@@ -10,6 +10,14 @@ export interface StreakStats {
 // 2-show "streak" reads as noise rather than something worth protecting.
 export const STREAK_REMINDER_MIN = 3
 
+// Shows at venues containing this marker are test fixtures; they never count
+// toward (or break) a streak, matching leaderboard filtering.
+export const TEST_VENUE_MARKER = "Test Venue"
+
+export function isTestVenue(venue: string): boolean {
+  return venue.includes(TEST_VENUE_MARKER)
+}
+
 /**
  * Compute current and best show streaks from the ordered list of locked
  * shows (oldest first) and the set of show IDs the user submitted picks for.
@@ -46,7 +54,7 @@ export async function getLockedShowIds(
       prisma.show.findMany({
         where: {
           lockTime: { lte: now },
-          NOT: { venue: { contains: "Test Venue" } },
+          NOT: { venue: { contains: TEST_VENUE_MARKER } },
         },
         select: { id: true },
         orderBy: { showDate: "asc" },
