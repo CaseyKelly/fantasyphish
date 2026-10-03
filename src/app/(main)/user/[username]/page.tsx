@@ -148,8 +148,10 @@ async function getUserProfile(username: string) {
     new Set(scoredOrLockedSubmissions.map((s) => s.show.id))
   )
 
+  // Only finished shows: progressive scoring marks not-yet-played regular
+  // picks as wasPlayed=false mid-show, which would count as premature misses
   const pickTypeStats = computePickTypeStats(
-    scoredOrLockedSubmissions.flatMap((s) => s.picks)
+    scoredSubmissions.flatMap((s) => s.picks)
   )
 
   return {

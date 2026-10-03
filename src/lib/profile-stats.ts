@@ -13,9 +13,9 @@ export interface ShowStreaks {
 }
 
 /**
- * Tally hits per pick type. Only picks that have been scored
- * (wasPlayed !== null) count toward `scored`, so a show in progress doesn't
- * drag the hit rate down before its songs have been played.
+ * Tally hits per pick type. Picks with wasPlayed === null don't count toward
+ * `scored`. Callers should pass picks from completed submissions only, since
+ * progressive scoring sets wasPlayed=false on regular picks mid-show.
  */
 export function computePickTypeStats(
   picks: { pickType: PickType; wasPlayed: boolean | null }[]
