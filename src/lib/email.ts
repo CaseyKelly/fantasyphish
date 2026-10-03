@@ -174,6 +174,8 @@ export async function sendShowReminderEmail(
     showDate: Date
     lockTime: Date
     timezone: string | null
+    /** Current show streak to call out, if it's long enough to be worth protecting */
+    streakAtRisk?: number
   }
 ): Promise<{ success: boolean; error?: string }> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
@@ -197,7 +199,9 @@ export async function sendShowReminderEmail(
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: email,
-      subject: `Reminder: Submit your picks for tonight's show at ${show.venue}`,
+      subject: show.streakAtRisk
+        ? `🔥 Keep your ${show.streakAtRisk}-show streak alive: pick for ${show.venue} tonight`
+        : `Reminder: Submit your picks for tonight's show at ${show.venue}`,
       tags: [
         {
           name: "category",
@@ -223,7 +227,13 @@ export async function sendShowReminderEmail(
             <p style="color: #333;">Phish plays tonight at <strong>${show.venue}</strong>${location ? ` in ${location}` : ""}, and you haven't submitted your picks yet.</p>
 
             <p style="color: #333;">Picks lock tonight at <strong>${lockTimeStr}</strong> &mdash; get them in before then to compete for points.</p>
-
+${
+  show.streakAtRisk
+    ? `
+            <p style="color: #333;">🔥 You've picked <strong>${show.streakAtRisk} shows in a row</strong>. Miss tonight and your streak resets to zero.</p>
+`
+    : ""
+}
             <div style="text-align: center; margin: 30px 0;">
               <a href="${picksUrl}" style="background: #c23a3a; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">Make Your Picks</a>
             </div>
