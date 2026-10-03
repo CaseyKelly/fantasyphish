@@ -1,6 +1,14 @@
 import { prisma } from "@/lib/prisma"
 import { format } from "date-fns"
-import { User, Calendar, Trophy, Target, TrendingUp, Star } from "lucide-react"
+import {
+  User,
+  Calendar,
+  Trophy,
+  Target,
+  TrendingUp,
+  Star,
+  Flame,
+} from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { AchievementBadge } from "@/components/AchievementBadge"
 import { NotificationSettings } from "@/components/NotificationSettings"
@@ -8,6 +16,15 @@ import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import { withRetry } from "@/lib/db-retry"
 import { auth } from "@/lib/auth"
+import { excludeTestShows } from "@/lib/test-filters"
+import { POINTS } from "@/lib/scoring"
+import { computePickTypeStats, computeShowStreaks } from "@/lib/profile-stats"
+
+const PICK_TYPE_ROWS = [
+  { type: "OPENER", label: "Opener", points: POINTS.OPENER },
+  { type: "ENCORE", label: "Encore", points: POINTS.ENCORE },
+  { type: "REGULAR", label: "Regular", points: POINTS.REGULAR },
+] as const
 
 interface UserPageProps {
   params: Promise<{ username: string }>
@@ -63,6 +80,7 @@ async function getUserProfile(username: string) {
               },
               show: {
                 select: {
+                  id: true,
                   lockTime: true,
                   isComplete: true,
                   venue: true,
@@ -85,6 +103,17 @@ async function getUserProfile(username: string) {
   )
 
   if (!user) return null
+
+  // Every show that has locked, oldest first, for participation streaks
+  const lockedShows = await withRetry(
+    () =>
+      prisma.show.findMany({
+        where: { lockTime: { lte: now }, ...excludeTestShows },
+        select: { id: true },
+        orderBy: { showDate: "asc" },
+      }),
+    { operationName: "find locked shows for streaks" }
+  )
 
   const emailPickReminders = user.emailPickReminders
   const emailVerified = !!user.emailVerified
@@ -115,6 +144,15 @@ async function getUserProfile(username: string) {
         })
       : null
 
+  const streaks = computeShowStreaks(
+    lockedShows.map((s) => s.id),
+    new Set(scoredOrLockedSubmissions.map((s) => s.show.id))
+  )
+
+  const pickTypeStats = computePickTypeStats(
+    scoredOrLockedSubmissions.flatMap((s) => s.picks)
+  )
+
   return {
     username: user.username,
     createdAt: user.createdAt,
@@ -133,7 +171,10 @@ async function getUserProfile(username: string) {
         totalPicks > 0 ? Math.round((correctPicks / totalPicks) * 100) : 0,
       correctPicks,
       totalPicks,
+      currentStreak: streaks.current,
+      longestStreak: streaks.longest,
     },
+    pickTypeStats,
     bestShow: bestShow
       ? {
           points: bestShow.totalPoints || 0,
@@ -297,9 +338,68 @@ export default async function UserProfilePage({ params }: UserPageProps) {
                 </p>
               </div>
             </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-orange-500/20 rounded-lg">
+                  <Flame className="h-5 w-5 text-orange-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">Current Streak</p>
+                  <p className="text-2xl font-bold text-white">
+                    {profile.stats.currentStreak}{" "}
+                    <span className="text-base font-medium text-gray-400">
+                      {profile.stats.currentStreak === 1 ? "show" : "shows"}
+                    </span>
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-gray-400">Longest</p>
+                <p className="text-lg font-semibold text-white">
+                  {profile.stats.longestStreak}
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Pick Breakdown */}
+      {profile.stats.totalShows > 0 && (
+        <Card>
+          <CardHeader>
+            <h2 className="text-xl font-semibold text-white">Pick Breakdown</h2>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4">
+              {PICK_TYPE_ROWS.map(({ type, label, points }) => {
+                const { hits, scored } = profile.pickTypeStats[type]
+                return (
+                  <div
+                    key={type}
+                    className="rounded-lg bg-white/5 p-4 text-center"
+                  >
+                    <p className="text-sm text-gray-400">{label}</p>
+                    <p className="text-2xl font-bold text-white">
+                      {hits}
+                      <span className="text-base font-medium text-gray-400">
+                        /{scored}
+                      </span>
+                    </p>
+                    <p className="text-sm font-semibold text-[#c23a3a]">
+                      {scored > 0 ? Math.round((hits / scored) * 100) : 0}%
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {points} {points === 1 ? "pt" : "pts"} each
+                    </p>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Achievements Section */}
       {profile.achievements.length > 0 && (
