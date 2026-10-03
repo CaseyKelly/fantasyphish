@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest"
 import { AchievementCategory } from "@prisma/client"
-import { ACHIEVEMENT_DEFINITIONS } from "./achievements"
+import {
+  ACHIEVEMENT_DEFINITIONS,
+  STREAK_ACHIEVEMENTS,
+  earnedStreakAchievements,
+} from "./achievements"
 
 describe("ACHIEVEMENT_DEFINITIONS", () => {
   it("has a unique slug per definition", () => {
@@ -25,7 +29,40 @@ describe("ACHIEVEMENT_DEFINITIONS", () => {
         "DONUT_DEVOTEE",
         "NYE_RUN_2025_PARTICIPANT",
         "ICCULUS",
+        "STREAK_5",
+        "STREAK_10",
+        "STREAK_25",
+        "STREAK_50",
       ].sort()
     )
+  })
+})
+
+describe("STREAK_ACHIEVEMENTS", () => {
+  it("is ordered by ascending streak length", () => {
+    const lengths = STREAK_ACHIEVEMENTS.map(
+      (key) => ACHIEVEMENT_DEFINITIONS[key].metadata.streakLength
+    )
+    expect(lengths).toEqual([...lengths].sort((a, b) => a - b))
+  })
+})
+
+describe("earnedStreakAchievements", () => {
+  it("earns nothing below the first milestone", () => {
+    expect(earnedStreakAchievements(0)).toEqual([])
+    expect(earnedStreakAchievements(4)).toEqual([])
+  })
+
+  it("earns a milestone exactly at its length", () => {
+    expect(earnedStreakAchievements(5)).toEqual(["STREAK_5"])
+  })
+
+  it("earns every milestone at or below the best streak", () => {
+    expect(earnedStreakAchievements(27)).toEqual([
+      "STREAK_5",
+      "STREAK_10",
+      "STREAK_25",
+    ])
+    expect(earnedStreakAchievements(80)).toEqual([...STREAK_ACHIEVEMENTS])
   })
 })

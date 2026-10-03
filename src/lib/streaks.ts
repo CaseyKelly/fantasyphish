@@ -6,9 +6,10 @@ export interface StreakStats {
   best: number
 }
 
-// Streak length at which reminders start calling out the streak. A 1- or
-// 2-show "streak" reads as noise rather than something worth protecting.
-export const STREAK_REMINDER_MIN = 3
+// Streak length at which reminders call out the streak and the leaderboard
+// shows a 🔥. A 1- or 2-show "streak" reads as noise rather than something
+// worth protecting.
+export const STREAK_HIGHLIGHT_MIN = 3
 
 // Shows at venues containing this marker are test fixtures; they never count
 // toward (or break) a streak, matching leaderboard filtering.
@@ -65,26 +66,14 @@ export async function getLockedShowIds(
 }
 
 /**
- * Current and best streaks for a batch of users, sharing a single locked-show
- * lookup and a single submissions query.
+ * Group (userId, showId) submission rows into per-user streaks. Users in
+ * `userIds` with no submissions get zero streaks.
  */
-export async function getStreaksForUsers(
-  userIds: string[],
-  now: Date = new Date()
-): Promise<Map<string, StreakStats>> {
-  const result = new Map<string, StreakStats>()
-  if (userIds.length === 0) return result
-
-  const lockedShowIds = await getLockedShowIds(now)
-  const submissions = await withRetry(
-    () =>
-      prisma.submission.findMany({
-        where: { userId: { in: userIds } },
-        select: { userId: true, showId: true },
-      }),
-    { operationName: "find submissions for streaks" }
-  )
-
+export function buildStreakMap(
+  lockedShowIds: string[],
+  submissions: { userId: string; showId: string }[],
+  userIds: Iterable<string>
+): Map<string, StreakStats> {
   const submittedByUser = new Map<string, Set<string>>()
   for (const { userId, showId } of submissions) {
     let set = submittedByUser.get(userId)
@@ -95,6 +84,7 @@ export async function getStreaksForUsers(
     set.add(showId)
   }
 
+  const result = new Map<string, StreakStats>()
   for (const userId of userIds) {
     result.set(
       userId,
@@ -102,4 +92,53 @@ export async function getStreaksForUsers(
     )
   }
   return result
+}
+
+/**
+ * Current and best streaks for a batch of users, sharing a single locked-show
+ * lookup and a single submissions query.
+ */
+export async function getStreaksForUsers(
+  userIds: string[],
+  now: Date = new Date()
+): Promise<Map<string, StreakStats>> {
+  if (userIds.length === 0) return new Map()
+
+  const [lockedShowIds, submissions] = await Promise.all([
+    getLockedShowIds(now),
+    withRetry(
+      () =>
+        prisma.submission.findMany({
+          where: { userId: { in: userIds } },
+          select: { userId: true, showId: true },
+        }),
+      { operationName: "find submissions for streaks" }
+    ),
+  ])
+
+  return buildStreakMap(lockedShowIds, submissions, userIds)
+}
+
+/**
+ * Current and best streaks for every user who has ever submitted picks.
+ */
+export async function getStreaksForAllUsers(
+  now: Date = new Date()
+): Promise<Map<string, StreakStats>> {
+  const [lockedShowIds, submissions] = await Promise.all([
+    getLockedShowIds(now),
+    withRetry(
+      () =>
+        prisma.submission.findMany({
+          select: { userId: true, showId: true },
+        }),
+      { operationName: "find all submissions for streaks" }
+    ),
+  ])
+
+  return buildStreakMap(
+    lockedShowIds,
+    submissions,
+    new Set(submissions.map((s) => s.userId))
+  )
 }

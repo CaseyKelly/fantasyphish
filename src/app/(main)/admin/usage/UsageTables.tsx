@@ -9,6 +9,7 @@ import {
   ShowParticipationRow,
   AchievementDistributionRow,
   DonutLeaderboardRow,
+  StreakRow,
 } from "@/lib/admin-usage"
 
 function formatDate(iso: string | null): string {
@@ -189,11 +190,23 @@ const donutColumns: Column<DonutLeaderboardRow>[] = [
   },
 ]
 
+const streakColumns: Column<StreakRow>[] = [
+  { key: "username", header: "User", sortable: true },
+  {
+    key: "currentStreak",
+    header: "Current Streak",
+    sortable: true,
+    align: "right",
+  },
+  { key: "bestStreak", header: "Best Streak", sortable: true, align: "right" },
+]
+
 interface UsageTablesProps {
   engagementRows: UserEngagementRow[]
   showRows: ShowParticipationRow[]
   achievementRows: AchievementDistributionRow[]
   donutRows: DonutLeaderboardRow[]
+  streakRows: StreakRow[]
 }
 
 export function UsageTables({
@@ -201,6 +214,7 @@ export function UsageTables({
   showRows,
   achievementRows,
   donutRows,
+  streakRows,
 }: UsageTablesProps) {
   return (
     <>
@@ -225,6 +239,18 @@ export function UsageTables({
           rows={showRows}
           rowKey={(row) => row.id}
           initialSortKey="showDate"
+        />
+      </CollapsibleCard>
+
+      <CollapsibleCard
+        title="Show Streaks"
+        description="Consecutive locked shows with picks submitted. Users who've never submitted are omitted."
+      >
+        <SortableTable
+          columns={streakColumns}
+          rows={streakRows}
+          rowKey={(row) => row.userId}
+          initialSortKey="currentStreak"
         />
       </CollapsibleCard>
 

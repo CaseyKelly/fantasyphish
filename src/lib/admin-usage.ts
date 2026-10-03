@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { withRetry } from "@/lib/db-retry"
 import { excludeTestShows } from "@/lib/test-filters"
+import { getStreaksForAllUsers } from "@/lib/streaks"
 
 export interface UsageOverview {
   totalUsers: number
@@ -245,4 +246,40 @@ export async function getDonutLeaderboard(): Promise<DonutLeaderboardRow[]> {
     score: s.score,
     achievedAt: s.updatedAt.toISOString(),
   }))
+}
+
+export interface StreakRow {
+  userId: string
+  username: string
+  currentStreak: number
+  bestStreak: number
+}
+
+/** Every user with a best streak of at least 1, longest current streak first. */
+export async function getStreakLeaderboard(): Promise<StreakRow[]> {
+  const streaks = await getStreaksForAllUsers()
+  const userIds = [...streaks.keys()]
+  const users = await withRetry(
+    () =>
+      prisma.user.findMany({
+        where: { id: { in: userIds } },
+        select: { id: true, username: true },
+      }),
+    { operationName: "get usernames for streak leaderboard" }
+  )
+
+  return users
+    .map((u) => {
+      const streak = streaks.get(u.id) ?? { current: 0, best: 0 }
+      return {
+        userId: u.id,
+        username: u.username,
+        currentStreak: streak.current,
+        bestStreak: streak.best,
+      }
+    })
+    .filter((row) => row.bestStreak > 0)
+    .sort(
+      (a, b) => b.currentStreak - a.currentStreak || b.bestStreak - a.bestStreak
+    )
 }

@@ -48,6 +48,7 @@ interface LeaderboardEntry {
   avgPoints: number
   accuracy: number
   rank: number
+  showStreak: number | null
   picksByShow: ShowPicks[]
 }
 
@@ -95,6 +96,19 @@ interface LeaderboardClientProps {
 }
 
 type View = "show" | "tour"
+
+function StreakFlame({ streak }: { streak: number | null }) {
+  if (streak === null) return null
+  return (
+    <span
+      className="ml-1.5 text-xs font-semibold text-orange-400"
+      title={`${streak}-show streak`}
+      aria-label={`${streak}-show streak`}
+    >
+      🔥{streak}
+    </span>
+  )
+}
 
 function getRankIcon(rank: number) {
   switch (rank) {
@@ -588,6 +602,7 @@ function LeaderboardTable({
                           onClick={(e) => e.stopPropagation()}
                         >
                           {user.username}
+                          <StreakFlame streak={user.showStreak} />
                           {isCurrentUser && (
                             <span className="ml-2 text-xs text-orange-400">
                               (You)
@@ -630,6 +645,7 @@ function LeaderboardTable({
                           onClick={(e) => e.stopPropagation()}
                         >
                           {user.username}
+                          <StreakFlame streak={user.showStreak} />
                           {isCurrentUser && (
                             <span className="ml-2 text-xs text-orange-400">
                               (You)

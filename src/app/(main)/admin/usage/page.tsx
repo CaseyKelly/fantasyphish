@@ -11,6 +11,7 @@ import {
   getShowParticipation,
   getAchievementDistribution,
   getDonutLeaderboard,
+  getStreakLeaderboard,
 } from "@/lib/admin-usage"
 
 export const metadata: Metadata = {
@@ -32,14 +33,21 @@ export default async function AdminUsagePage() {
     notFound()
   }
 
-  const [overview, engagementRows, showRows, achievementRows, donutRows] =
-    await Promise.all([
-      getUsageOverview(),
-      getUserEngagementRows(),
-      getShowParticipation(),
-      getAchievementDistribution(),
-      getDonutLeaderboard(),
-    ])
+  const [
+    overview,
+    engagementRows,
+    showRows,
+    achievementRows,
+    donutRows,
+    streakRows,
+  ] = await Promise.all([
+    getUsageOverview(),
+    getUserEngagementRows(),
+    getShowParticipation(),
+    getAchievementDistribution(),
+    getDonutLeaderboard(),
+    getStreakLeaderboard(),
+  ])
 
   return (
     <div className="space-y-8">
@@ -66,6 +74,7 @@ export default async function AdminUsagePage() {
         showRows={showRows}
         achievementRows={achievementRows}
         donutRows={donutRows}
+        streakRows={streakRows}
       />
     </div>
   )
