@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { withRetry } from "@/lib/db-retry"
+import { getStreaksForUsers, STREAK_HIGHLIGHT_MIN } from "@/lib/streaks"
 
 export interface LeaderboardPick {
   songName: string
@@ -29,6 +30,8 @@ export interface LeaderboardEntry {
   avgPoints: number
   accuracy: number
   rank: number
+  /** Current show streak, or null when below STREAK_HIGHLIGHT_MIN */
+  showStreak: number | null
   picksByShow: LeaderboardShowPicks[]
 }
 
@@ -112,8 +115,11 @@ export async function getLeaderboard(
     { operationName }
   )
 
+  const streaks = await getStreaksForUsers(users.map((u) => u.id))
+
   const sortedUsers = users
     .map((user) => {
+      const currentStreak = streaks.get(user.id)?.current ?? 0
       const totalPoints = user.submissions.reduce(
         (sum, sub) => sum + (sub.totalPoints || 0),
         0
@@ -146,6 +152,8 @@ export async function getLeaderboard(
         username: user.username,
         totalPoints,
         showsPlayed: user.submissions.length,
+        showStreak:
+          currentStreak >= STREAK_HIGHLIGHT_MIN ? currentStreak : null,
         avgPoints:
           user.submissions.length > 0
             ? Math.round((totalPoints / user.submissions.length) * 10) / 10

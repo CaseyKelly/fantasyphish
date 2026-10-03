@@ -4,7 +4,7 @@ import { describe, it, expect, vi } from "vitest"
 // never touches it.
 vi.mock("@/lib/prisma", () => ({ prisma: {} }))
 
-import { computeStreaks, isTestVenue } from "./streaks"
+import { buildStreakMap, computeStreaks, isTestVenue } from "./streaks"
 
 const shows = ["s1", "s2", "s3", "s4", "s5", "s6"]
 
@@ -56,5 +56,29 @@ describe("isTestVenue", () => {
   it("flags test-fixture venues and passes real ones", () => {
     expect(isTestVenue("Test Venue 42")).toBe(true)
     expect(isTestVenue("Madison Square Garden")).toBe(false)
+  })
+})
+
+describe("buildStreakMap", () => {
+  it("groups submissions per user and zero-fills requested users with none", () => {
+    const map = buildStreakMap(
+      ["s1", "s2", "s3"],
+      [
+        { userId: "a", showId: "s1" },
+        { userId: "a", showId: "s2" },
+        { userId: "a", showId: "s3" },
+        { userId: "b", showId: "s1" },
+        { userId: "b", showId: "s3" },
+      ],
+      ["a", "b", "c"]
+    )
+    expect(map.get("a")).toEqual({ current: 3, best: 3 })
+    expect(map.get("b")).toEqual({ current: 1, best: 1 })
+    expect(map.get("c")).toEqual({ current: 0, best: 0 })
+  })
+
+  it("only includes the requested users", () => {
+    const map = buildStreakMap(["s1"], [{ userId: "a", showId: "s1" }], [])
+    expect(map.size).toBe(0)
   })
 })

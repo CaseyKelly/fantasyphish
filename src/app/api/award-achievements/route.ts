@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { ACHIEVEMENT_DEFINITIONS } from "@/lib/achievements"
+import {
+  ACHIEVEMENT_DEFINITIONS,
+  STREAK_ACHIEVEMENTS,
+  earnedStreakAchievements,
+} from "@/lib/achievements"
+import { getStreaksForAllUsers } from "@/lib/streaks"
 import { shouldRunCronJobs } from "@/lib/cron-helpers"
 import { withRetry } from "@/lib/db-retry"
 
@@ -53,6 +58,11 @@ export async function POST(request: Request) {
     // runs regardless of the shouldRunCronJobs() check below.
     const notificationsResults = await awardNotificationsAchievement()
     results.push(notificationsResults)
+
+    // Award show-streak milestones. Also runs regardless of active tours so
+    // the first deploy backfills everyone's existing best streaks.
+    const streakResults = await awardStreakAchievements()
+    results.push(...streakResults)
 
     // Check if cron jobs should run (only when tours are active)
     const { shouldRun, reason } = await shouldRunCronJobs()
@@ -358,6 +368,84 @@ async function awardNotificationsAchievement() {
     skipped,
     total: users.length,
   }
+}
+
+async function awardStreakAchievements() {
+  console.log(
+    "[AwardAchievements:POST] 🔥 Awarding show-streak achievements..."
+  )
+
+  const streaks = await getStreaksForAllUsers()
+
+  const usersByMilestone = new Map<string, string[]>()
+  for (const [userId, { best }] of streaks) {
+    for (const key of earnedStreakAchievements(best)) {
+      const users = usersByMilestone.get(key) ?? []
+      users.push(userId)
+      usersByMilestone.set(key, users)
+    }
+  }
+
+  const results = []
+  for (const key of STREAK_ACHIEVEMENTS) {
+    const achievementDef = ACHIEVEMENT_DEFINITIONS[key]
+
+    const achievement = await withRetry(
+      () =>
+        prisma.achievement.upsert({
+          where: { slug: achievementDef.slug },
+          update: {
+            name: achievementDef.name,
+            description: achievementDef.description,
+            icon: achievementDef.icon,
+            category: achievementDef.category,
+          },
+          create: {
+            slug: achievementDef.slug,
+            name: achievementDef.name,
+            description: achievementDef.description,
+            icon: achievementDef.icon,
+            category: achievementDef.category,
+          },
+        }),
+      { operationName: `upsert achievement ${achievementDef.slug}` }
+    )
+
+    const userIds = usersByMilestone.get(key) ?? []
+    if (userIds.length === 0) {
+      results.push({ achievement: achievementDef.name, awarded: 0, skipped: 0 })
+      continue
+    }
+
+    const { count: awarded } = await withRetry(
+      () =>
+        prisma.userAchievement.createMany({
+          data: userIds.map((userId) => ({
+            userId,
+            achievementId: achievement.id,
+            metadata: achievementDef.metadata,
+          })),
+          skipDuplicates: true,
+        }),
+      {
+        operationName: `award ${achievementDef.slug} to ${userIds.length} users`,
+      }
+    )
+    const skipped = userIds.length - awarded
+
+    console.log(
+      `[AwardAchievements:POST]   ✓ ${achievementDef.name}: awarded ${awarded}, skipped ${skipped} already-awarded`
+    )
+
+    results.push({
+      achievement: achievementDef.name,
+      awarded,
+      skipped,
+      total: userIds.length,
+    })
+  }
+
+  return results
 }
 
 async function awardJackpotAchievement() {

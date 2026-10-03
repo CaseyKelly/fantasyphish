@@ -5,7 +5,7 @@ import { sendPushNotification } from "@/lib/push"
 import {
   getStreaksForUsers,
   isTestVenue,
-  STREAK_REMINDER_MIN,
+  STREAK_HIGHLIGHT_MIN,
 } from "@/lib/streaks"
 
 export interface ReminderRunResult {
@@ -90,7 +90,7 @@ export async function sendPickReminders(options?: {
     for (const user of eligibleUsers) {
       const currentStreak = streaks.get(user.id)?.current ?? 0
       const streakAtRisk =
-        currentStreak >= STREAK_REMINDER_MIN ? currentStreak : undefined
+        currentStreak >= STREAK_HIGHLIGHT_MIN ? currentStreak : undefined
 
       if (user.emailPickReminders && user.emailVerified) {
         const { success, error } = await sendShowReminderEmail(user.email, {

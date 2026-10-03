@@ -67,6 +67,38 @@ export const ACHIEVEMENT_DEFINITIONS = {
     icon: "Book",
     category: "PARTICIPATION" as AchievementCategory,
   },
+  STREAK_5: {
+    slug: "streak-5",
+    name: "Couch Tour",
+    description: "Submitted picks for 5 shows in a row",
+    icon: "🛋️",
+    category: "MILESTONE" as AchievementCategory,
+    metadata: { streakLength: 5 },
+  },
+  STREAK_10: {
+    slug: "streak-10",
+    name: "Tour Rat",
+    description: "Submitted picks for 10 shows in a row",
+    icon: "🚐",
+    category: "MILESTONE" as AchievementCategory,
+    metadata: { streakLength: 10 },
+  },
+  STREAK_25: {
+    slug: "streak-25",
+    name: "Lot Lifer",
+    description: "Submitted picks for 25 shows in a row",
+    icon: "🎪",
+    category: "MILESTONE" as AchievementCategory,
+    metadata: { streakLength: 25 },
+  },
+  STREAK_50: {
+    slug: "streak-50",
+    name: "Never Miss a Sunday Show",
+    description: "Submitted picks for 50 shows in a row",
+    icon: "🌞",
+    category: "MILESTONE" as AchievementCategory,
+    metadata: { streakLength: 50 },
+  },
   // Future achievement examples:
   // SUMMER_TOUR_2025_CHAMPION: {
   //   slug: "summer-tour-2025-champion",
@@ -92,3 +124,23 @@ export const ACHIEVEMENT_DEFINITIONS = {
 } as const
 
 export type AchievementSlug = keyof typeof ACHIEVEMENT_DEFINITIONS
+
+// Show-streak milestones, smallest first. Awarded from a user's best streak,
+// so a broken streak never takes a milestone away.
+export const STREAK_ACHIEVEMENTS = [
+  "STREAK_5",
+  "STREAK_10",
+  "STREAK_25",
+  "STREAK_50",
+] as const satisfies readonly AchievementSlug[]
+
+export type StreakAchievementSlug = (typeof STREAK_ACHIEVEMENTS)[number]
+
+/** Streak milestones a user with the given best streak has earned. */
+export function earnedStreakAchievements(
+  bestStreak: number
+): StreakAchievementSlug[] {
+  return STREAK_ACHIEVEMENTS.filter(
+    (key) => bestStreak >= ACHIEVEMENT_DEFINITIONS[key].metadata.streakLength
+  )
+}
