@@ -9,6 +9,9 @@ import {
   TrendingUp,
   Star,
   Flame,
+  PlaneTakeoff,
+  PlaneLanding,
+  Music,
 } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { AchievementBadge } from "@/components/AchievementBadge"
@@ -18,6 +21,7 @@ import { Metadata } from "next"
 import { withRetry } from "@/lib/db-retry"
 import { auth } from "@/lib/auth"
 import { getStreaksForUsers, TEST_VENUE_MARKER } from "@/lib/streaks"
+import { computePickBreakdown, type PickTypeStat } from "@/lib/profile-stats"
 
 // How far ahead an unlocked show counts as "tonight" for the keep-your-streak
 // prompt on your own profile.
@@ -154,6 +158,8 @@ async function getUserProfile(username: string) {
         })
       : null
 
+  const pickBreakdown = computePickBreakdown(scoredOrLockedSubmissions)
+
   return {
     username: user.username,
     createdAt: user.createdAt,
@@ -175,6 +181,7 @@ async function getUserProfile(username: string) {
       bestStreak: streak.best,
     },
     streakAtRiskShow,
+    pickBreakdown,
     bestShow: bestShow
       ? {
           points: bestShow.totalPoints || 0,
@@ -199,6 +206,63 @@ async function getUserProfile(username: string) {
           : ua.achievement.description,
     })),
   }
+}
+
+function PickTypeRow({
+  icon,
+  iconClassName,
+  label,
+  points,
+  stat,
+}: {
+  icon: React.ReactNode
+  iconClassName: string
+  label: string
+  points: string
+  stat: PickTypeStat
+}): React.ReactElement {
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center space-x-3">
+        <div className={`p-2 rounded-lg ${iconClassName}`}>{icon}</div>
+        <div>
+          <p className="text-sm text-gray-400">
+            {label} <span className="text-xs text-gray-500">({points})</span>
+          </p>
+          <p className="text-2xl font-bold text-white">{stat.hits}</p>
+        </div>
+      </div>
+      <div className="text-right">
+        <p className="text-sm text-gray-400">Hit rate</p>
+        <p className="text-lg font-semibold text-white">
+          {stat.rate}%{" "}
+          <span className="text-xs font-normal text-gray-500">
+            ({stat.hits}/{stat.attempts})
+          </span>
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function MiniStat({
+  label,
+  value,
+  detail,
+}: {
+  label: string
+  value: string | number
+  detail?: string
+}): React.ReactElement {
+  return (
+    <div className="rounded-lg bg-white/5 p-3">
+      <p className="text-xs text-gray-400">{label}</p>
+      <p className="font-semibold text-white truncate" title={String(value)}>
+        {value}
+      </p>
+      {detail && <p className="text-xs text-gray-500">{detail}</p>}
+    </div>
+  )
 }
 
 export default async function UserProfilePage({ params }: UserPageProps) {
@@ -365,6 +429,75 @@ export default async function UserProfilePage({ params }: UserPageProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Pick Breakdown */}
+      {profile.stats.totalShows > 0 && (
+        <Card>
+          <CardHeader>
+            <h2 className="text-xl font-semibold text-white">Pick Breakdown</h2>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-3">
+              <PickTypeRow
+                icon={<PlaneTakeoff className="h-5 w-5 text-[#c23a3a]" />}
+                iconClassName="bg-[#c23a3a]/20"
+                label="Openers"
+                points="3 pts"
+                stat={profile.pickBreakdown.opener}
+              />
+              <PickTypeRow
+                icon={<PlaneLanding className="h-5 w-5 text-purple-400" />}
+                iconClassName="bg-purple-500/20"
+                label="Encores"
+                points="3 pts"
+                stat={profile.pickBreakdown.encore}
+              />
+              <PickTypeRow
+                icon={<Music className="h-5 w-5 text-white" />}
+                iconClassName="bg-[#3d5a6c]"
+                label="Regular"
+                points="1 pt"
+                stat={profile.pickBreakdown.regular}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              <MiniStat
+                label="Bookend Shows"
+                value={profile.pickBreakdown.bookendShows}
+                detail="Opener + encore hit"
+              />
+              <MiniStat
+                label="Most Hits in a Show"
+                value={profile.pickBreakdown.mostHitsInShow}
+                detail="of 13 picks"
+              />
+              <MiniStat
+                label="Unique Songs Picked"
+                value={profile.pickBreakdown.uniqueSongsPicked}
+              />
+              <MiniStat
+                label="Go-To Song"
+                value={profile.pickBreakdown.favoriteSong?.name ?? "—"}
+                detail={
+                  profile.pickBreakdown.favoriteSong
+                    ? `Picked ${profile.pickBreakdown.favoriteSong.count}×`
+                    : undefined
+                }
+              />
+              <MiniStat
+                label="Most Reliable Song"
+                value={profile.pickBreakdown.mostReliableSong?.name ?? "—"}
+                detail={
+                  profile.pickBreakdown.mostReliableSong
+                    ? `Hit ${profile.pickBreakdown.mostReliableSong.count}×`
+                    : undefined
+                }
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Achievements Section */}
       {profile.achievements.length > 0 && (
