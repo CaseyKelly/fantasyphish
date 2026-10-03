@@ -42,6 +42,7 @@ export default async function AdminCompleteShowsPage() {
           setlistJson: true,
           encoreStartedAt: true,
           lastEncoreCount: true,
+          forceCompletedAt: true,
           _count: { select: { submissions: true } },
         },
         orderBy: { showDate: "asc" },
@@ -57,6 +58,7 @@ export default async function AdminCompleteShowsPage() {
     showDate: show.showDate.toISOString(),
     hasSetlist: show.setlistJson !== null,
     encoreStartedAt: show.encoreStartedAt?.toISOString() ?? null,
+    forceCompleted: show.forceCompletedAt !== null,
     submissionCount: show._count.submissions,
   }))
 

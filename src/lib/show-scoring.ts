@@ -43,7 +43,14 @@ export interface ScoreShowResult {
  * Shared by the /api/score cron (natural grace-period expiry) and the
  * admin "mark complete" action (options.forceComplete short-circuits the
  * grace period so an admin can finalize a show the moment they see the
- * encore end, without waiting up to 60 minutes).
+ * encore end, without waiting up to 60 minutes). A show with
+ * forceCompletedAt set is treated as force-completed too, so the cron can
+ * finish an admin completion whose request was cut off.
+ *
+ * The show is only marked isComplete after every submission has been
+ * finalized. If a run dies partway through (e.g. a function timeout), the
+ * show stays incomplete and the next cron run picks up the submissions that
+ * are still unscored.
  */
 export async function scoreShow(
   show: ShowWithSubmissions,
@@ -51,6 +58,8 @@ export async function scoreShow(
   options: { forceComplete?: boolean; logPrefix?: string } = {}
 ): Promise<ScoreShowResult> {
   const logPrefix = options.logPrefix ?? "[ScoreShow]"
+  const forceComplete =
+    Boolean(options.forceComplete) || show.forceCompletedAt !== null
   const parsedSetlist = parseSetlist(setlist)
 
   const encoreDetected = isShowComplete(setlist)
@@ -62,7 +71,7 @@ export async function scoreShow(
   let encoreJustStarted = false
   let newEncoreSongsAdded = false
 
-  if (options.forceComplete) {
+  if (forceComplete) {
     gracePeriodExpired = true
     console.log(`${logPrefix}   ✓ Force-completing show (admin override)`)
   } else {
@@ -80,21 +89,20 @@ export async function scoreShow(
 
   const showComplete = gracePeriodExpired
 
+  // isComplete is deliberately not written here - see the final update below
   const updateData: {
     setlistJson: object
-    isComplete: boolean
     fetchedAt: Date
     lastScoredAt: Date
     encoreStartedAt?: Date
     lastEncoreCount?: number
   } = {
     setlistJson: setlist as object,
-    isComplete: showComplete,
     fetchedAt: new Date(),
     lastScoredAt: new Date(),
   }
 
-  if (!options.forceComplete) {
+  if (!forceComplete) {
     if (encoreJustStarted) {
       updateData.encoreStartedAt = new Date()
       updateData.lastEncoreCount = currentEncoreCount
@@ -160,33 +168,32 @@ export async function scoreShow(
         }
       })
 
-      for (const scoredPick of scoredPicks) {
-        await withRetry(
-          async () =>
-            prisma.pick.update({
-              where: { id: scoredPick.id },
-              data: {
-                wasPlayed: scoredPick.wasPlayed,
-                pointsEarned: scoredPick.pointsEarned,
-              },
-            }),
-          { operationName: `update pick ${scoredPick.id}` }
-        )
-      }
-
       // Only mark as fully scored if grace period has expired (1 hour after encore)
       const shouldMarkScored = Boolean(gracePeriodExpired)
 
+      // One round trip per submission instead of one per pick, and the picks
+      // and submission land together so a cut-off run can't leave them split
       await withRetry(
         async () =>
-          prisma.submission.update({
-            where: { id: submission.id },
-            data: {
-              isScored: shouldMarkScored,
-              totalPoints,
-              lastSongCount: currentSongCount,
-            },
-          }),
+          prisma.$transaction([
+            ...scoredPicks.map((scoredPick) =>
+              prisma.pick.update({
+                where: { id: scoredPick.id },
+                data: {
+                  wasPlayed: scoredPick.wasPlayed,
+                  pointsEarned: scoredPick.pointsEarned,
+                },
+              })
+            ),
+            prisma.submission.update({
+              where: { id: submission.id },
+              data: {
+                isScored: shouldMarkScored,
+                totalPoints,
+                lastSongCount: currentSongCount,
+              },
+            }),
+          ]),
         { operationName: `update submission ${submission.id}` }
       )
 
@@ -236,6 +243,20 @@ export async function scoreShow(
   console.log(
     `${logPrefix}   ✓ Processed ${submissionsProcessed} submission(s) (${submissionsWithChanges} updated)`
   )
+
+  // Mark the show complete only now that every submission is finalized.
+  // The cron only revisits incomplete shows, so writing this any earlier
+  // would strand submissions if the run were cut off mid-loop.
+  if (showComplete) {
+    await withRetry(
+      async () =>
+        prisma.show.update({
+          where: { id: show.id },
+          data: { isComplete: true },
+        }),
+      { operationName: `mark show ${show.id} complete` }
+    )
+  }
 
   return {
     status: showComplete ? "completed" : "in_progress",

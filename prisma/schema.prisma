@@ -67,6 +67,7 @@ model Show {
   timezone         String?      // Venue timezone (e.g., "America/New_York")
   lockTime         DateTime?    // Time when picks locked (7 PM in venue timezone)
   lockTimeOverride DateTime?    // Manually set lock time; if set, sync-tours preserves lockTime instead of recomputing it
+  forceCompletedAt DateTime?    // When an admin completed the show early; the scoring cron finishes the job if that request is cut off
   lastScoredAt     DateTime?    // Last progressive scoring run
   encoreStartedAt  DateTime?    // When encore was first detected (for grace period)
   lastEncoreCount  Int?         // Track encore song count to detect when new encores are added

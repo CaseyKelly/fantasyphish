@@ -17,6 +17,7 @@ interface ShowRow {
   showDate: string
   hasSetlist: boolean
   encoreStartedAt: string | null
+  forceCompleted: boolean
   submissionCount: number
 }
 
@@ -34,6 +35,12 @@ function useNow(intervalMs: number) {
 }
 
 function getStatus(show: ShowRow, now: number) {
+  if (show.forceCompleted) {
+    return {
+      label: "Completing — scoring cron finishes it within 10 minutes",
+      tone: "text-green-400",
+    }
+  }
   if (!show.hasSetlist) {
     return { label: "Not started", tone: "text-slate-400" }
   }
@@ -78,9 +85,19 @@ export default function CompleteShowsClient({
         body: JSON.stringify({ showId: show.id }),
       })
 
-      const result = await response.json()
+      // A timed-out request returns a non-JSON error page, not our JSON
+      const result = await response.json().catch(() => null)
 
       if (!response.ok) {
+        if (!result) {
+          // The completion was recorded before scoring started, so the
+          // scoring cron will finish the job; refresh to show that state
+          toast.info(
+            `${show.venue} is still finishing - the scoring cron will complete it within 10 minutes`
+          )
+          router.refresh()
+          return
+        }
         throw new Error(result.error || "Failed to complete show")
       }
 

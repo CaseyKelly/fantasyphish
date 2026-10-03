@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { isAdminFeaturesEnabled } from "@/lib/env"
 import { getSetlist } from "@/lib/phishnet"
+import { withRetry } from "@/lib/db-retry"
 import { scoreShow, showWithSubmissionsInclude } from "@/lib/show-scoring"
 
 export async function POST(request: NextRequest) {
@@ -52,6 +53,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "No setlist data available yet" },
         { status: 400 }
+      )
+    }
+
+    // Record the decision before the slow part. If this request is cut off
+    // (e.g. a function timeout on a big show), the scoring cron sees
+    // forceCompletedAt and finishes the remaining submissions on its next run.
+    if (!show.forceCompletedAt) {
+      show.forceCompletedAt = new Date()
+      await withRetry(
+        () =>
+          prisma.show.update({
+            where: { id: show.id },
+            data: { forceCompletedAt: show.forceCompletedAt },
+          }),
+        { operationName: `record force-complete for show ${show.id}` }
       )
     }
 
