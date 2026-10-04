@@ -248,7 +248,9 @@ export function UsageTables({
           rowKey={(row) => row.id}
           initialSortKey="signupDate"
           maxRows={normalizedQuery ? undefined : 10}
-          emptyMessage="No users match your search."
+          emptyMessage={
+            normalizedQuery ? "No users match your search." : "No users yet."
+          }
         />
       </CollapsibleCard>
 
