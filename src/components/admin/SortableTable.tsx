@@ -19,6 +19,8 @@ interface SortableTableProps<T> {
   initialSortKey?: string
   initialSortDir?: "asc" | "desc"
   emptyMessage?: string
+  /** Show only this many rows (after sorting) until the viewer expands the table. */
+  maxRows?: number
 }
 
 function alignClass(align?: "left" | "right" | "center"): string {
@@ -34,9 +36,11 @@ export function SortableTable<T>({
   initialSortKey,
   initialSortDir = "desc",
   emptyMessage = "No data",
+  maxRows,
 }: SortableTableProps<T>) {
   const [sortKey, setSortKey] = useState<string | undefined>(initialSortKey)
   const [sortDir, setSortDir] = useState<"asc" | "desc">(initialSortDir)
+  const [expanded, setExpanded] = useState(false)
 
   const getValue = (column: Column<T>, row: T): string | number | null => {
     if (column.accessor) return column.accessor(row)
@@ -79,74 +83,91 @@ export function SortableTable<T>({
     return <p className="text-sm text-gray-400">{emptyMessage}</p>
   }
 
+  const isTruncatable = maxRows !== undefined && sortedRows.length > maxRows
+  const visibleRows =
+    isTruncatable && !expanded ? sortedRows.slice(0, maxRows) : sortedRows
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-max border-collapse text-sm">
-        <thead>
-          <tr className="bg-[#2d4654]">
-            {columns.map((column) => (
-              <th
-                key={column.key}
-                onClick={() => handleSort(column)}
-                onKeyDown={(e) => {
-                  if (!column.sortable) return
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault()
-                    handleSort(column)
-                  }
-                }}
-                role={column.sortable ? "button" : undefined}
-                tabIndex={column.sortable ? 0 : undefined}
-                aria-sort={
-                  column.sortable
-                    ? sortKey === column.key
-                      ? sortDir === "asc"
-                        ? "ascending"
-                        : "descending"
-                      : "none"
-                    : undefined
-                }
-                className={`border-b-2 border-[#3d5a6c]/60 px-3 py-2 font-semibold whitespace-nowrap text-gray-300 ${alignClass(
-                  column.align
-                )} ${column.sortable ? "cursor-pointer select-none hover:text-white" : ""}`}
-              >
-                <span className="inline-flex items-center gap-1">
-                  {column.header}
-                  {column.sortable &&
-                    (sortKey === column.key ? (
-                      sortDir === "asc" ? (
-                        <ChevronUp className="h-3.5 w-3.5" />
-                      ) : (
-                        <ChevronDown className="h-3.5 w-3.5" />
-                      )
-                    ) : (
-                      <ChevronsUpDown className="h-3.5 w-3.5 opacity-40" />
-                    ))}
-                </span>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {sortedRows.map((row) => (
-            <tr
-              key={rowKey(row)}
-              className="border-b border-[#3d5a6c]/30 hover:bg-[#3d5a6c]/20"
-            >
+    <div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-max border-collapse text-sm">
+          <thead>
+            <tr className="bg-[#2d4654]">
               {columns.map((column) => (
-                <td
+                <th
                   key={column.key}
-                  className={`px-3 py-2 whitespace-nowrap text-gray-300 ${alignClass(column.align)}`}
+                  onClick={() => handleSort(column)}
+                  onKeyDown={(e) => {
+                    if (!column.sortable) return
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault()
+                      handleSort(column)
+                    }
+                  }}
+                  role={column.sortable ? "button" : undefined}
+                  tabIndex={column.sortable ? 0 : undefined}
+                  aria-sort={
+                    column.sortable
+                      ? sortKey === column.key
+                        ? sortDir === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : "none"
+                      : undefined
+                  }
+                  className={`border-b-2 border-[#3d5a6c]/60 px-3 py-2 font-semibold whitespace-nowrap text-gray-300 ${alignClass(
+                    column.align
+                  )} ${column.sortable ? "cursor-pointer select-none hover:text-white" : ""}`}
                 >
-                  {column.render
-                    ? column.render(row)
-                    : (getValue(column, row) ?? "—")}
-                </td>
+                  <span className="inline-flex items-center gap-1">
+                    {column.header}
+                    {column.sortable &&
+                      (sortKey === column.key ? (
+                        sortDir === "asc" ? (
+                          <ChevronUp className="h-3.5 w-3.5" />
+                        ) : (
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        )
+                      ) : (
+                        <ChevronsUpDown className="h-3.5 w-3.5 opacity-40" />
+                      ))}
+                  </span>
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {visibleRows.map((row) => (
+              <tr
+                key={rowKey(row)}
+                className="border-b border-[#3d5a6c]/30 hover:bg-[#3d5a6c]/20"
+              >
+                {columns.map((column) => (
+                  <td
+                    key={column.key}
+                    className={`px-3 py-2 whitespace-nowrap text-gray-300 ${alignClass(column.align)}`}
+                  >
+                    {column.render
+                      ? column.render(row)
+                      : (getValue(column, row) ?? "—")}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {isTruncatable && (
+        <button
+          type="button"
+          onClick={() => setExpanded((e) => !e)}
+          className="mt-3 text-sm text-gray-400 hover:text-white"
+        >
+          {expanded
+            ? "Show fewer"
+            : `Show all ${sortedRows.length} (showing ${maxRows})`}
+        </button>
+      )}
     </div>
   )
 }

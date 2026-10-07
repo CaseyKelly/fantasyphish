@@ -3,6 +3,7 @@
 import { ReactNode, useState } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { SortableTable, Column } from "@/components/admin/SortableTable"
 import {
   UserEngagementRow,
@@ -216,17 +217,40 @@ export function UsageTables({
   donutRows,
   streakRows,
 }: UsageTablesProps) {
+  const [engagementQuery, setEngagementQuery] = useState("")
+  const normalizedQuery = engagementQuery.trim().toLowerCase()
+  const filteredEngagementRows = normalizedQuery
+    ? engagementRows.filter(
+        (row) =>
+          row.username.toLowerCase().includes(normalizedQuery) ||
+          row.email.toLowerCase().includes(normalizedQuery)
+      )
+    : engagementRows
+
   return (
     <>
       <CollapsibleCard
         title="User Engagement"
         description="One row per user. Click a column header to sort."
       >
+        <div className="mb-4 sm:max-w-xs">
+          <Input
+            type="search"
+            value={engagementQuery}
+            onChange={(e) => setEngagementQuery(e.target.value)}
+            placeholder="Search by username or email"
+            aria-label="Search users"
+          />
+        </div>
         <SortableTable
           columns={engagementColumns}
-          rows={engagementRows}
+          rows={filteredEngagementRows}
           rowKey={(row) => row.id}
           initialSortKey="signupDate"
+          maxRows={normalizedQuery ? undefined : 10}
+          emptyMessage={
+            normalizedQuery ? "No users match your search." : "No users yet."
+          }
         />
       </CollapsibleCard>
 
@@ -251,6 +275,7 @@ export function UsageTables({
           rows={streakRows}
           rowKey={(row) => row.userId}
           initialSortKey="currentStreak"
+          maxRows={10}
         />
       </CollapsibleCard>
 
