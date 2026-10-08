@@ -155,7 +155,7 @@ Important fields:
 
 ### Cron Jobs (vercel.json)
 
-All cron endpoints require `CRON_SECRET` or Vercel-Cron user-agent:
+All cron endpoints require `Authorization: Bearer <CRON_SECRET>` via `verifyCronRequest()` (`src/lib/cron-auth.ts`), and reject every request when `CRON_SECRET` is unset. Vercel sends this header on cron invocations automatically; never trust the `User-Agent` header:
 
 1. **Scoring** (`/api/score`) - Every 10 minutes
    - Only runs when active tours exist (via `shouldRunCronJobs()`)
@@ -290,7 +290,7 @@ Required for development:
 - `PHISHNET_API_KEY` - phish.net API key
 - `RESEND_API_KEY` - Email service API key
 - `NEXT_PUBLIC_APP_URL` - Public app URL
-- `CRON_SECRET` - Cron job authentication (optional locally)
+- `CRON_SECRET` - Cron job authentication (required to call any cron endpoint, including locally)
 - `PRIVATE_VIEWER_EMAIL` - Email of the sole account allowed to view owner-only pages (e.g. `/submissions`); no hardcoded fallback, so this must be set in every environment where those pages should work
 
 ## Common Pitfalls
