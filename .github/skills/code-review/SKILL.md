@@ -39,8 +39,13 @@ Points are fixed: opener (first song of Set 1) = 3, encore (any encore song)
 - `getSetlist(...)` calls in the scoring path without `{ noCache: true }` —
   cached setlists mean picks stop scoring mid-show.
 - Changes that reset or ignore `Submission.lastSongCount`, or that overwrite
-  `Pick.wasPlayed` from `true` back to `false`/`null` on a later scoring pass
-  — `wasPlayed` is tri-state (`null` = not yet scored).
+  `Pick.wasPlayed` from `true` back to `false`/`null` on a later scoring pass.
+- Code that treats `Pick.wasPlayed === false` as a final miss. During a live
+  show `scoreSubmission()` sets unplayed REGULAR picks to `false` on every
+  pass (opener/encore picks stay `null` until that part of the show starts),
+  so `false` is provisional. Only `Submission.isScored` (set once the grace
+  period expires) means a submission's results are final — UI or logic that
+  shows a pick as a definite miss must check it.
 
 ## Show completion grace period
 
@@ -62,12 +67,18 @@ scripts) that doesn't respect this unless it's an explicit admin action like
 ## Cron routes
 
 Cron endpoints (`score`, `sync-tours`, `sync-song-stats`,
-`award-achievements`, `send-reminders`) follow the same shape as
-`src/app/api/score/route.ts`. For a new or changed cron route, check that it:
+`award-achievements`, `send-reminders`) run on Vercel cron. For a new or
+changed cron route, check that it:
 
-- Rejects the request unless it's from Vercel cron (`user-agent:
-Vercel-Cron`) or carries `Authorization: Bearer ${CRON_SECRET}` when
-  `CRON_SECRET` is set — before doing any work.
+- Requires `Authorization: Bearer ${CRON_SECRET}` before doing any work, and
+  fails closed (returns an error) when `CRON_SECRET` is unset, as
+  `src/app/api/sync-song-stats/route.ts` does. Vercel sends this header on
+  cron invocations when `CRON_SECRET` is configured. Flag new or changed
+  auth that accepts a `User-Agent` such as `Vercel-Cron` as proof of origin
+  (any caller can set it) or that skips the check when the secret is
+  missing. Some existing routes (`score`, `sync-tours`,
+  `award-achievements`, `send-reminders`) still do both; don't copy that
+  pattern into new code.
 - Calls `shouldRunCronJobs()` (`src/lib/cron-helpers.ts`) early, where the
   job only matters during an active tour.
 - Wraps every Prisma call in `withRetry(..., { operationName })` from
@@ -80,9 +91,12 @@ Vercel-Cron`) or carries `Authorization: Bearer ${CRON_SECRET}` when
 
 Achievements are awarded inline during scoring (`processPickAchievements` in
 `src/lib/achievement-awards.ts`) and again by the daily backup cron. Any new
-award path must check for an existing `UserAchievement` (or rely on the
-`@@unique([userId, achievementId])` constraint and handle the conflict) — otherwise the backup cron
-creates duplicates.
+award path must check for an existing `UserAchievement` before creating
+one, as `awardPickAchievement` does. The
+`@@unique([userId, achievementId])` constraint makes duplicate rows
+impossible, so a missing check shows up as a Prisma unique-constraint
+error (`P2002`) that can fail a scoring or backup cron run — check that new
+award code either looks up first or catches that error.
 
 ## Database changes need a migration
 
@@ -100,15 +114,26 @@ default).
   `isPrivateViewerOwner()` from `src/lib/private-access.ts`, which fails
   closed when `PRIVATE_VIEWER_EMAIL` is unset. Never hardcode an email or
   fall back to "allow" when the env var is missing.
-- Admin endpoints under `src/app/api/admin/` must check both
-  `session.user.isAdmin` and `isAdminFeaturesEnabled()` (`src/lib/env.ts`),
-  as `reset-show` does, and must not trust a user id or admin flag from the
-  request body. `User.isAdmin` is separate from private-viewer access.
-- While an admin impersonates a user, `token.id`/`isAdmin` become the
-  impersonated user's, and the real admin lives in
-  `session.impersonating.originalUserId`/`originalIsAdmin`. Flag changes
-  that let an impersonated session reach admin-only actions, or that drop
-  the `impersonating` info so "stop impersonating" can't restore the admin.
+- Every admin endpoint under `src/app/api/admin/` must check
+  `isAdminFeaturesEnabled()` (`src/lib/env.ts`) and must derive admin status
+  from the session or database, never from the request body.
+  `User.isAdmin` is separate from private-viewer access.
+- While an admin impersonates a user, `session.user` (`id`, `isAdmin`) is
+  the impersonated user's, and the real admin lives in
+  `session.impersonating` (`originalUserId`, `originalIsAdmin`). Admin
+  routes split into two kinds:
+  - Ordinary admin actions (e.g. `reset-show`) check
+    `session.user.isAdmin`, so they're unavailable while impersonating a
+    non-admin.
+  - Impersonation-aware routes authorize the original admin instead:
+    `impersonate`, `stop-impersonate` and `users` use
+    `session.impersonating`, and `set-show-lock-override` uses
+    `session.impersonating?.originalIsAdmin ?? session.user.isAdmin`. Don't
+    flag these for "not checking `session.user.isAdmin`" — `stop-impersonate`
+    must work while the session user is a non-admin. Do flag a change that
+    trusts `session.impersonating` without it having been set by the
+    `impersonate` flow in `src/lib/auth.ts`, or that drops it so "stop
+    impersonating" can't restore the admin.
 
 ## API route conventions
 
