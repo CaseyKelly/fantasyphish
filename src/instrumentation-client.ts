@@ -18,6 +18,10 @@ Sentry.init({
     // support). Scoped to our own sw.js path so unrelated script load
     // failures still surface.
     /Script https?:\/\/[^/]+\/serwist\/sw\.js load failed/,
+    // Headless checks hitting per-deployment *.vercel.app URLs get sw.js
+    // redirected by Vercel deployment protection. Scoped to those hosts so a
+    // redirect on the real domain still surfaces.
+    /Failed to register a ServiceWorker for scope \('https:\/\/[^/']+\.vercel\.app\/'\).*behind a redirect/,
   ],
 })
 
