@@ -40,7 +40,7 @@
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.0.0",
     "@sentry/nextjs": "^11.0.0",
-    "@serwist/turbopack": "^9.5.12",
+    "@serwist/turbopack": "^9.5.13",
     "@swc/helpers": "^0.5.17",
     "@vercel/analytics": "^2.0.0",
     "@vercel/speed-insights": "^2.0.0",
