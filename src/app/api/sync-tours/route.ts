@@ -131,16 +131,11 @@ async function syncYear(year: number): Promise<{
     const tourIdStr = `phishnet-${tourId}`
     const existingTour = existingToursMap.get(tourIdStr)
 
-    const tourStartDate = new Date(firstShow.showdate)
-    const tourEndDate = new Date(lastShow.showdate)
+    const fetchedStartDate = new Date(firstShow.showdate)
+    const fetchedEndDate = new Date(lastShow.showdate)
 
-    const tourNeedsUpdate =
-      !existingTour ||
-      existingTour.name !== tourData.name ||
-      existingTour.startDate.getTime() !== tourStartDate.getTime() ||
-      existingTour.endDate?.getTime() !== tourEndDate.getTime()
-
-    // Create or update tour only if needed
+    // Create the tour up front so its shows can reference it. Its dates are
+    // finalized below, once its shows are synced.
     if (!existingTour) {
       await withRetry(
         async () =>
@@ -148,31 +143,14 @@ async function syncYear(year: number): Promise<{
             data: {
               id: tourIdStr,
               name: tourData.name,
-              startDate: tourStartDate,
-              endDate: tourEndDate,
+              startDate: fetchedStartDate,
+              endDate: fetchedEndDate,
             },
           }),
         { operationName: `create tour ${tourData.name}` }
       )
       toursCreated++
       console.log(`[Sync Tours]   ✓ Created tour: ${tourData.name}`)
-    } else if (tourNeedsUpdate) {
-      await withRetry(
-        async () =>
-          prisma.tour.update({
-            where: { id: tourIdStr },
-            data: {
-              name: tourData.name,
-              startDate: tourStartDate,
-              endDate: tourEndDate,
-            },
-          }),
-        { operationName: `update tour ${tourData.name}` }
-      )
-      toursUpdated++
-      console.log(`[Sync Tours]   ✓ Updated tour: ${tourData.name}`)
-    } else {
-      console.log(`[Sync Tours]   → Skipped tour (unchanged): ${tourData.name}`)
     }
 
     // Create/update shows
@@ -260,6 +238,50 @@ async function syncYear(year: number): Promise<{
       } else {
         showsSkipped++
       }
+    }
+
+    // Take the tour's dates from all of its shows in the DB, not just this
+    // year's fetch: a tour spanning New Year's (e.g. a NYE run) is synced
+    // once per year, and each pass would otherwise overwrite the dates with
+    // only that year's shows.
+    const tourShowDates = await withRetry(
+      async () =>
+        prisma.show.aggregate({
+          where: { tourId: tourIdStr },
+          _min: { showDate: true },
+          _max: { showDate: true },
+        }),
+      { operationName: `aggregate show dates for tour ${tourData.name}` }
+    )
+    const tourStartDate = tourShowDates._min.showDate ?? fetchedStartDate
+    const tourEndDate = tourShowDates._max.showDate ?? fetchedEndDate
+
+    const currentStartDate = existingTour?.startDate ?? fetchedStartDate
+    const currentEndDate = existingTour ? existingTour.endDate : fetchedEndDate
+    const tourNeedsUpdate =
+      (existingTour !== undefined && existingTour.name !== tourData.name) ||
+      currentStartDate.getTime() !== tourStartDate.getTime() ||
+      currentEndDate?.getTime() !== tourEndDate.getTime()
+
+    if (tourNeedsUpdate) {
+      await withRetry(
+        async () =>
+          prisma.tour.update({
+            where: { id: tourIdStr },
+            data: {
+              name: tourData.name,
+              startDate: tourStartDate,
+              endDate: tourEndDate,
+            },
+          }),
+        { operationName: `update tour ${tourData.name}` }
+      )
+      if (existingTour) {
+        toursUpdated++
+        console.log(`[Sync Tours]   ✓ Updated tour: ${tourData.name}`)
+      }
+    } else if (existingTour) {
+      console.log(`[Sync Tours]   → Skipped tour (unchanged): ${tourData.name}`)
     }
   }
 
