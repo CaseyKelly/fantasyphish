@@ -70,15 +70,13 @@ Cron endpoints (`score`, `sync-tours`, `sync-song-stats`,
 `award-achievements`, `send-reminders`) run on Vercel cron. For a new or
 changed cron route, check that it:
 
-- Requires `Authorization: Bearer ${CRON_SECRET}` before doing any work, and
-  fails closed (returns an error) when `CRON_SECRET` is unset, as
-  `src/app/api/sync-song-stats/route.ts` does. Vercel sends this header on
-  cron invocations when `CRON_SECRET` is configured. Flag new or changed
-  auth that accepts a `User-Agent` such as `Vercel-Cron` as proof of origin
-  (any caller can set it) or that skips the check when the secret is
-  missing. Some existing routes (`score`, `sync-tours`,
-  `award-achievements`, `send-reminders`) still do both; don't copy that
-  pattern into new code.
+- Authenticates with `verifyCronRequest()` from `src/lib/cron-auth.ts`
+  before doing any work. It requires `Authorization: Bearer ${CRON_SECRET}`
+  (Vercel sends this header on cron invocations when `CRON_SECRET` is
+  configured) and fails closed when the secret is unset. Flag a cron route
+  that skips it or rolls its own check, especially one that accepts a
+  `User-Agent` such as `Vercel-Cron` as proof of origin (any caller can set
+  it) or that allows requests when the secret is missing.
 - Calls `shouldRunCronJobs()` (`src/lib/cron-helpers.ts`) early, where the
   job only matters during an active tour.
 - Wraps every Prisma call in `withRetry(..., { operationName })` from
