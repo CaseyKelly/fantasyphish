@@ -4,6 +4,7 @@ import { getSetlist, parseSetlist } from "@/lib/phishnet"
 import { withRetry } from "@/lib/db-retry"
 import { shouldRunCronJobs } from "@/lib/cron-helpers"
 import { scoreShow } from "@/lib/show-scoring"
+import { verifyCronRequest } from "@/lib/cron-auth"
 
 // Force dynamic rendering and disable caching
 export const dynamic = "force-dynamic"
@@ -15,32 +16,18 @@ export async function POST(request: Request) {
   console.log(`[Score:POST] ========================================`)
   console.log(`[Score:POST] Cron job started at ${new Date().toISOString()}`)
   console.log(
-    `[Score:POST] Request headers: ${JSON.stringify(Object.fromEntries(request.headers.entries()))}`
+    `[Score:POST] Request headers: ${JSON.stringify(
+      Object.fromEntries(
+        [...request.headers.entries()].filter(
+          ([name]) => name.toLowerCase() !== "authorization"
+        )
+      )
+    )}`
   )
 
   try {
-    // Verify cron secret (optional to configure, but enforced when CRON_SECRET is set)
-    // Vercel cron jobs send "Vercel-Cron" as user-agent and are allowed without CRON_SECRET
-    // Manual triggers require the correct CRON_SECRET when it is configured
-    const authHeader = request.headers.get("authorization")
-    const userAgent = request.headers.get("user-agent")
-    const token = authHeader?.replace("Bearer ", "")
-    const cronSecret = process.env.CRON_SECRET
-    const isVercelCron = userAgent === "Vercel-Cron"
-
-    console.log(
-      `[Score:POST] Auth check: cronSecret=${cronSecret ? "SET" : "NOT_SET"}, authHeader=${authHeader ? "PROVIDED" : "MISSING"}, isVercelCron=${isVercelCron}`
-    )
-
-    // Allow requests from:
-    // 1. Vercel cron (user-agent: "Vercel-Cron")
-    // 2. Manual triggers with correct CRON_SECRET
-    if (!isVercelCron && cronSecret && token !== cronSecret) {
-      console.error(
-        "[Score:POST] Unauthorized: not Vercel cron and invalid/missing CRON_SECRET"
-      )
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const authError = verifyCronRequest(request, "[Score:POST]")
+    if (authError) return authError
 
     console.log("[Score:POST] Authorization successful")
 

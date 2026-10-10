@@ -34,20 +34,16 @@ npm run dev
 
 ### 2. Check Scoring Status
 
-```bash
-# GET - Check what shows are pending
-curl http://localhost:3000/api/score
-
-# Response:
-# {"pendingShows":[]} - No shows need scoring
-# {"pendingShows":[{...}]} - Shows with unscored submissions
-```
+`GET /api/score` is not a read-only status check — it runs a scoring pass,
+same as `POST` (Vercel cron calls it with `GET`). Check pending shows in the
+database or the server logs instead.
 
 ### 3. Manually Trigger Scoring
 
 ```bash
-# POST - Run scoring now
-curl -X POST http://localhost:3000/api/score
+# POST - Run scoring now (requires CRON_SECRET; returns 401 without it)
+curl -X POST http://localhost:3000/api/score \
+  -H "Authorization: Bearer $CRON_SECRET"
 
 # Response:
 # {
@@ -76,7 +72,8 @@ WHERE id = 'your-show-id';
 **Run scoring:**
 
 ```bash
-curl -X POST http://localhost:3000/api/score
+curl -X POST http://localhost:3000/api/score \
+  -H "Authorization: Bearer $CRON_SECRET"
 ```
 
 **Check results** (via UI at `/results/[showId]` - coming soon)
@@ -164,9 +161,9 @@ ORDER BY u.email, p."pickType";
 
 ### Scoring not running
 
-1. Check cron is configured: `vercel.json` should have `*/5 * * * *`
-2. Check `CRON_SECRET` env var is set (if using auth)
-3. Manually trigger: `curl -X POST http://localhost:3000/api/score`
+1. Check cron is configured: `vercel.json` should have `*/10 * * * *`
+2. Check `CRON_SECRET` env var is set — every cron endpoint rejects all requests without it
+3. Manually trigger: `curl -X POST http://localhost:3000/api/score -H "Authorization: Bearer $CRON_SECRET"`
 4. Check server logs for errors
 
 ### Scores not updating
