@@ -7,11 +7,13 @@ import { LoadingDonut } from "@/components/LoadingDonut"
 import { format, parseISO } from "date-fns"
 import { Trash2, ScrollText, ChevronDown } from "lucide-react"
 import { useRefetchOnReturn } from "@/hooks/useRefetchOnReturn"
+import { getOpenerLabel, getOpenerSet, POINTS } from "@/lib/pick-rules"
 
 interface Pick {
   id: string
   song: string
   pickType: string
+  openerSet: number | null
   wasPlayed: boolean | null
   pointsEarned: number
 }
@@ -31,6 +33,7 @@ interface Show {
   state: string
   showDate: string
   isComplete: boolean
+  setCount: number
   lockTime: string | null
   lastScoredAt: string | null
 }
@@ -189,7 +192,9 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
   const isTestShow = show.venue.includes("Test Venue")
 
   // Group picks by type
-  const openerPicks = submission.picks.filter((p) => p.pickType === "OPENER")
+  const openerPicks = submission.picks
+    .filter((p) => p.pickType === "OPENER")
+    .sort((a, b) => getOpenerSet(a) - getOpenerSet(b))
   const encorePicks = submission.picks.filter((p) => p.pickType === "ENCORE")
   const regularPicks = submission.picks.filter((p) => p.pickType === "REGULAR")
 
@@ -223,7 +228,11 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
   const songsProcessed = new Set<string>()
 
   // Helper function to check if a song was picked by the user
-  const getSongPickInfo = (songName: string, songPosition: number) => {
+  const getSongPickInfo = (
+    songName: string,
+    setName: string,
+    isFirstOfSet: boolean
+  ) => {
     // Check if this song was picked by the user
     const userPick = submission.picks.find(
       (pick) => pick.song.toLowerCase().trim() === songName.toLowerCase().trim()
@@ -250,8 +259,12 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
     let points = 0
     let isCorrectPosition = false
 
-    if (userPick.pickType === "OPENER" && songPosition === 1) {
-      pickType = "Opener"
+    if (
+      userPick.pickType === "OPENER" &&
+      isFirstOfSet &&
+      Number(setName) === getOpenerSet(userPick)
+    ) {
+      pickType = getOpenerLabel(userPick.openerSet, show.setCount)
       points = userPick.pointsEarned || 0
       isCorrectPosition = true
     } else if (userPick.pickType === "ENCORE") {
@@ -266,7 +279,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
       // Song was picked but not in the right position (e.g., picked as opener but wasn't)
       pickType =
         userPick.pickType === "OPENER"
-          ? "Opener (wrong)"
+          ? `${getOpenerLabel(userPick.openerSet, show.setCount)} (wrong)`
           : userPick.pickType === "ENCORE"
             ? "Encore (wrong)"
             : "Pick"
@@ -393,7 +406,11 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
                   </h3>
                   <div className="space-y-1">
                     {songs.map((song, idx) => {
-                      const pickInfo = getSongPickInfo(song.song, song.position)
+                      const pickInfo = getSongPickInfo(
+                        song.song,
+                        setName,
+                        songs.every((s) => s.position >= song.position)
+                      )
                       return (
                         <div
                           key={idx}
@@ -486,27 +503,23 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
             )}
           </div>
 
-          {/* Opener */}
-          <div className="mb-6">
-            <h3 className="text-sm font-semibold text-slate-400 uppercase mb-2">
-              Opener (3 pts)
-            </h3>
-            <div className="space-y-2">
-              {openerPicks.map((pick) => (
-                <div
-                  key={pick.id}
-                  className="flex items-center justify-between py-2 border-b-2 border-[#4a6b7d]/40"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className={getPickStatus(pick)}>{pick.song}</span>
-                  </div>
-                  <span className={`font-semibold ${getPickStatus(pick)}`}>
-                    {pick.pointsEarned > 0 ? `+${pick.pointsEarned}` : ""}
-                  </span>
+          {/* Openers - one per set */}
+          {openerPicks.map((pick) => (
+            <div key={pick.id} className="mb-6">
+              <h3 className="text-sm font-semibold text-slate-400 uppercase mb-2">
+                {getOpenerLabel(pick.openerSet, show.setCount)} ({POINTS.OPENER}{" "}
+                pts)
+              </h3>
+              <div className="flex items-center justify-between py-2 border-b-2 border-[#4a6b7d]/40">
+                <div className="flex items-center gap-3">
+                  <span className={getPickStatus(pick)}>{pick.song}</span>
                 </div>
-              ))}
+                <span className={`font-semibold ${getPickStatus(pick)}`}>
+                  {pick.pointsEarned > 0 ? `+${pick.pointsEarned}` : ""}
+                </span>
+              </div>
             </div>
-          </div>
+          ))}
 
           {/* Encore */}
           <div className="mb-6">

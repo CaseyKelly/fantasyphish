@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { LiveBadge } from "@/components/LiveBadge"
 import { LoadingDonut } from "@/components/LoadingDonut"
 import { useRefetchOnReturn } from "@/hooks/useRefetchOnReturn"
+import { getOpenerLabel } from "@/lib/pick-rules"
 
 // Helper to format show dates consistently without timezone issues
 function formatShowDate(showDate: Date | string, formatStr: string): string {
@@ -56,6 +57,7 @@ function formatShowDate(showDate: Date | string, formatStr: string): string {
 interface Pick {
   id: string
   pickType: string
+  openerSet: number | null
   song: {
     id: string
     name: string
@@ -79,6 +81,7 @@ interface Show {
   country: string | null
   showDate: Date
   isComplete: boolean
+  setCount: number
   tour: {
     name: string
   } | null
@@ -379,7 +382,12 @@ export default function ResultsClient({
                         >
                           <div>
                             <p className="text-xs text-slate-400 uppercase mb-1">
-                              {pick.pickType === "OPENER" ? "Opener" : "Encore"}
+                              {pick.pickType === "OPENER"
+                                ? getOpenerLabel(
+                                    pick.openerSet,
+                                    submission.show.setCount
+                                  )
+                                : "Encore"}
                             </p>
                             <p className="font-medium text-white">
                               {pick.song.name}

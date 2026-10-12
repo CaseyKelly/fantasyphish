@@ -5,6 +5,7 @@ import { hasShowStarted } from "@/lib/phishnet"
 import { z } from "zod"
 import { PickType } from "@prisma/client"
 import { withRetry } from "@/lib/db-retry"
+import { validatePicks } from "@/lib/pick-rules"
 import { submitPicksSchema } from "./schema"
 
 // GET - Get user's submission for a show
@@ -64,41 +65,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { showId, picks } = submitPicksSchema.parse(body)
 
-    // Validate pick count
-    const openerPicks = picks.filter((p) => p.pickType === "OPENER")
-    const encorePicks = picks.filter((p) => p.pickType === "ENCORE")
-    const regularPicks = picks.filter((p) => p.pickType === "REGULAR")
-
-    if (openerPicks.length !== 1) {
-      return NextResponse.json(
-        { error: "You must select exactly 1 opener" },
-        { status: 400 }
-      )
-    }
-
-    if (encorePicks.length !== 1) {
-      return NextResponse.json(
-        { error: "You must select exactly 1 encore" },
-        { status: 400 }
-      )
-    }
-
-    if (regularPicks.length !== 11) {
-      return NextResponse.json(
-        { error: "You must select exactly 11 regular songs" },
-        { status: 400 }
-      )
-    }
-
-    // Check for duplicate songs
-    const songIds = picks.map((p) => p.songId)
-    if (new Set(songIds).size !== songIds.length) {
-      return NextResponse.json(
-        { error: "You cannot pick the same song twice" },
-        { status: 400 }
-      )
-    }
-
     // Get the show with tour information
     const show = await withRetry(
       () =>
@@ -111,6 +77,12 @@ export async function POST(request: NextRequest) {
 
     if (!show) {
       return NextResponse.json({ error: "Show not found" }, { status: 404 })
+    }
+
+    // Validate pick composition (one opener per set, 1 encore, the rest regular)
+    const pickError = validatePicks(picks, show.setCount)
+    if (pickError) {
+      return NextResponse.json({ error: pickError }, { status: 400 })
     }
 
     // Check if show has started (now timezone-aware)
@@ -177,6 +149,8 @@ export async function POST(request: NextRequest) {
               submissionId: existingSubmission.id,
               songId: pick.songId,
               pickType: pick.pickType as PickType,
+              openerSet:
+                pick.pickType === "OPENER" ? (pick.openerSet ?? 1) : null,
             })),
           }),
         { operationName: "create picks" }
@@ -214,6 +188,8 @@ export async function POST(request: NextRequest) {
               create: picks.map((pick) => ({
                 songId: pick.songId,
                 pickType: pick.pickType as PickType,
+                openerSet:
+                  pick.pickType === "OPENER" ? (pick.openerSet ?? 1) : null,
               })),
             },
           },

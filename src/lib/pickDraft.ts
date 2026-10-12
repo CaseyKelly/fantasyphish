@@ -1,11 +1,15 @@
+import { getOpenerSets, getRegularPickCount } from "@/lib/pick-rules"
+
 export interface DraftPick {
   songId: string
   songName: string
   pickType: "OPENER" | "ENCORE" | "REGULAR"
+  openerSet?: number | null
 }
 
 export interface PickDraft {
-  openerPick: DraftPick | null
+  // One slot per set, index 0 = set 1
+  openerPicks: (DraftPick | null)[]
   encorePick: DraftPick | null
   regularPicks: DraftPick[]
 }
@@ -31,7 +35,8 @@ function isDraftPick(value: unknown): value is DraftPick {
 export function readPickDraft(
   userId: string,
   showId: string,
-  validSongIds: Set<string>
+  validSongIds: Set<string>,
+  setCount: number
 ): PickDraft | null {
   if (typeof window === "undefined") return null
   try {
@@ -40,25 +45,35 @@ export function readPickDraft(
     const parsed = JSON.parse(raw)
     if (!parsed || typeof parsed !== "object") return null
 
-    const openerPick =
-      isDraftPick(parsed.openerPick) &&
-      validSongIds.has(parsed.openerPick.songId)
-        ? parsed.openerPick
-        : null
-    const encorePick =
-      isDraftPick(parsed.encorePick) &&
-      validSongIds.has(parsed.encorePick.songId)
-        ? parsed.encorePick
-        : null
+    const isValid = (p: unknown): p is DraftPick =>
+      isDraftPick(p) && validSongIds.has(p.songId)
+
+    // Drafts saved before set openers existed have a single `openerPick`,
+    // which was always the set 1 opener
+    const storedOpeners: unknown[] = Array.isArray(parsed.openerPicks)
+      ? parsed.openerPicks
+      : [parsed.openerPick]
+    const openerPicks = getOpenerSets(setCount).map((set) => {
+      const stored = storedOpeners[set - 1]
+      return isValid(stored) ? { ...stored, openerSet: set } : null
+    })
+    const encorePick = isValid(parsed.encorePick) ? parsed.encorePick : null
+    // The show's set count can change before anyone submits, which can
+    // shrink the number of regular slots - drop any overflow
     const regularPicks: DraftPick[] = Array.isArray(parsed.regularPicks)
-      ? parsed.regularPicks.filter(
-          (p: unknown): p is DraftPick =>
-            isDraftPick(p) && validSongIds.has(p.songId)
-        )
+      ? parsed.regularPicks
+          .filter(isValid)
+          .slice(0, getRegularPickCount(setCount))
       : []
 
-    if (!openerPick && !encorePick && regularPicks.length === 0) return null
-    return { openerPick, encorePick, regularPicks }
+    if (
+      openerPicks.every((p) => p === null) &&
+      !encorePick &&
+      regularPicks.length === 0
+    ) {
+      return null
+    }
+    return { openerPicks, encorePick, regularPicks }
   } catch (err) {
     console.warn("Failed to read pick draft from localStorage", err)
     return null
@@ -74,7 +89,7 @@ export function writePickDraft(
   try {
     const key = getDraftKey(userId, showId)
     if (
-      !draft.openerPick &&
+      draft.openerPicks.every((p) => p === null) &&
       !draft.encorePick &&
       draft.regularPicks.length === 0
     ) {

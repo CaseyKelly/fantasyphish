@@ -20,12 +20,14 @@ import {
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { parseUTCDate } from "@/lib/date-utils"
 import { useRefetchOnReturn } from "@/hooks/useRefetchOnReturn"
+import { getOpenerLabel, getOpenerSet } from "@/lib/pick-rules"
 
 interface Pick {
   songName: string
   wasPlayed: boolean | null
   pointsEarned: number
   pickType: string
+  openerSet: number | null
 }
 
 interface ShowPicks {
@@ -35,6 +37,7 @@ interface ShowPicks {
     venue: string
     city: string | null
     state: string | null
+    setCount: number
   }
   totalPoints: number
   picks: Pick[]
@@ -323,7 +326,9 @@ function ShowPickDetail({ picksByShow }: { picksByShow: ShowPicks[] }) {
   return (
     <div className="space-y-4">
       {visibleShows.map((showPicks) => {
-        const openerPick = showPicks.picks.find((p) => p.pickType === "OPENER")
+        const openerPicks = showPicks.picks
+          .filter((p) => p.pickType === "OPENER")
+          .sort((a, b) => getOpenerSet(a) - getOpenerSet(b))
         const encorePicks = showPicks.picks.filter(
           (p) => p.pickType === "ENCORE"
         )
@@ -358,10 +363,13 @@ function ShowPickDetail({ picksByShow }: { picksByShow: ShowPicks[] }) {
               </div>
             </div>
 
-            {openerPick && (
-              <div className="mb-2">
+            {openerPicks.map((openerPick) => (
+              <div key={getOpenerSet(openerPick)} className="mb-2">
                 <div className="text-xs font-medium text-slate-500 mb-1">
-                  Opener
+                  {getOpenerLabel(
+                    openerPick.openerSet,
+                    showPicks.show.setCount
+                  )}
                 </div>
                 <div
                   className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
@@ -374,7 +382,7 @@ function ShowPickDetail({ picksByShow }: { picksByShow: ShowPicks[] }) {
                   <span>{openerPick.songName}</span>
                 </div>
               </div>
-            )}
+            ))}
 
             {regularPicks.length > 0 && (
               <div className="mb-2">
