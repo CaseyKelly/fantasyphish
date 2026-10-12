@@ -39,6 +39,14 @@ const WARMUP_API_REQUESTS: { path: string; init: RequestInit }[] = [
     },
   },
   {
+    path: "/api/admin/set-show-set-count",
+    init: {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ showId: "warmup", setCount: 2 }),
+    },
+  },
+  {
     path: "/api/admin/complete-show",
     init: {
       method: "POST",

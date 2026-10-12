@@ -5,8 +5,8 @@ import {
   getPickTypeLabel,
   getPickTypePoints,
   POINTS,
-  MAX_POINTS,
 } from "./scoring"
+import { getMaxPoints } from "./pick-rules"
 import type { PhishNetSetlist, PhishNetSetlistSong } from "./phishnet"
 import type { PickType } from "@prisma/client"
 
@@ -54,9 +54,15 @@ function makeSetlist(songs: PhishNetSetlistSong[]): PhishNetSetlist {
 function pick(
   id: string,
   pickType: PickType,
-  songName: string
-): { id: string; pickType: PickType; song: { name: string; slug: string } } {
-  return { id, pickType, song: { name: songName, slug: songName } }
+  songName: string,
+  openerSet?: number
+): {
+  id: string
+  pickType: PickType
+  openerSet?: number
+  song: { name: string; slug: string }
+} {
+  return { id, pickType, openerSet, song: { name: songName, slug: songName } }
 }
 
 describe("scoreSubmission", () => {
@@ -186,8 +192,104 @@ describe("scoreSubmission", () => {
       ...regularSongs.map((name, i) => pick(`r${i}`, "REGULAR", name)),
     ]
     const { totalPoints } = scoreSubmission(picks, setlist)
-    expect(totalPoints).toBe(MAX_POINTS)
+    expect(totalPoints).toBe(getMaxPoints(1))
     expect(totalPoints).toBe(17)
+  })
+
+  it("awards the full 19-point max on a two-set show", () => {
+    const regularSongs = Array.from({ length: 10 }, (_, i) => `Song ${i}`)
+    const setlist = makeSetlist([
+      makeSong({ song: "Set 1 Opener", set: "1", position: 1 }),
+      ...regularSongs.map((name, i) =>
+        makeSong({ song: name, set: "1", position: i + 2 })
+      ),
+      makeSong({ song: "Set 2 Opener", set: "2", position: 20 }),
+      makeSong({ song: "Encore Song", set: "e", position: 30 }),
+    ])
+    const picks = [
+      pick("o1", "OPENER", "Set 1 Opener", 1),
+      pick("o2", "OPENER", "Set 2 Opener", 2),
+      pick("encore", "ENCORE", "Encore Song"),
+      ...regularSongs.map((name, i) => pick(`r${i}`, "REGULAR", name)),
+    ]
+    const { totalPoints } = scoreSubmission(picks, setlist)
+    expect(totalPoints).toBe(getMaxPoints(2))
+    expect(totalPoints).toBe(19)
+  })
+})
+
+describe("scoreSubmission set openers", () => {
+  const setlist = makeSetlist([
+    makeSong({ song: "Tweezer", set: "1", position: 1 }),
+    makeSong({ song: "Carini", set: "2", position: 9 }),
+    makeSong({ song: "Sand", set: "3", position: 15 }),
+  ])
+
+  it("scores each opener pick against its own set", () => {
+    const { scoredPicks } = scoreSubmission(
+      [
+        pick("o1", "OPENER", "Tweezer", 1),
+        pick("o2", "OPENER", "Carini", 2),
+        pick("o3", "OPENER", "Sand", 3),
+      ],
+      setlist
+    )
+    expect(scoredPicks.map((p) => p.pointsEarned)).toEqual([3, 3, 3])
+  })
+
+  it("does not credit an opener pick for opening a different set", () => {
+    const { scoredPicks } = scoreSubmission(
+      [pick("o2", "OPENER", "Tweezer", 2)],
+      setlist
+    )
+    expect(scoredPicks[0]).toEqual({
+      id: "o2",
+      wasPlayed: false,
+      pointsEarned: 0,
+    })
+  })
+
+  it("treats an opener pick without openerSet as a set 1 opener", () => {
+    const { scoredPicks } = scoreSubmission(
+      [pick("legacy", "OPENER", "Tweezer")],
+      setlist
+    )
+    expect(scoredPicks[0].pointsEarned).toBe(POINTS.OPENER)
+  })
+
+  it("leaves a set 2 opener unscored while set 1 is still going", () => {
+    const { scoredPicks } = scoreSubmission(
+      [pick("o2", "OPENER", "Carini", 2)],
+      makeSetlist([makeSong({ song: "Tweezer", set: "1", position: 1 })])
+    )
+    expect(scoredPicks[0].wasPlayed).toBeNull()
+  })
+
+  it("settles a set 2 opener as a miss once the encore starts without a set 2", () => {
+    const { scoredPicks } = scoreSubmission(
+      [pick("o2", "OPENER", "Carini", 2)],
+      makeSetlist([
+        makeSong({ song: "Tweezer", set: "1", position: 1 }),
+        makeSong({ song: "Loving Cup", set: "e", position: 2 }),
+      ])
+    )
+    expect(scoredPicks[0]).toEqual({
+      id: "o2",
+      wasPlayed: false,
+      pointsEarned: 0,
+    })
+  })
+
+  it("settles unplayed openers and encore as misses when the show is final", () => {
+    const { scoredPicks } = scoreSubmission(
+      [
+        pick("o2", "OPENER", "Carini", 2),
+        pick("encore", "ENCORE", "Loving Cup"),
+      ],
+      makeSetlist([makeSong({ song: "Tweezer", set: "1", position: 1 })]),
+      { isFinal: true }
+    )
+    expect(scoredPicks.map((p) => p.wasPlayed)).toEqual([false, false])
   })
 })
 

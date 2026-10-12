@@ -8,6 +8,7 @@ import { Target, ArrowRight, Trophy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DonutLogo } from "@/components/DonutLogo"
 import { SongPicker } from "@/components/SongPicker"
+import { getMaxPoints } from "@/lib/pick-rules"
 import { GuestRegistrationModal } from "@/components/GuestRegistrationModal"
 import { LiveBadge } from "@/components/LiveBadge"
 import {
@@ -43,6 +44,7 @@ interface Show {
   isComplete: boolean
   lockTime: string | null
   timezone: string | null
+  setCount: number
   tour: Tour | null
 }
 
@@ -55,6 +57,7 @@ export function HomeClient() {
     songId: string
     songName: string
     pickType: "OPENER" | "ENCORE" | "REGULAR"
+    openerSet?: number | null
   }> | null>(null)
 
   useEffect(() => {
@@ -321,6 +324,7 @@ export function HomeClient() {
                       city: nextShow.city || "",
                       state: nextShow.state || "",
                       showDate: nextShow.showDate,
+                      setCount: nextShow.setCount,
                     }}
                     songs={songs}
                     isLocked={isLocked}
@@ -357,14 +361,16 @@ export function HomeClient() {
                   <div className="flex items-center space-x-4 min-w-0">
                     <Target className="h-6 w-6 text-[#c23a3a] flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="font-semibold text-white">Opener Pick</p>
+                      <p className="font-semibold text-white">
+                        Set Opener Picks
+                      </p>
                       <p className="text-sm text-gray-400">
-                        Call the first song of Set 1
+                        Call the first song of each set
                       </p>
                     </div>
                   </div>
                   <span className="text-2xl font-bold text-[#c23a3a] whitespace-nowrap flex-shrink-0">
-                    3 pts
+                    3 pts each
                   </span>
                 </div>
 
@@ -387,11 +393,10 @@ export function HomeClient() {
                   <div className="flex items-center space-x-4 min-w-0">
                     <Target className="h-6 w-6 text-gray-400 flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="font-semibold text-white">
-                        Regular Picks (11)
-                      </p>
+                      <p className="font-semibold text-white">Regular Picks</p>
                       <p className="text-sm text-gray-400">
-                        Any song played anywhere in the show
+                        The rest of your 13 picks &mdash; any song played
+                        anywhere in the show
                       </p>
                     </div>
                   </div>
@@ -401,13 +406,25 @@ export function HomeClient() {
                 </div>
 
                 <div className="flex items-center justify-between gap-4 p-6 bg-[#3d5a6c]/30">
-                  <p className="font-semibold text-white">Maximum Points</p>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-white">Maximum Points</p>
+                    <p className="text-sm text-gray-400">
+                      Typical two-set show ({getMaxPoints(1)} for one set,{" "}
+                      {getMaxPoints(3)} for three)
+                    </p>
+                  </div>
                   <span className="text-2xl font-bold text-white whitespace-nowrap flex-shrink-0">
-                    17 pts
+                    {getMaxPoints(2)} pts
                   </span>
                 </div>
               </div>
             </div>
+            <p className="mt-4 text-sm text-gray-400 text-center">
+              Every show gets one opener pick per set, so single-set and
+              three-set shows adjust how many regular picks you make. If a set
+              never happens &mdash; say, weather ends the show early &mdash; its
+              opener pick scores 0.
+            </p>
           </div>
         </div>
       </section>

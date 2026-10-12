@@ -25,6 +25,7 @@ test.describe("Song Picker Flow", () => {
 
     const show = await prisma.show.create({
       data: {
+        setCount: 1,
         venue: "Test Venue Picker A11y",
         city: "Test City",
         state: "NY",
@@ -75,6 +76,7 @@ test.describe("Song Picker Flow", () => {
 
     const show = await prisma.show.create({
       data: {
+        setCount: 1,
         venue: "Test Venue Picker",
         city: "Test City",
         state: "NY",
@@ -171,6 +173,7 @@ test.describe("Song Picker Flow", () => {
 
     const show = await prisma.show.create({
       data: {
+        setCount: 1,
         venue: "Test Venue Update",
         city: "Test City",
         state: "NY",
@@ -269,6 +272,7 @@ test.describe("Song Picker Flow", () => {
 
     const show = await prisma.show.create({
       data: {
+        setCount: 1,
         venue: "Test Venue Wrong Count",
         city: "Test City",
         state: "NY",
@@ -345,6 +349,7 @@ test.describe("Song Picker Flow", () => {
 
     const show = await prisma.show.create({
       data: {
+        setCount: 1,
         venue: "Test Venue Dupes",
         city: "Test City",
         state: "NY",
@@ -409,6 +414,7 @@ test.describe("Song Picker Flow", () => {
 
     const show = await prisma.show.create({
       data: {
+        setCount: 1,
         venue: "Test Venue Locked",
         city: "Test City",
         state: "NY",
@@ -459,6 +465,7 @@ test.describe("Song Picker Flow", () => {
 
     const show = await prisma.show.create({
       data: {
+        setCount: 1,
         venue: "Test Venue Unauth",
         city: "Test City",
         state: "NY",
@@ -518,6 +525,7 @@ test.describe("Song Picker Flow", () => {
 
     const show = await prisma.show.create({
       data: {
+        setCount: 1,
         venue: "Test Venue Get",
         city: "Test City",
         state: "NY",
@@ -592,6 +600,7 @@ test.describe("Song Picker Flow", () => {
 
     const show = await prisma.show.create({
       data: {
+        setCount: 1,
         venue: "Test Venue Reminder",
         city: "Test City",
         state: "NY",
@@ -646,6 +655,7 @@ test.describe("Song Picker Flow", () => {
 
     const show = await prisma.show.create({
       data: {
+        setCount: 1,
         venue: "Test Venue Draft Restore",
         city: "Test City",
         state: "NY",
@@ -730,6 +740,7 @@ test.describe("Song Picker Flow", () => {
 
     const show = await prisma.show.create({
       data: {
+        setCount: 1,
         venue: "Test Venue Clear All",
         city: "Test City",
         state: "NY",
@@ -821,8 +832,12 @@ test.describe("Song Picker Flow", () => {
       await page.click('button[type="submit"]')
       await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
 
+      // Default two-set show: two opener slots, then encore, then 10
+      // regular picks
       await page.goto(`/pick/${show.id}`)
-      await expect(page.getByText("Opener Pick")).toBeVisible()
+      await expect(page.getByText("Set 1 Opener Pick")).toBeVisible()
+      await expect(page.getByText("Set 2 Opener Pick")).toBeVisible()
+      await expect(page.getByText("0/10 selected")).toBeVisible()
 
       const search = page.getByLabel("Search songs")
       for (const song of songs) {
@@ -852,10 +867,136 @@ test.describe("Song Picker Flow", () => {
       )
       expect(keysAfterSubmit).toEqual([])
 
-      // Cleanup the submission this test created.
+      // Each opener pick is tied to its own set
       const submission = await prisma.submission.findFirst({
         where: { showId: show.id },
+        include: { picks: true },
       })
+      const openers = submission?.picks
+        .filter((p) => p.pickType === "OPENER")
+        .map((p) => ({ songId: p.songId, openerSet: p.openerSet }))
+        .sort((a, b) => (a.openerSet ?? 0) - (b.openerSet ?? 0))
+      expect(openers).toEqual([
+        { songId: songs[0].id, openerSet: 1 },
+        { songId: songs[1].id, openerSet: 2 },
+      ])
+      expect(
+        submission?.picks.find((p) => p.pickType === "ENCORE")?.songId
+      ).toBe(songs[2].id)
+      expect(
+        submission?.picks.filter((p) => p.pickType === "REGULAR")
+      ).toHaveLength(10)
+
+      // Cleanup the submission this test created.
+      if (submission) {
+        await prisma.submission.delete({ where: { id: submission.id } })
+      }
+    } finally {
+      await prisma.show.delete({ where: { id: show.id } })
+    }
+  })
+
+  test("should require one opener per set on multi-set shows", async ({
+    page,
+    createUser,
+    prisma,
+  }) => {
+    const userUsername = uniqueUsername("pickersets")
+    const userEmail = `${userUsername}@example.com`
+    const userPassword = "PickerPassword123!"
+
+    await createUser({
+      email: userEmail,
+      username: userUsername,
+      password: userPassword,
+      verified: true,
+    })
+
+    const futureDate = new Date()
+    futureDate.setDate(futureDate.getDate() + 35)
+
+    const show = await prisma.show.create({
+      data: {
+        venue: "Test Venue Three Sets",
+        city: "Test City",
+        state: "NY",
+        showDate: futureDate,
+        setCount: 3,
+        isComplete: false,
+      },
+    })
+
+    try {
+      const songs = await prisma.song.findMany({ take: 13 })
+      if (songs.length < 13) throw new Error("Not enough songs in database")
+
+      await page.goto("/login")
+      await page.getByPlaceholder("Email address").fill(userEmail)
+      await page.getByPlaceholder("Password").fill(userPassword)
+      await page.click('button[type="submit"]')
+      await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
+
+      // The old one-opener shape is rejected on a three-set show
+      const oneOpener = [
+        { songId: songs[0].id, pickType: "OPENER", openerSet: 1 },
+        { songId: songs[1].id, pickType: "ENCORE" },
+        ...songs.slice(2, 13).map((song) => ({
+          songId: song.id,
+          pickType: "REGULAR" as const,
+        })),
+      ]
+      const rejected = await page.request.post("/api/picks", {
+        data: { showId: show.id, picks: oneOpener },
+      })
+      expect(rejected.status()).toBe(400)
+      expect((await rejected.json()).error).toContain("3 openers")
+
+      // Two openers for the same set are rejected too
+      const duplicateSet = [
+        { songId: songs[0].id, pickType: "OPENER", openerSet: 1 },
+        { songId: songs[1].id, pickType: "OPENER", openerSet: 1 },
+        { songId: songs[2].id, pickType: "OPENER", openerSet: 3 },
+        { songId: songs[3].id, pickType: "ENCORE" },
+        ...songs.slice(4, 13).map((song) => ({
+          songId: song.id,
+          pickType: "REGULAR" as const,
+        })),
+      ]
+      const duplicateResponse = await page.request.post("/api/picks", {
+        data: { showId: show.id, picks: duplicateSet },
+      })
+      expect(duplicateResponse.status()).toBe(400)
+      expect((await duplicateResponse.json()).error).toContain(
+        "one opener pick"
+      )
+
+      // One opener per set, an encore, and 9 regular picks is accepted
+      const valid = [
+        { songId: songs[0].id, pickType: "OPENER", openerSet: 1 },
+        { songId: songs[1].id, pickType: "OPENER", openerSet: 2 },
+        { songId: songs[2].id, pickType: "OPENER", openerSet: 3 },
+        { songId: songs[3].id, pickType: "ENCORE" },
+        ...songs.slice(4, 13).map((song) => ({
+          songId: song.id,
+          pickType: "REGULAR" as const,
+        })),
+      ]
+      const accepted = await page.request.post("/api/picks", {
+        data: { showId: show.id, picks: valid },
+      })
+      expect(accepted.status()).toBe(200)
+
+      const submission = await prisma.submission.findFirst({
+        where: { showId: show.id },
+        include: { picks: true },
+      })
+      expect(
+        submission?.picks
+          .filter((p) => p.pickType === "OPENER")
+          .map((p) => p.openerSet)
+          .sort()
+      ).toEqual([1, 2, 3])
+
       if (submission) {
         await prisma.submission.delete({ where: { id: submission.id } })
       }

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { sendVerificationEmail } from "@/lib/email"
 import { z } from "zod"
 import { PickType } from "@prisma/client"
+import { validatePicks } from "@/lib/pick-rules"
 import { registerSchema } from "./schema"
 
 export async function POST(request: NextRequest) {
@@ -38,6 +39,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Picks made as a guest must match the show's set count
+    if (showId && picks) {
+      const show = await prisma.show.findUnique({
+        where: { id: showId },
+        select: { setCount: true },
+      })
+      if (!show) {
+        return NextResponse.json({ error: "Show not found" }, { status: 404 })
+      }
+      const pickError = validatePicks(picks, show.setCount)
+      if (pickError) {
+        return NextResponse.json({ error: pickError }, { status: 400 })
+      }
+    }
+
     // Hash password
     const passwordHash = await hash(password, 12)
 
@@ -60,7 +76,7 @@ export async function POST(request: NextRequest) {
       let submission = null
 
       // If picks are provided, create submission
-      if (showId && picks && picks.length === 13) {
+      if (showId && picks) {
         submission = await tx.submission.create({
           data: {
             userId: user.id,
@@ -69,6 +85,8 @@ export async function POST(request: NextRequest) {
               create: picks.map((pick) => ({
                 songId: pick.songId,
                 pickType: pick.pickType as PickType,
+                openerSet:
+                  pick.pickType === "OPENER" ? (pick.openerSet ?? 1) : null,
               })),
             },
           },
