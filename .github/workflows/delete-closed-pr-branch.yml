@@ -1,0 +1,55 @@
+name: Delete Closed PR Branch
+
+# GitHub's "Automatically delete head branches" setting only fires on merge,
+# so PRs closed without merging leave their branch behind. This deletes the
+# head branch on any close (merged ones are usually already gone - that's
+# fine, a missing branch is a no-op).
+#
+# pull_request_target so the workflow always runs from the default branch's
+# copy of this file. It never checks out PR code, so that's safe here.
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  delete-branch:
+    name: Delete head branch
+    # Only branches in this repo - a fork's branch isn't ours to delete
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          if [ "$BRANCH" == "$DEFAULT_BRANCH" ]; then
+            echo "⚠️  SAFETY CHECK: Not deleting the default branch ($BRANCH)"
+            exit 0
+          fi
+
+          # Another open PR may still be using this branch (e.g. one closed
+          # and reopened as a new PR)
+          OPEN_PRS=$(gh pr list --repo "$REPO" --head "$BRANCH" --state open --json number --jq 'length')
+          if [ "$OPEN_PRS" != "0" ]; then
+            echo "Branch $BRANCH still has $OPEN_PRS open PR(s) - keeping it"
+            exit 0
+          fi
+
+          # URL-encode each path segment but keep the slashes (claude/foo)
+          ENCODED_BRANCH=$(jq -rn --arg b "$BRANCH" '$b | split("/") | map(@uri) | join("/")')
+          if gh api -X DELETE "repos/$REPO/git/refs/heads/$ENCODED_BRANCH" 2> err.txt; then
+            echo "✓ Deleted branch: $BRANCH"
+          elif grep -q "Reference does not exist" err.txt; then
+            echo "Branch $BRANCH is already gone - nothing to clean up"
+          else
+            echo "✗ Failed to delete branch $BRANCH:"
+            cat err.txt
+            exit 1
+          fi

@@ -1,9 +1,12 @@
 /**
- * Delete all archived Neon branches to reduce branch-hours costs
+ * Delete stale Neon branches to reduce branch-hours costs
  *
  * This script will:
  * 1. List all branches
- * 2. Filter for archived preview branches
+ * 2. Pick archived branches, plus preview/<git-branch> branches whose git
+ *    branch no longer exists on origin (its PR was merged or closed).
+ *    Previews for git branches that still exist are kept, so open PRs'
+ *    preview deployments keep their database.
  * 3. Delete them to save on branch-hours charges
  *
  * Usage: npx tsx scripts/cleanup-neon-branches.ts [--dry-run]
@@ -45,6 +48,26 @@ async function listAllBranches(): Promise<Branch[]> {
   }
 }
 
+/**
+ * Names of the branches that currently exist on origin, or null if they
+ * can't be determined (in which case no preview branches get deleted).
+ */
+async function listLiveGitBranches(): Promise<Set<string> | null> {
+  try {
+    const { stdout } = await execAsync("git ls-remote --heads origin")
+    const names = stdout
+      .split("\n")
+      .map((line) => line.split("\trefs/heads/")[1])
+      .filter((name): name is string => Boolean(name))
+    // origin always has at least main - an empty list means something's off
+    return names.length > 0 ? new Set(names) : null
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error("⚠️  Failed to list git branches on origin:", errorMessage)
+    return null
+  }
+}
+
 async function deleteBranch(
   branchId: string,
   branchName: string
@@ -80,18 +103,29 @@ async function main() {
 
   // Get all branches
   const allBranches = await listAllBranches()
+  const liveGitBranches = await listLiveGitBranches()
+
+  if (!liveGitBranches) {
+    console.log(
+      "⚠️  Couldn't list git branches - keeping all preview branches this run\n"
+    )
+  }
 
   // Filter for branches to delete:
   // - Archived branches
-  // - Preview branches (exclude main, dev, test)
+  // - Preview branches whose git branch is gone (exclude main, dev, test)
   const protectedBranches = ["main", "dev", "test"]
+
+  const isStalePreview = (name: string): boolean => {
+    if (!name.startsWith("preview/") || !liveGitBranches) return false
+    return !liveGitBranches.has(name.slice("preview/".length))
+  }
 
   const branchesToDelete = allBranches.filter((b) => {
     const isArchived = b.current_state === "archived"
-    const isPreview = b.name.startsWith("preview/")
     const isProtected = protectedBranches.includes(b.name)
 
-    return (isArchived || isPreview) && !isProtected
+    return (isArchived || isStalePreview(b.name)) && !isProtected
   })
 
   console.log(`📊 Branch Summary:`)
@@ -169,6 +203,11 @@ async function main() {
       `   Previously you had ~${branchesToDelete.length} branches accumulating hours.`
     )
     console.log()
+  }
+
+  if (failed > 0) {
+    console.error(`❌ ${failed} branch deletion(s) failed`)
+    process.exit(1)
   }
 
   console.log("✅ Cleanup complete!")
