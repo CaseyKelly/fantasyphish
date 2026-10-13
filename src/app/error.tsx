@@ -6,6 +6,7 @@ import * as Sentry from "@sentry/nextjs"
 import { RotateCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DonutLogo } from "@/components/DonutLogo"
+import { isTransientNetworkError } from "@/lib/network-error"
 
 const JAM_EXCUSES = [
   "Looks like we wandered off into a Type II jam and lost the thread.",
@@ -24,17 +25,52 @@ function pickExcuse(seed: string): string {
   return JAM_EXCUSES[Math.abs(hash) % JAM_EXCUSES.length]
 }
 
+// A network blip (e.g. Safari dropping the connection while the RSC refresh
+// that fires on tab return is still streaming) surfaces here as a render
+// error. Retry those once on our own instead of showing the error page;
+// the cooldown keeps a persistent failure from looping, and it falls through
+// to the normal page + Sentry report.
+const AUTO_RETRY_COOLDOWN_MS = 30_000
+let lastAutoRetryAt = 0
+// Keyed by error so each new error gets its own decision even when React
+// keeps this boundary mounted across a failed retry
+const autoRetryDecisions = new WeakMap<object, boolean>()
+
+function shouldAutoRetry(error: Error): boolean {
+  let decision = autoRetryDecisions.get(error)
+  if (decision === undefined) {
+    decision =
+      isTransientNetworkError(error) &&
+      Date.now() - lastAutoRetryAt > AUTO_RETRY_COOLDOWN_MS
+    autoRetryDecisions.set(error, decision)
+  }
+  return decision
+}
+
 export default function Error({
   error,
-  reset,
+  retry,
 }: {
   error: Error & { digest?: string }
-  reset: () => void
+  // Refetches the route's server data, then resets the boundary. Plain
+  // reset() would re-render the same failed payload.
+  retry: () => void
 }) {
+  const autoRetry = shouldAutoRetry(error)
+
   useEffect(() => {
+    if (autoRetry) {
+      lastAutoRetryAt = Date.now()
+      retry()
+      return
+    }
     console.error("[ErrorBoundary]", error)
     Sentry.captureException(error)
-  }, [error])
+  }, [error, retry, autoRetry])
+
+  // Keep the screen blank for the moment a retry takes rather than flashing
+  // the error page at someone who did nothing wrong
+  if (autoRetry) return null
 
   const excuse = pickExcuse(error.digest || error.message || "")
 
@@ -47,7 +83,7 @@ export default function Error({
         </h1>
         <p className="text-gray-400 mb-8">{excuse}</p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Button onClick={reset}>
+          <Button onClick={retry}>
             <RotateCw className="mr-2 h-4 w-4" />
             Try Again
           </Button>
