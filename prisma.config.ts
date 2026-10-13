@@ -2,6 +2,7 @@
 // npm install --save-dev prisma dotenv
 import { config } from "dotenv"
 import { defineConfig } from "prisma/config"
+import { resolveMigrationTarget } from "./src/lib/migration-url"
 
 // Load .env.local first, then .env as fallback
 config({ path: ".env.local" })
@@ -15,11 +16,11 @@ export default defineConfig({
   datasource: {
     // Migrate/introspect should always go through the direct (non-pooled)
     // connection, since pgbouncer's transaction pooling doesn't release
-    // Prisma's session-level advisory lock cleanly. Falls back to
-    // DATABASE_URL if DIRECT_URL isn't set (e.g. non-pooled local Postgres).
+    // Prisma's session-level advisory lock cleanly. On Vercel this is the
+    // deployment's own DATABASE_URL (so previews migrate their per-branch
+    // database, not prod) - see src/lib/migration-url.ts.
     url:
-      process.env.DIRECT_URL ||
-      process.env.DATABASE_URL ||
+      resolveMigrationTarget(process.env).url ||
       "postgresql://localhost:5432/fantasyphish",
   },
 })
