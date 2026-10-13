@@ -9,6 +9,11 @@ test.describe("Song Picker Flow", () => {
     createUser,
     prisma,
   }) => {
+    // axe scans the full song list rendered in the open picker panel, which
+    // alone takes ~18s on a loaded 4-worker CI runner - on top of login and
+    // the page load that blows the default 30s budget. Triple it.
+    test.slow()
+
     const userUsername = uniqueUsername("pickera11y")
     const userEmail = `${userUsername}@example.com`
     const userPassword = "PickerPassword123!"
