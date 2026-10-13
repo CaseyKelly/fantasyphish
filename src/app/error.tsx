@@ -27,11 +27,13 @@ function pickExcuse(seed: string): string {
 
 // A network blip (e.g. Safari dropping the connection while the RSC refresh
 // that fires on tab return is still streaming) surfaces here as a render
-// error. Retry those once on our own instead of showing the error page;
-// the cooldown keeps a persistent failure from looping, and it falls through
-// to the normal page + Sentry report.
+// error. Retry those once on our own instead of showing the error page. A
+// retry that fails again (however long it took) falls through to the normal
+// page + Sentry report: the in-flight flag only clears once the boundary
+// unmounts, i.e. the page recovered, and the cooldown runs from then.
 const AUTO_RETRY_COOLDOWN_MS = 30_000
-let lastAutoRetryAt = 0
+let autoRetryInFlight = false
+let lastAutoRetryEndedAt = 0
 // Keyed by error so each new error gets its own decision even when React
 // keeps this boundary mounted across a failed retry
 const autoRetryDecisions = new WeakMap<object, boolean>()
@@ -41,7 +43,8 @@ function shouldAutoRetry(error: Error): boolean {
   if (decision === undefined) {
     decision =
       isTransientNetworkError(error) &&
-      Date.now() - lastAutoRetryAt > AUTO_RETRY_COOLDOWN_MS
+      !autoRetryInFlight &&
+      Date.now() - lastAutoRetryEndedAt > AUTO_RETRY_COOLDOWN_MS
     autoRetryDecisions.set(error, decision)
   }
   return decision
@@ -59,8 +62,19 @@ export default function Error({
   const autoRetry = shouldAutoRetry(error)
 
   useEffect(() => {
+    // Unmounting means the boundary rendered its children again, so any
+    // retry in flight succeeded
+    return () => {
+      if (autoRetryInFlight) {
+        autoRetryInFlight = false
+        lastAutoRetryEndedAt = Date.now()
+      }
+    }
+  }, [])
+
+  useEffect(() => {
     if (autoRetry) {
-      lastAutoRetryAt = Date.now()
+      autoRetryInFlight = true
       retry()
       return
     }
