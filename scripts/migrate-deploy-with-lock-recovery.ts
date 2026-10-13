@@ -1,6 +1,10 @@
 import { spawnSync } from "child_process"
 import { PrismaClient } from "@prisma/client"
 import { PrismaPg } from "@prisma/adapter-pg"
+import {
+  describeMigrationTarget,
+  resolveMigrationTarget,
+} from "../src/lib/migration-url"
 
 /**
  * Wraps `prisma migrate deploy` with one-shot recovery from the known Neon
@@ -22,10 +26,10 @@ function runMigrateDeploy(): { status: number; output: string } {
 }
 
 async function clearStaleAdvisoryLock(lockId: string): Promise<boolean> {
-  const directUrl = process.env.DIRECT_URL || process.env.DATABASE_URL
+  const directUrl = resolveMigrationTarget(process.env).url
   if (!directUrl) {
     console.error(
-      "[migrate-deploy] No DIRECT_URL/DATABASE_URL set, cannot attempt lock recovery"
+      "[migrate-deploy] No migration database URL set, cannot attempt lock recovery"
     )
     return false
   }
@@ -73,6 +77,18 @@ async function clearStaleAdvisoryLock(lockId: string): Promise<boolean> {
 }
 
 async function main() {
+  const target = resolveMigrationTarget(process.env)
+  if (target.skipReason) {
+    console.warn(
+      `[migrate-deploy] Skipping migrations: ${target.skipReason}. ` +
+        "This deployment's database will be missing any pending migrations."
+    )
+    process.exit(0)
+  }
+  console.log(
+    `[migrate-deploy] Migrating database at ${describeMigrationTarget(target)}`
+  )
+
   const first = runMigrateDeploy()
   if (first.status === 0) {
     process.exit(0)
