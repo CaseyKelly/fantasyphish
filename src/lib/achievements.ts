@@ -99,11 +99,11 @@ export const ACHIEVEMENT_DEFINITIONS = {
     category: "MILESTONE" as AchievementCategory,
     metadata: { streakLength: 50 },
   },
-  LETTER_TO_CHALUPA: {
-    slug: "letter-to-chalupa",
-    name: "Letter to Chalupa",
-    description: "Emailed Chalupa an idea to make FantasyPhish better",
-    icon: "Mail",
+  FEE_DBACK: {
+    slug: "fee-dback",
+    name: "Fee-dback",
+    description: "Sent Chalupa feedback by email",
+    icon: "🦦",
     category: "SPECIAL" as AchievementCategory,
   },
   // Future achievement examples:

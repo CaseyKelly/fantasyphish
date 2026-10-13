@@ -1,10 +1,10 @@
 /**
- * Award the Letter to Chalupa achievement to users who emailed Chalupa
+ * Award the Fee-dback achievement to users who emailed Chalupa
  * (chalupa@fantasyphish.com) with an idea to make the site better.
  *
  * This script is idempotent - safe to run multiple times.
  *
- * Usage: npx tsx scripts/award-letter-to-chalupa.ts <username> [username...]
+ * Usage: npx tsx scripts/award-fee-dback.ts <username> [username...]
  */
 
 import { PrismaClient } from "@prisma/client"
@@ -25,12 +25,12 @@ async function main() {
 
   if (usernames.length === 0) {
     console.error(
-      "Usage: npx tsx scripts/award-letter-to-chalupa.ts <username> [username...]"
+      "Usage: npx tsx scripts/award-fee-dback.ts <username> [username...]"
     )
     process.exit(1)
   }
 
-  const achievementDef = ACHIEVEMENT_DEFINITIONS.LETTER_TO_CHALUPA
+  const achievementDef = ACHIEVEMENT_DEFINITIONS.FEE_DBACK
 
   // Create or get the achievement record
   const achievement = await prisma.achievement.upsert({
