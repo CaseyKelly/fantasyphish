@@ -27,6 +27,7 @@ model User {
   achievements          UserAchievement[]
   easterEggScore        EasterEggScore?
   pushSubscriptions     PushSubscription[]
+  pollVotes             PollVote[]
 }
 
 model PushSubscription {
@@ -171,6 +172,21 @@ model EasterEggScore {
   updatedAt DateTime @updatedAt
 
   @@index([score])
+}
+
+// One row per user per poll - the (pollSlug, userId) unique constraint is
+// what enforces "each user only votes once". Poll definitions (question,
+// options) live in code in src/lib/polls.ts, keyed by pollSlug.
+model PollVote {
+  id        String   @id @default(cuid())
+  pollSlug  String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  option    String
+  createdAt DateTime @default(now())
+
+  @@unique([pollSlug, userId])
+  @@index([pollSlug])
 }
 
 enum AchievementCategory {
