@@ -111,22 +111,23 @@ async function main() {
     )
   }
 
-  // Filter for branches to delete:
-  // - Archived branches
-  // - Preview branches whose git branch is gone (exclude main, dev, test)
+  // Filter for branches to delete (exclude main, dev, test):
+  // - Preview branches whose git branch is gone. Archived or not, a preview
+  //   whose git branch still exists is kept - Neon archives idle branches,
+  //   and a quiet open PR still needs its preview database.
+  // - Other archived branches
   const protectedBranches = ["main", "dev", "test"]
 
-  const isStalePreview = (name: string): boolean => {
-    if (!name.startsWith("preview/") || !liveGitBranches) return false
-    return !liveGitBranches.has(name.slice("preview/".length))
+  const shouldDelete = (b: Branch): boolean => {
+    if (protectedBranches.includes(b.name)) return false
+    if (b.name.startsWith("preview/")) {
+      if (!liveGitBranches) return false
+      return !liveGitBranches.has(b.name.slice("preview/".length))
+    }
+    return b.current_state === "archived"
   }
 
-  const branchesToDelete = allBranches.filter((b) => {
-    const isArchived = b.current_state === "archived"
-    const isProtected = protectedBranches.includes(b.name)
-
-    return (isArchived || isStalePreview(b.name)) && !isProtected
-  })
+  const branchesToDelete = allBranches.filter(shouldDelete)
 
   console.log(`📊 Branch Summary:`)
   console.log(`   Total branches: ${allBranches.length}`)

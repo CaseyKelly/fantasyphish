@@ -29,10 +29,14 @@ jobs:
           BRANCH: ${{ github.event.pull_request.head.ref }}
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
-          if [ "$BRANCH" == "$DEFAULT_BRANCH" ]; then
-            echo "⚠️  SAFETY CHECK: Not deleting the default branch ($BRANCH)"
-            exit 0
-          fi
+          # Never delete the default branch or long-lived shared branches
+          PROTECTED_BRANCHES=("$DEFAULT_BRANCH" "main" "dev" "test" "production" "staging")
+          for protected in "${PROTECTED_BRANCHES[@]}"; do
+            if [ "$BRANCH" == "$protected" ]; then
+              echo "⚠️  SAFETY CHECK: Not deleting protected branch: $BRANCH"
+              exit 0
+            fi
+          done
 
           # Another open PR may still be using this branch (e.g. one closed
           # and reopened as a new PR)
