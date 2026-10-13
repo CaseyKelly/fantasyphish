@@ -90,16 +90,8 @@ jobs:
           NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
         run: |
           echo "🧹 Running orphaned branch cleanup..."
-          echo "This will delete archived and old preview branches"
+          echo "This will delete archived branches and preview branches whose git branch is gone"
 
-          # Run the cleanup script in non-interactive mode and report detailed status
-          if ! output=$(npx tsx scripts/cleanup-neon-branches.ts 2>&1); then
-            status=$?
-            echo "⚠️ Cleanup script completed with warnings or errors (exit code ${status})."
-            echo "----- Cleanup script output start -----"
-            echo "${output}"
-            echo "----- Cleanup script output end -----"
-          else
-            echo "${output}"
-            echo "✅ Orphaned branch cleanup complete"
-          fi
+          # Let a failure fail the run, so a broken NEON_API_KEY or a stuck
+          # deletion shows up red instead of silently passing every week
+          npx tsx scripts/cleanup-neon-branches.ts
