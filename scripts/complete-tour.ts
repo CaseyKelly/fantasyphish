@@ -138,23 +138,20 @@ async function main() {
     )
   }
 
-  // Get final leaderboard standings (excluding admins)
+  // Get final leaderboard standings. Admins play too, so they're included -
+  // matching the live leaderboard and Podium UI (src/lib/leaderboard.ts)
   const submissions = await prisma.submission.findMany({
     where: {
       show: {
         tourId: tour.id,
       },
       isScored: true,
-      user: {
-        isAdmin: false, // Exclude admin submissions
-      },
     },
     include: {
       user: {
         select: {
           id: true,
           username: true,
-          isAdmin: true,
         },
       },
     },
