@@ -99,6 +99,13 @@ export const ACHIEVEMENT_DEFINITIONS = {
     category: "MILESTONE" as AchievementCategory,
     metadata: { streakLength: 50 },
   },
+  FEE_DBACK: {
+    slug: "fee-dback",
+    name: "Fee-dback",
+    description: "Sent Chalupa feedback by email",
+    icon: "🦦",
+    category: "SPECIAL" as AchievementCategory,
+  },
   // Future achievement examples:
   // SUMMER_TOUR_2025_CHAMPION: {
   //   slug: "summer-tour-2025-champion",
