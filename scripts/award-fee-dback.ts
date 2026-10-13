@@ -55,9 +55,7 @@ async function main() {
   let failed = false
 
   for (const username of usernames) {
-    const user = await prisma.user.findFirst({
-      where: { username: { equals: username, mode: "insensitive" } },
-    })
+    const user = await prisma.user.findUnique({ where: { username } })
 
     if (!user) {
       console.error(`❌ User not found: ${username}`)
