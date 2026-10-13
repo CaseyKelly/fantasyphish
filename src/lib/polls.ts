@@ -46,6 +46,26 @@ export function isValidPollOption(
   return poll.options.some((o) => o.id === option)
 }
 
+// Largest-remainder rounding: floor every share, then hand the leftover
+// points to the options with the biggest fractional parts, so displayed
+// percentages always total exactly 100 (independent rounding can show 101,
+// e.g. 1 and 7 votes -> 13% + 88%).
+function roundedPercents(votes: number[], totalVotes: number): number[] {
+  if (totalVotes === 0) return votes.map(() => 0)
+  const exact = votes.map((v) => (v / totalVotes) * 100)
+  const floors = exact.map(Math.floor)
+  let remaining = 100 - floors.reduce((sum, f) => sum + f, 0)
+  const byRemainder = exact
+    .map((e, i) => ({ i, frac: e - floors[i] }))
+    .sort((a, b) => b.frac - a.frac)
+  for (const { i } of byRemainder) {
+    if (remaining <= 0) break
+    floors[i]++
+    remaining--
+  }
+  return floors
+}
+
 // Turns raw per-option vote counts into display-ready results. Options with
 // no votes still appear (at 0%), and counts for option ids no longer in the
 // poll definition are ignored so a renamed option can't skew the total.
@@ -59,12 +79,13 @@ export function summarizePollVotes(
     votes: countByOption.get(o.id) ?? 0,
   }))
   const totalVotes = options.reduce((sum, o) => sum + o.votes, 0)
+  const percents = roundedPercents(
+    options.map((o) => o.votes),
+    totalVotes
+  )
 
   return {
     totalVotes,
-    options: options.map((o) => ({
-      ...o,
-      percent: totalVotes === 0 ? 0 : Math.round((o.votes / totalVotes) * 100),
-    })),
+    options: options.map((o, i) => ({ ...o, percent: percents[i] })),
   }
 }

@@ -46,6 +46,17 @@ describe("summarizePollVotes", () => {
     ])
   })
 
+  it("keeps rounded percentages summing to exactly 100", () => {
+    const results = summarizePollVotes(SET2_OPENER_POLL, [
+      { option: "yes", count: 1 },
+      { option: "no", count: 7 },
+    ])
+    // 12.5% / 87.5% would independently round to 13% + 88% = 101%
+    const percents = results.options.map((o) => o.percent)
+    expect(percents.reduce((sum, p) => sum + p, 0)).toBe(100)
+    expect(percents).toEqual([13, 87])
+  })
+
   it("ignores counts for options not in the poll", () => {
     const results = summarizePollVotes(SET2_OPENER_POLL, [
       { option: "yes", count: 1 },
