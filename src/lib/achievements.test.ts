@@ -33,6 +33,7 @@ describe("ACHIEVEMENT_DEFINITIONS", () => {
         "STREAK_10",
         "STREAK_25",
         "STREAK_50",
+        "LETTER_TO_CHALUPA",
       ].sort()
     )
   })
