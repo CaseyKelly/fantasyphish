@@ -17,10 +17,15 @@
 
 ### Point System
 
-- **Opener**: 3 points (must be first song of Set 1)
+- **Set opener**: 3 points each, one pick per set (must be the first song of
+  the set it was picked for)
 - **Encore**: 3 points (must be in encore set)
-- **Regular**: 1 point each (anywhere in setlist)
-- **Maximum**: 17 points (3 + 3 + 11×1)
+- **Regular**: 1 point each (anywhere in setlist); regular picks fill out the
+  13, so there are 11 / 10 / 9 of them for 1 / 2 / 3-set shows
+- **Maximum**: 17 / 19 / 21 points for 1 / 2 / 3-set shows (see
+  `getMaxPoints()` in `src/lib/pick-rules.ts`)
+- A set's opener pick settles as a miss once a later set or the encore starts
+  without that set, or once the show is final
 
 ---
 
@@ -199,7 +204,7 @@ ORDER BY u.email, p."pickType";
 3. **7:35 PM ET - Show starts**
    - Phish.net API gets first song
    - Cron job (next 5-min interval) scores:
-     - Opener picks scored
+     - Set 1 opener picks scored (Set 2/3 opener picks wait for their set)
      - Other picks not scored yet (no encore)
 
 4. **8:45 PM ET - Set 1 ends**
