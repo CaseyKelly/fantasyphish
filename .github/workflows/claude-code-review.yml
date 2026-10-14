@@ -25,20 +25,30 @@ permissions:
 
 jobs:
   review:
-    # Skip (not fail) when the repo secret hasn't been configured yet, so
-    # this workflow degrades gracefully rather than showing a permanently
-    # red required check until ANTHROPIC_API_KEY is added.
-    if: github.event.pull_request.draft == false && secrets.ANTHROPIC_API_KEY != ''
+    if: github.event.pull_request.draft == false
     timeout-minutes: 15
     runs-on: ubuntu-latest
+    # Skip (not fail) when the repo secret hasn't been configured yet, so
+    # this workflow degrades gracefully rather than showing a permanently
+    # red required check until ANTHROPIC_API_KEY is added. The `secrets`
+    # context isn't allowed in a job-level `if:` (GitHub rejects the whole
+    # workflow file), so expose whether it's set via env and gate the steps.
+    env:
+      HAS_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
 
     steps:
+      - name: Skip notice
+        if: env.HAS_ANTHROPIC_API_KEY != 'true'
+        run: echo "::notice::ANTHROPIC_API_KEY secret is not set; skipping Claude Code Review."
+
       - name: Checkout code
+        if: env.HAS_ANTHROPIC_API_KEY == 'true'
         uses: actions/checkout@v7
         with:
           fetch-depth: 1
 
       - name: Run /code-review
+        if: env.HAS_ANTHROPIC_API_KEY == 'true'
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
