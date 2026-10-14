@@ -88,8 +88,8 @@ Anthropic API key used by `claude-code-review.yml` to run this repo's `/code-rev
 skill against every PR and post findings as inline comments.
 
 - Get it from: https://console.anthropic.com/settings/keys
-- Without this secret, the review job fails auth and no review comment is posted -
-  other workflows are unaffected
+- Without this secret, the review job's steps are skipped (the check passes with a
+  notice) and no review comment is posted - other workflows are unaffected
 
 ## Workflows
 
