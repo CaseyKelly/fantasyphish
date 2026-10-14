@@ -4,6 +4,7 @@ import { z } from "zod"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { withRetry } from "@/lib/db-retry"
+import { awardSongPickAchievement } from "@/lib/achievement-awards"
 import {
   getPoll,
   isValidPollOption,
@@ -131,6 +132,12 @@ export async function POST(
       }
       throw error
     }
+
+    // Idempotent and logs its own failures, so a missed award never fails
+    // the vote - the daily award-achievements cron backfills it.
+    await awardSongPickAchievement(session.user.id, "SAMPLE_IN_A_JAR", {
+      pollSlug: poll.slug,
+    })
 
     return NextResponse.json({
       userVote: option,
