@@ -20,3 +20,24 @@ export const sentryDataCollection: DataCollection = {
   // Bound Prisma params and results include `passwordHash`
   databaseQueryData: false,
 }
+
+type ErrorEvent = Parameters<
+  NonNullable<NonNullable<Parameters<typeof Sentry.init>[0]>["beforeSend"]>
+>[0]
+
+/**
+ * Googlebot's renderer (Web Rendering Service) stubs out
+ * `navigator.serviceWorker.register` with a wrapper that rejects with a bare
+ * "Rejected", so every crawl of a page logs an unhandled rejection from
+ * Serwist's registration. Its injected frame is named after `wrsParams`; match
+ * on that rather than the generic message so real SW failures still surface.
+ */
+export function isGoogleRendererNoise(event: ErrorEvent): boolean {
+  return (
+    event.exception?.values?.some((exception) =>
+      exception.stacktrace?.frames?.some((frame) =>
+        frame.function?.includes("wrsParams.")
+      )
+    ) ?? false
+  )
+}
