@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma"
 import { getTimezoneForLocation } from "@/lib/timezone"
 import { ShowLockOverrideForm } from "./ShowLockOverrideForm"
 import { ShowSetCountForm } from "./ShowSetCountForm"
+import { getPickUpdateNeeded } from "@/lib/pick-rules"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
 export const metadata: Metadata = {
@@ -28,6 +29,7 @@ export default async function AdminShowsPage() {
     notFound()
   }
 
+  const now = new Date()
   const shows = await prisma.show.findMany({
     where: { isComplete: false },
     orderBy: { showDate: "asc" },
@@ -41,7 +43,9 @@ export default async function AdminShowsPage() {
       lockTime: true,
       lockTimeOverride: true,
       setCount: true,
-      _count: { select: { submissions: true } },
+      submissions: {
+        select: { picks: { select: { pickType: true, openerSet: true } } },
+      },
     },
   })
 
@@ -64,9 +68,10 @@ export default async function AdminShowsPage() {
           tour syncs until cleared.
         </p>
         <p className="mt-1 text-gray-400">
-          Shows default to two sets, with one opener pick per set. Change the
-          set count for single-set or three-set shows before anyone picks
-          &mdash; it locks once the first submission comes in.
+          Shows default to two sets, with one opener pick per set. Set the count
+          for single-set or three-set shows before anyone picks if you can. Once
+          picks are in it can still go up (anyone who already picked is asked to
+          add the new set&apos;s opener), but not down.
         </p>
       </div>
 
@@ -100,7 +105,15 @@ export default async function AdminShowsPage() {
               <ShowSetCountForm
                 showId={show.id}
                 setCount={show.setCount}
-                submissionCount={show._count.submissions}
+                submissionCount={show.submissions.length}
+                submissionsNeedingUpdate={
+                  show.submissions.filter(
+                    (submission) =>
+                      getPickUpdateNeeded(submission.picks, show.setCount) !==
+                      null
+                  ).length
+                }
+                isLocked={!!show.lockTime && show.lockTime <= now}
               />
             </div>
           ))}

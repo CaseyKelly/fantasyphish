@@ -111,3 +111,57 @@ export function validatePicks(
 
   return null
 }
+
+export interface PickUpdateNeeded {
+  // Sets that have no opener pick yet
+  missingOpenerSets: number[]
+  // Regular picks over the show's regular-pick limit
+  extraRegularPicks: number
+}
+
+/**
+ * What a saved submission still needs after an admin raised the show's set
+ * count, or null if it already matches the show. Saved picks keep scoring
+ * as they are in the meantime - this only drives the "update your picks"
+ * prompts.
+ */
+export function getPickUpdateNeeded(
+  picks: Pick<PickInput, "pickType" | "openerSet">[],
+  setCount: number
+): PickUpdateNeeded | null {
+  const pickedSets = new Set(
+    picks.filter((p) => p.pickType === "OPENER").map((p) => p.openerSet ?? 1)
+  )
+  const missingOpenerSets = getOpenerSets(setCount).filter(
+    (set) => !pickedSets.has(set)
+  )
+  const regularCount = picks.filter((p) => p.pickType === "REGULAR").length
+  const extraRegularPicks = Math.max(
+    0,
+    regularCount - getRegularPickCount(setCount)
+  )
+  if (missingOpenerSets.length === 0 && extraRegularPicks === 0) return null
+  return { missingOpenerSets, extraRegularPicks }
+}
+
+/** e.g. "Choose a Set 2 opener and remove 1 regular pick" */
+export function describePickUpdateNeeded(needed: PickUpdateNeeded): string {
+  const parts: string[] = []
+  if (needed.missingOpenerSets.length > 0) {
+    const sets = needed.missingOpenerSets.map((set) => `Set ${set}`)
+    parts.push(
+      sets.length === 1
+        ? `choose a ${sets[0]} opener`
+        : `choose ${sets.join(" and ")} openers`
+    )
+  }
+  if (needed.extraRegularPicks > 0) {
+    parts.push(
+      `remove ${needed.extraRegularPicks} regular pick${
+        needed.extraRegularPicks === 1 ? "" : "s"
+      }`
+    )
+  }
+  const text = parts.join(" and ")
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}

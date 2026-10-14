@@ -139,7 +139,7 @@ test.describe("Admin show lock time overrides", () => {
     }
   })
 
-  test("should let an admin change a show's set count until someone picks", async ({
+  test("should only let a show's set count go up once someone has picked", async ({
     page,
     createAdmin,
     prisma,
@@ -186,44 +186,72 @@ test.describe("Admin show lock time overrides", () => {
       const row = page.getByTestId(`show-set-count-${show.id}`)
       await expect(row).toContainText("2 sets")
 
-      await row.getByLabel("Sets").selectOption("3")
+      // Before anyone picks, the set count can go down as well as up
+      await row.getByLabel("Sets").selectOption("1")
       await row.getByRole("button", { name: "Save sets" }).click()
-      await expect(row).toContainText("3 sets", { timeout: 10000 })
-      await expect(row).toContainText("9 regular")
+      await expect(row).toContainText("1 set", { timeout: 10000 })
+      await expect(row).toContainText("11 regular")
 
-      const updated = await prisma.show.findUnique({ where: { id: show.id } })
-      expect(updated?.setCount).toBe(3)
-
-      // Once anyone has submitted picks, the set count is frozen
+      // Someone picks under the one-set rules
       const admin = await prisma.user.findUnique({
         where: { email: adminEmail.toLowerCase() },
       })
-      const songs = await prisma.song.findMany({ take: 1 })
-      if (songs.length < 1) throw new Error("Not enough songs in database")
+      const songs = await prisma.song.findMany({ take: 13 })
+      if (songs.length < 13) throw new Error("Not enough songs in database")
       await prisma.submission.create({
         data: {
           userId: admin!.id,
           showId: show.id,
           picks: {
-            create: [{ songId: songs[0].id, pickType: "OPENER", openerSet: 1 }],
+            create: [
+              { songId: songs[0].id, pickType: "OPENER", openerSet: 1 },
+              { songId: songs[1].id, pickType: "ENCORE" },
+              ...songs.slice(2, 13).map((song) => ({
+                songId: song.id,
+                pickType: "REGULAR" as const,
+              })),
+            ],
           },
         },
       })
 
       await page.reload()
-      await expect(row).toContainText("Locked: 1 submission")
-      await expect(row.getByLabel("Sets")).toHaveCount(0)
+      await expect(row).toContainText(
+        "1 submission in — the set count can only go up"
+      )
 
-      const response = await page.request.post(
+      // Raising still works, and flags the submission as needing an update
+      await row.getByLabel("Sets").selectOption("2")
+      await expect(row).toContainText("asks everyone who already picked")
+      await row.getByRole("button", { name: "Save sets" }).click()
+      await expect(row).toContainText("2 sets", { timeout: 10000 })
+      await expect(row).toContainText("1 submission needs updating")
+
+      const raised = await prisma.show.findUnique({ where: { id: show.id } })
+      expect(raised?.setCount).toBe(2)
+
+      // Lowering is refused once picks are in
+      const lowerResponse = await page.request.post(
         "/api/admin/set-show-set-count",
         { data: { showId: show.id, setCount: 1 } }
       )
-      expect(response.status()).toBe(409)
+      expect(lowerResponse.status()).toBe(409)
+
+      // Nothing can change once picks have locked
+      await prisma.show.update({
+        where: { id: show.id },
+        data: { lockTime: new Date(Date.now() - 60 * 1000) },
+      })
+      const lockedResponse = await page.request.post(
+        "/api/admin/set-show-set-count",
+        { data: { showId: show.id, setCount: 3 } }
+      )
+      expect(lockedResponse.status()).toBe(400)
 
       const unchanged = await prisma.show.findUnique({
         where: { id: show.id },
       })
-      expect(unchanged?.setCount).toBe(3)
+      expect(unchanged?.setCount).toBe(2)
     } finally {
       await prisma.show.delete({ where: { id: show.id } })
     }

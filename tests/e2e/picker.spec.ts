@@ -1009,4 +1009,114 @@ test.describe("Song Picker Flow", () => {
       await prisma.show.delete({ where: { id: show.id } })
     }
   })
+
+  test("should prompt a user whose saved picks predate a raised set count to update them", async ({
+    page,
+    createUser,
+    prisma,
+  }) => {
+    const userUsername = uniqueUsername("pickerraised")
+    const userEmail = `${userUsername}@example.com`
+    const userPassword = "PickerPassword123!"
+
+    await createUser({
+      email: userEmail,
+      username: userUsername,
+      password: userPassword,
+      verified: true,
+    })
+    const user = await prisma.user.findUnique({
+      where: { email: userEmail.toLowerCase() },
+    })
+
+    const futureDate = new Date()
+    futureDate.setDate(futureDate.getDate() + 36)
+
+    // Picked under one-set rules, then an admin raised the show to two sets
+    const show = await prisma.show.create({
+      data: {
+        venue: "Test Venue Raised Sets",
+        city: "Test City",
+        state: "NY",
+        showDate: futureDate,
+        setCount: 2,
+        isComplete: false,
+      },
+    })
+
+    try {
+      const songs = await prisma.song.findMany({
+        take: 14,
+        orderBy: { name: "asc" },
+      })
+      if (songs.length < 14) throw new Error("Not enough songs in database")
+      const regulars = songs.slice(2, 13)
+
+      await prisma.submission.create({
+        data: {
+          userId: user!.id,
+          showId: show.id,
+          picks: {
+            create: [
+              { songId: songs[0].id, pickType: "OPENER", openerSet: 1 },
+              { songId: songs[1].id, pickType: "ENCORE" },
+              ...regulars.map((song) => ({
+                songId: song.id,
+                pickType: "REGULAR" as const,
+              })),
+            ],
+          },
+        },
+      })
+
+      await page.goto("/login")
+      await page.getByPlaceholder("Email address").fill(userEmail)
+      await page.getByPlaceholder("Password").fill(userPassword)
+      await page.click('button[type="submit"]')
+      await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
+
+      await page.goto(`/pick/${show.id}`)
+      const banner = page.getByRole("status").filter({
+        hasText: "This show now has 2 sets",
+      })
+      await expect(banner).toContainText(
+        "Choose a Set 2 opener and remove 1 regular pick"
+      )
+      await expect(page.getByText("Remove 1", { exact: true })).toBeVisible()
+
+      // Drop one regular pick to make room
+      await page.getByRole("button", { name: /Regular Picks/ }).click()
+      await page
+        .getByRole("button", { name: `Remove ${regulars[10].name}` })
+        .click()
+      await expect(banner).toContainText("Choose a Set 2 opener")
+
+      // Fill the new Set 2 opener slot
+      await page.getByRole("button", { name: /Set 2 Opener Pick/ }).click()
+      await page.getByLabel("Search songs").fill(songs[13].name)
+      await page.getByRole("button", { name: songs[13].name }).first().click()
+      await expect(banner).toContainText("Click update to save your changes")
+
+      await page.getByRole("button", { name: /Update Picks/ }).click()
+      await expect(page.getByText("Picks updated successfully!")).toBeVisible()
+
+      const submission = await prisma.submission.findFirst({
+        where: { showId: show.id },
+        include: { picks: true },
+      })
+      const openers = submission?.picks
+        .filter((p) => p.pickType === "OPENER")
+        .map((p) => ({ songId: p.songId, openerSet: p.openerSet }))
+        .sort((a, b) => (a.openerSet ?? 0) - (b.openerSet ?? 0))
+      expect(openers).toEqual([
+        { songId: songs[0].id, openerSet: 1 },
+        { songId: songs[13].id, openerSet: 2 },
+      ])
+      expect(
+        submission?.picks.filter((p) => p.pickType === "REGULAR")
+      ).toHaveLength(10)
+    } finally {
+      await prisma.show.delete({ where: { id: show.id } })
+    }
+  })
 })
