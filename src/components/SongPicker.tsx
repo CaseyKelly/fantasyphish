@@ -27,9 +27,11 @@ import { LiveBadge } from "@/components/LiveBadge"
 import { useFocusTrap } from "@/hooks/useFocusTrap"
 import { readPickDraft, writePickDraft, clearPickDraft } from "@/lib/pickDraft"
 import {
+  describePickUpdateNeeded,
   getOpenerLabel,
   getOpenerSet,
   getOpenerSets,
+  getPickUpdateNeeded,
   getRegularPickCount,
   POINTS,
   TOTAL_PICKS,
@@ -496,6 +498,28 @@ export function SongPicker({
     !!encorePick &&
     regularPicks.length === regularCount
 
+  // Saved picks made before an admin raised the show's set count. They keep
+  // scoring as they are, but need the new set openers (and room made for
+  // them among the regular picks) before they can be saved again.
+  const savedPicksNeedUpdate =
+    !isLocked &&
+    !!existingPicks &&
+    existingPicks.length > 0 &&
+    getPickUpdateNeeded(existingPicks, setCount) !== null
+  const currentUpdateNeeded = getPickUpdateNeeded(
+    [
+      ...openerPicks.filter((p): p is Pick => p !== null),
+      ...(encorePick ? [encorePick] : []),
+      ...regularPicks,
+    ],
+    setCount
+  )
+  const extraRegularPicks = currentUpdateNeeded?.extraRegularPicks ?? 0
+  const remainingText =
+    extraRegularPicks > 0 && currentUpdateNeeded
+      ? describePickUpdateNeeded(currentUpdateNeeded)
+      : `${TOTAL_PICKS - selectedSongIds.size} picks remaining`
+
   const getOpenerTitle = (set: number) => getOpenerLabel(set, setCount)
 
   const renderSongList = (slot: Slot) => (
@@ -663,7 +687,13 @@ export function SongPicker({
 
           {/* Song List */}
           <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
-            {isRegular && picks.length === regularCount ? (
+            {isRegular && picks.length > regularCount ? (
+              <p className="text-center text-yellow-400 py-4">
+                Remove {picks.length - regularCount} regular{" "}
+                {picks.length - regularCount === 1 ? "pick" : "picks"} above to
+                make room
+              </p>
+            ) : isRegular && picks.length === regularCount ? (
               <p className="text-center text-green-400 py-4">
                 All {regularCount} regular picks selected!
               </p>
@@ -915,7 +945,11 @@ export function SongPicker({
               </div>
               <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                 {isRegular ? (
-                  pickCount === regularCount ? (
+                  (pickCount || 0) > regularCount ? (
+                    <span className="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-sm font-medium whitespace-nowrap">
+                      Remove {(pickCount || 0) - regularCount}
+                    </span>
+                  ) : pickCount === regularCount ? (
                     <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium whitespace-nowrap">
                       Complete
                     </span>
@@ -975,7 +1009,13 @@ export function SongPicker({
                 ))}
               </div>
             )}
-            {isRegular && pickCount === regularCount ? (
+            {isRegular && (pickCount || 0) > regularCount ? (
+              <p className="text-center text-yellow-400 py-4">
+                Remove {(pickCount || 0) - regularCount} regular{" "}
+                {(pickCount || 0) - regularCount === 1 ? "pick" : "picks"} above
+                to make room
+              </p>
+            ) : isRegular && pickCount === regularCount ? (
               <p className="text-center text-green-400 py-4">
                 All {regularCount} regular picks selected!
               </p>
@@ -1054,6 +1094,29 @@ export function SongPicker({
                     <X aria-hidden="true" className="h-5 w-5" />
                   </button>
                 )}
+              </div>
+            )}
+
+            {savedPicksNeedUpdate && (
+              <div
+                role="status"
+                className="mb-4 flex items-start gap-3 rounded-xl border-2 border-yellow-500/50 bg-yellow-500/10 p-3 sm:p-4"
+              >
+                <AlertCircle
+                  aria-hidden="true"
+                  className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5"
+                />
+                <div className="text-sm">
+                  <p className="font-medium text-white">
+                    This show now has {setCount} sets
+                  </p>
+                  <p className="text-gray-300">
+                    {currentUpdateNeeded
+                      ? `${describePickUpdateNeeded(currentUpdateNeeded)}, then update your picks.`
+                      : "Click update to save your changes."}{" "}
+                    Your saved picks still count until you do.
+                  </p>
+                </div>
               </div>
             )}
 
@@ -1147,10 +1210,10 @@ export function SongPicker({
                         ? existingPicks
                           ? "Click update to save your changes"
                           : "Click submit to save your picks"
-                        : `${TOTAL_PICKS - selectedSongIds.size} picks remaining — not yet saved`
+                        : `${remainingText} — not yet saved`
                       : isComplete
                         ? "All picks completed"
-                        : `${TOTAL_PICKS - selectedSongIds.size} picks remaining`}
+                        : remainingText}
                 </p>
               </div>
             </div>

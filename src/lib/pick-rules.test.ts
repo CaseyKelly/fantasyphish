@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest"
 import {
+  describePickUpdateNeeded,
   getMaxPoints,
   getOpenerLabel,
   getOpenerSets,
+  getPickUpdateNeeded,
   getRegularPickCount,
   isValidSetCount,
   validatePicks,
@@ -108,5 +110,45 @@ describe("validatePicks", () => {
     const picks = buildPicks(1)
     picks[2] = { ...picks[2], songId: picks[0].songId }
     expect(validatePicks(picks, 1)).toBe("You cannot pick the same song twice")
+  })
+})
+
+describe("getPickUpdateNeeded", () => {
+  it("is null when the picks already match the show", () => {
+    expect(getPickUpdateNeeded(buildPicks(2), 2)).toBeNull()
+  })
+
+  it("asks a one-set submission on a now two-set show for a Set 2 opener and one fewer regular", () => {
+    expect(getPickUpdateNeeded(buildPicks(1), 2)).toEqual({
+      missingOpenerSets: [2],
+      extraRegularPicks: 1,
+    })
+  })
+
+  it("treats legacy opener picks without a set number as Set 1", () => {
+    const legacy = buildPicks(1).map((p) =>
+      p.pickType === "OPENER" ? { ...p, openerSet: null } : p
+    )
+    expect(getPickUpdateNeeded(legacy, 3)).toEqual({
+      missingOpenerSets: [2, 3],
+      extraRegularPicks: 2,
+    })
+  })
+})
+
+describe("describePickUpdateNeeded", () => {
+  it("reads naturally for one missing set", () => {
+    expect(
+      describePickUpdateNeeded({ missingOpenerSets: [2], extraRegularPicks: 1 })
+    ).toBe("Choose a Set 2 opener and remove 1 regular pick")
+  })
+
+  it("reads naturally for two missing sets", () => {
+    expect(
+      describePickUpdateNeeded({
+        missingOpenerSets: [2, 3],
+        extraRegularPicks: 2,
+      })
+    ).toBe("Choose Set 2 and Set 3 openers and remove 2 regular picks")
   })
 })

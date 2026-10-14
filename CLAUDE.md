@@ -78,7 +78,7 @@ The scoring logic is split between:
 - `Show.setCount` (1-3, default 2) is set by admins on `/admin/shows`; sync-tours never touches it
 - Each opener pick stores which set it's for in `Pick.openerSet` (picks made before this existed are set 1 openers)
 - `validatePicks()` is the single source of truth for a valid submission, shared by `/api/picks` and guest registration
-- The set count freezes once a show has any submission (`/api/admin/set-show-set-count` returns 409), so existing picks always match the show
+- Once a show has any submission its set count can only go up (lowering returns 409; nothing changes after lock). Raising leaves existing submissions short an opener: they keep scoring as saved, `getPickUpdateNeeded()` flags them, and the picker shows a banner asking the user to add the new set opener and drop the extra regular pick(s)
 - A set's opener pick settles as a miss if a later set or the encore starts without that set, or once the show is final
 
 ### Timezone-Aware Locking (`src/lib/timezone.ts`)

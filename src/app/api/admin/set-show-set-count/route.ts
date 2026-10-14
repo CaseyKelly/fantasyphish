@@ -3,7 +3,11 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { withRetry } from "@/lib/db-retry"
 import { isAdminFeaturesEnabled } from "@/lib/env"
-import { MAX_SET_COUNT, MIN_SET_COUNT } from "@/lib/pick-rules"
+import {
+  getPickUpdateNeeded,
+  MAX_SET_COUNT,
+  MIN_SET_COUNT,
+} from "@/lib/pick-rules"
 import { z } from "zod"
 
 const setSetCountSchema = z.object({
@@ -37,29 +41,67 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Existing submissions were built for the current number of opener
-    // slots, so the set count is frozen once anyone has picked. The
-    // no-submissions condition lives in the update itself so a submission
-    // landing between a separate check and this write can't slip through.
-    const { count } = await withRetry(
-      () =>
-        prisma.show.updateMany({
-          where: { id: showId, isComplete: false, submissions: { none: {} } },
-          data: { setCount },
-        }),
-      { operationName: "set show set count" }
-    )
-    if (count === 0) {
+    if (show.lockTime && show.lockTime <= new Date()) {
       return NextResponse.json(
-        {
-          error:
-            "Picks have already been submitted for this show, so its set count can't change",
-        },
-        { status: 409 }
+        { error: "Picks have already locked for this show" },
+        { status: 400 }
       )
     }
 
-    return NextResponse.json({ success: true, show: { id: showId, setCount } })
+    if (setCount < show.setCount) {
+      // Lowering would leave existing opener picks pointing at a set the
+      // show no longer has, so it's only allowed before anyone has picked.
+      // The no-submissions condition lives in the update itself so a
+      // submission landing between a separate check and this write can't
+      // slip through.
+      const { count } = await withRetry(
+        () =>
+          prisma.show.updateMany({
+            where: { id: showId, isComplete: false, submissions: { none: {} } },
+            data: { setCount },
+          }),
+        { operationName: "lower show set count" }
+      )
+      if (count === 0) {
+        return NextResponse.json(
+          {
+            error:
+              "Picks have already been submitted for this show, so its set count can only go up",
+          },
+          { status: 409 }
+        )
+      }
+    } else if (setCount > show.setCount) {
+      // Raising is safe with picks in: saved submissions keep scoring as
+      // they are, and the picker prompts their owners to add the new set
+      // openers (see getPickUpdateNeeded).
+      await withRetry(
+        () =>
+          prisma.show.update({
+            where: { id: showId },
+            data: { setCount },
+          }),
+        { operationName: "raise show set count" }
+      )
+    }
+
+    const submissions = await withRetry(
+      () =>
+        prisma.submission.findMany({
+          where: { showId },
+          select: { picks: { select: { pickType: true, openerSet: true } } },
+        }),
+      { operationName: "find submissions for set count" }
+    )
+    const submissionsNeedingUpdate = submissions.filter(
+      (submission) => getPickUpdateNeeded(submission.picks, setCount) !== null
+    ).length
+
+    return NextResponse.json({
+      success: true,
+      show: { id: showId, setCount },
+      submissionsNeedingUpdate,
+    })
   } catch (error) {
     console.error("[Admin] Set show set count error:", error)
 
