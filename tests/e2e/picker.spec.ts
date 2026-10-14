@@ -1084,6 +1084,14 @@ test.describe("Song Picker Flow", () => {
       )
       await expect(page.getByText("Remove 1", { exact: true })).toBeVisible()
 
+      // A reload restores the saved draft, which must keep all 11 regular
+      // picks for the user to choose from rather than dropping one for them
+      await page.reload()
+      await expect(page.getByText("Remove 1", { exact: true })).toBeVisible({
+        timeout: 20000,
+      })
+      await expect(page.getByText("11/10 selected")).toBeVisible()
+
       // Drop one regular pick to make room
       await page.getByRole("button", { name: /Regular Picks/ }).click()
       await page

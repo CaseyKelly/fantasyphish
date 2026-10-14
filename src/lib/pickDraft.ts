@@ -1,4 +1,4 @@
-import { getOpenerSets, getRegularPickCount } from "@/lib/pick-rules"
+import { getOpenerSets } from "@/lib/pick-rules"
 
 export interface DraftPick {
   songId: string
@@ -58,12 +58,11 @@ export function readPickDraft(
       return isValid(stored) ? { ...stored, openerSet: set } : null
     })
     const encorePick = isValid(parsed.encorePick) ? parsed.encorePick : null
-    // The show's set count can change before anyone submits, which can
-    // shrink the number of regular slots - drop any overflow
+    // Keep every regular pick even if the show's set count went up and
+    // shrank the regular slots - the picker asks the user which to remove
+    // rather than dropping one for them
     const regularPicks: DraftPick[] = Array.isArray(parsed.regularPicks)
-      ? parsed.regularPicks
-          .filter(isValid)
-          .slice(0, getRegularPickCount(setCount))
+      ? parsed.regularPicks.filter(isValid)
       : []
 
     if (

@@ -518,7 +518,9 @@ export function SongPicker({
   const remainingText =
     extraRegularPicks > 0 && currentUpdateNeeded
       ? describePickUpdateNeeded(currentUpdateNeeded)
-      : `${TOTAL_PICKS - selectedSongIds.size} picks remaining`
+      : `${TOTAL_PICKS - selectedSongIds.size} ${
+          TOTAL_PICKS - selectedSongIds.size === 1 ? "pick" : "picks"
+        } remaining`
 
   const getOpenerTitle = (set: number) => getOpenerLabel(set, setCount)
 
