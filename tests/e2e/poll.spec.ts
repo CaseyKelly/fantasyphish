@@ -45,6 +45,13 @@ test.describe("Set 2 Opener format poll", () => {
     })
     expect(vote?.option).toBe("yes")
 
+    // Voting earns the Sample in a Jar achievement
+    const award = await prisma.userAchievement.findFirst({
+      where: { userId: user.id, achievement: { slug: "sample-in-a-jar" } },
+      include: { achievement: true },
+    })
+    expect(award?.achievement.name).toBe("Sample in a Jar")
+
     // Returning to the page shows results instead of asking again
     await page.reload()
     await expect(page.getByText("Your vote")).toBeVisible()

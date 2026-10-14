@@ -106,6 +106,13 @@ export const ACHIEVEMENT_DEFINITIONS = {
     icon: "🦦",
     category: "SPECIAL" as AchievementCategory,
   },
+  SAMPLE_IN_A_JAR: {
+    slug: "sample-in-a-jar",
+    name: "Sample in a Jar",
+    description: "Dropped your ballot in the jar by voting in a site poll",
+    icon: "🫙",
+    category: "PARTICIPATION" as AchievementCategory,
+  },
   // Future achievement examples:
   // SUMMER_TOUR_2025_CHAMPION: {
   //   slug: "summer-tour-2025-champion",

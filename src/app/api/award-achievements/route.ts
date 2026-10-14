@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import {
   ACHIEVEMENT_DEFINITIONS,
@@ -26,26 +27,22 @@ export async function POST(request: Request) {
   )
 
   try {
-    // Verify cron secret (optional to configure, but enforced when CRON_SECRET is set)
-    // Vercel cron jobs send "Vercel-Cron" as user-agent and are allowed without CRON_SECRET
-    // Manual triggers require the correct CRON_SECRET when it is configured
+    // Require the exact Bearer secret and fail closed when it's unset.
+    // Vercel cron sends this header automatically when CRON_SECRET is
+    // configured; a User-Agent is spoofable, so it's never proof of origin.
     const authHeader = request.headers.get("authorization")
-    const userAgent = request.headers.get("user-agent")
-    const token = authHeader?.replace("Bearer ", "")
     const cronSecret = process.env.CRON_SECRET
-    const isVercelCron = userAgent === "Vercel-Cron"
 
-    console.log(
-      `[AwardAchievements:POST] Auth check: cronSecret=${cronSecret ? "SET" : "NOT_SET"}, authHeader=${authHeader ? "PROVIDED" : "MISSING"}, isVercelCron=${isVercelCron}`
-    )
-
-    // Allow requests from:
-    // 1. Vercel cron (user-agent: "Vercel-Cron")
-    // 2. Manual triggers with correct CRON_SECRET
-    if (!isVercelCron && cronSecret && token !== cronSecret) {
-      console.error(
-        "[AwardAchievements:POST] Unauthorized: not Vercel cron and invalid/missing CRON_SECRET"
+    if (!cronSecret) {
+      console.error("[AwardAchievements:POST] CRON_SECRET not configured")
+      return NextResponse.json(
+        { error: "CRON_SECRET not configured" },
+        { status: 500 }
       )
+    }
+
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      console.error("[AwardAchievements:POST] Unauthorized request")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -58,6 +55,11 @@ export async function POST(request: Request) {
     // runs regardless of the shouldRunCronJobs() check below.
     const notificationsResults = await awardNotificationsAchievement()
     results.push(notificationsResults)
+
+    // Award SAMPLE_IN_A_JAR to everyone who has voted in a poll (backfills
+    // voters from before the achievement existed).
+    const pollVoterResults = await awardPollVoterAchievement()
+    results.push(pollVoterResults)
 
     // Award show-streak milestones. Also runs regardless of active tours so
     // the first deploy backfills everyone's existing best streaks.
@@ -280,8 +282,15 @@ async function awardAchievement(
   }
 }
 
-async function awardNotificationsAchievement() {
-  const achievementDef = ACHIEVEMENT_DEFINITIONS.ICCULUS
+// Awards a one-off achievement to every user matching `where`, skipping
+// anyone who already has it. Backfills existing users and catches anyone
+// whose inline award at action time was missed.
+async function awardAchievementToMatchingUsers(
+  achievementKey: "ICCULUS" | "SAMPLE_IN_A_JAR",
+  where: Prisma.UserWhereInput,
+  usersLabel: string
+) {
+  const achievementDef = ACHIEVEMENT_DEFINITIONS[achievementKey]
 
   console.log(
     `[AwardAchievements:POST] ${achievementDef.icon} Awarding ${achievementDef.name} achievements...`
@@ -313,25 +322,14 @@ async function awardNotificationsAchievement() {
     `[AwardAchievements:POST] ✓ Achievement record ready: ${achievement.name}`
   )
 
-  // 2. Find all users who have email reminders or push notifications enabled
-  // (covers both existing opted-in users and anyone whose inline award at
-  // opt-in time was missed)
+  // 2. Find all qualifying users
   const users = await withRetry(
-    () =>
-      prisma.user.findMany({
-        where: {
-          OR: [
-            { emailPickReminders: true },
-            { pushSubscriptions: { some: {} } },
-          ],
-        },
-        select: { id: true },
-      }),
-    { operationName: "find users with notifications enabled" }
+    () => prisma.user.findMany({ where, select: { id: true } }),
+    { operationName: `find users ${usersLabel}` }
   )
 
   console.log(
-    `[AwardAchievements:POST] Found ${users.length} users with notifications enabled`
+    `[AwardAchievements:POST] Found ${users.length} users ${usersLabel}`
   )
 
   if (users.length === 0) {
@@ -368,6 +366,24 @@ async function awardNotificationsAchievement() {
     skipped,
     total: users.length,
   }
+}
+
+function awardNotificationsAchievement() {
+  return awardAchievementToMatchingUsers(
+    "ICCULUS",
+    {
+      OR: [{ emailPickReminders: true }, { pushSubscriptions: { some: {} } }],
+    },
+    "with notifications enabled"
+  )
+}
+
+function awardPollVoterAchievement() {
+  return awardAchievementToMatchingUsers(
+    "SAMPLE_IN_A_JAR",
+    { pollVotes: { some: {} } },
+    "who voted in a poll"
+  )
 }
 
 async function awardStreakAchievements() {
