@@ -71,6 +71,8 @@ The scoring logic is split between:
 - Set opener (first song of each set, one pick per set): 3 points each
 - Encore (any song in encore): 3 points
 - Regular (fills the rest of the 13 picks, anywhere): 1 point each
+- An opener/encore pick played outside its slot still earns 1 point, like a regular pick (the slot is a bonus, never a penalty)
+- `Pick.wasPlayed` means "played anywhere"; a slot hit is `isSlotHit()` (`pointsEarned` reached the full 3), which drives PERFECT_OPENER/PERFECT_CLOSER and profile hit rates
 - Maximum depends on `Show.setCount`: 17 (1 set), 19 (2 sets, the default), 21 (3 sets) - see `getMaxPoints()`
 
 **Set counts (`src/lib/pick-rules.ts`):**
@@ -79,7 +81,7 @@ The scoring logic is split between:
 - Each opener pick stores which set it's for in `Pick.openerSet` (picks made before this existed are set 1 openers)
 - `validatePicks()` is the single source of truth for a valid submission, shared by `/api/picks` and guest registration
 - Once a show has any submission its set count can only go up (lowering returns 409; nothing changes after lock). Raising leaves existing submissions short an opener: they keep scoring as saved, `getPickUpdateNeeded()` flags them, and the picker shows a banner asking the user to add the new set opener and drop the extra regular pick(s)
-- A set's opener pick settles as a miss if a later set or the encore starts without that set, or once the show is final
+- A set's opener slot settles once the set starts, a later set or the encore starts without that set, or the show is final; an unplayed pick then shows as a miss but still flips to 1 point if the song is played later
 
 ### Timezone-Aware Locking (`src/lib/timezone.ts`)
 
@@ -153,7 +155,7 @@ Important fields:
 - `Show.lastEncoreCount` - Track encore count to detect resets
 - `Submission.lastSongCount` - Track song count for progressive scoring
 - `Pick.openerSet` - Set an OPENER pick is for (null for encore/regular)
-- `Pick.wasPlayed` - Tri-state: null (not scored), true, false
+- `Pick.wasPlayed` - Tri-state: null (not scored), true (played anywhere in the show), false
 
 ### NextAuth v5 Setup (`src/lib/auth.ts`)
 

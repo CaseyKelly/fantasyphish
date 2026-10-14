@@ -7,6 +7,7 @@ import {
   earnedStreakAchievements,
 } from "@/lib/achievements"
 import { getStreaksForAllUsers } from "@/lib/streaks"
+import { POINTS } from "@/lib/pick-rules"
 import { shouldRunCronJobs } from "@/lib/cron-helpers"
 import { withRetry } from "@/lib/db-retry"
 
@@ -177,7 +178,9 @@ async function awardAchievement(
       prisma.pick.findMany({
         where: {
           pickType: pickType,
-          wasPlayed: true,
+          // Landed in its slot - an opener/encore pick played elsewhere in
+          // the show only earns regular points
+          pointsEarned: { gte: POINTS[pickType] },
         },
         include: {
           submission: {

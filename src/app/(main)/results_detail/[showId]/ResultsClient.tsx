@@ -267,7 +267,10 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
       pickType = getOpenerLabel(userPick.openerSet, show.setCount)
       points = userPick.pointsEarned || 0
       isCorrectPosition = true
-    } else if (userPick.pickType === "ENCORE") {
+    } else if (
+      userPick.pickType === "ENCORE" &&
+      setName.toLowerCase() === "e"
+    ) {
       pickType = "Encore"
       points = userPick.pointsEarned || 0
       isCorrectPosition = true
@@ -276,14 +279,13 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
       points = userPick.pointsEarned || 0
       isCorrectPosition = true
     } else {
-      // Song was picked but not in the right position (e.g., picked as opener but wasn't)
+      // Opener/encore pick played outside its slot - still earns regular
+      // points, the slot bonus just didn't land
       pickType =
         userPick.pickType === "OPENER"
-          ? `${getOpenerLabel(userPick.openerSet, show.setCount)} (wrong)`
-          : userPick.pickType === "ENCORE"
-            ? "Encore (wrong)"
-            : "Pick"
-      points = 0
+          ? `${getOpenerLabel(userPick.openerSet, show.setCount)} pick (played elsewhere)`
+          : "Encore pick (played elsewhere)"
+      points = userPick.pointsEarned || 0
       isCorrectPosition = false
     }
 
@@ -524,7 +526,7 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
           {/* Encore */}
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-slate-400 uppercase mb-2">
-              Encore (3 pts)
+              Encore ({POINTS.ENCORE} pts)
             </h3>
             <div className="space-y-2">
               {encorePicks.map((pick) => (

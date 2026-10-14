@@ -60,6 +60,19 @@ export function getOpenerLabel(
   return `Set ${openerSet ?? 1} Opener`
 }
 
+/**
+ * Whether an opener/encore pick landed in its slot (and earned the full
+ * bonus), as opposed to only being played somewhere else in the show.
+ * `wasPlayed` means "played anywhere", so the slot hit comes from points.
+ */
+export function isSlotHit(pick: {
+  pickType: PickTypeName
+  pointsEarned: number | null | undefined
+}): boolean {
+  if (pick.pickType === "REGULAR") return false
+  return (pick.pointsEarned ?? 0) >= POINTS[pick.pickType]
+}
+
 /** Opener picks predate `openerSet`; treat a missing value as set 1. */
 export function getOpenerSet(pick: { openerSet?: number | null }): number {
   return pick.openerSet ?? 1

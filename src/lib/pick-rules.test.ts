@@ -1,12 +1,14 @@
 import { describe, it, expect } from "vitest"
 import {
   describePickUpdateNeeded,
+  isSlotHit,
   getMaxPoints,
   getOpenerLabel,
   getOpenerSets,
   getPickUpdateNeeded,
   getRegularPickCount,
   isValidSetCount,
+  POINTS,
   validatePicks,
   type PickInput,
 } from "./pick-rules"
@@ -150,5 +152,28 @@ describe("describePickUpdateNeeded", () => {
         extraRegularPicks: 2,
       })
     ).toBe("Choose Set 2 and Set 3 openers and remove 2 regular picks")
+  })
+})
+
+describe("isSlotHit", () => {
+  it("is true only when an opener/encore pick earned its full points", () => {
+    expect(isSlotHit({ pickType: "OPENER", pointsEarned: POINTS.OPENER })).toBe(
+      true
+    )
+    expect(isSlotHit({ pickType: "ENCORE", pointsEarned: POINTS.ENCORE })).toBe(
+      true
+    )
+    // Played elsewhere in the show - regular points only
+    expect(
+      isSlotHit({ pickType: "OPENER", pointsEarned: POINTS.REGULAR })
+    ).toBe(false)
+    expect(isSlotHit({ pickType: "ENCORE", pointsEarned: 0 })).toBe(false)
+    expect(isSlotHit({ pickType: "OPENER", pointsEarned: null })).toBe(false)
+  })
+
+  it("is never true for regular picks", () => {
+    expect(
+      isSlotHit({ pickType: "REGULAR", pointsEarned: POINTS.REGULAR })
+    ).toBe(false)
   })
 })

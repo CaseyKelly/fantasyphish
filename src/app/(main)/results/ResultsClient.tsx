@@ -402,7 +402,9 @@ export default function ResultsClient({
                                     : "text-red-400"
                                 }`}
                               >
-                                {pick.wasPlayed ? "+3" : "0"}
+                                {pick.wasPlayed
+                                  ? `+${pick.pointsEarned ?? 0}`
+                                  : "0"}
                               </span>
                             </div>
                           )}

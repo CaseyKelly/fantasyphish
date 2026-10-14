@@ -365,7 +365,8 @@ export function HomeClient() {
                         Set Opener Picks
                       </p>
                       <p className="text-sm text-gray-400">
-                        Call the first song of each set
+                        Call the first song of each set &mdash; still 1 pt if
+                        it&apos;s played anywhere else
                       </p>
                     </div>
                   </div>
@@ -380,7 +381,8 @@ export function HomeClient() {
                     <div className="min-w-0">
                       <p className="font-semibold text-white">Encore Pick</p>
                       <p className="text-sm text-gray-400">
-                        Pick any song from the encore
+                        Pick any song from the encore &mdash; still 1 pt if
+                        it&apos;s played anywhere else
                       </p>
                     </div>
                   </div>
@@ -421,9 +423,9 @@ export function HomeClient() {
             </div>
             <p className="mt-4 text-sm text-gray-400 text-center">
               Every show gets one opener pick per set, so single-set and
-              three-set shows adjust how many regular picks you make. If a set
-              never happens &mdash; say, weather ends the show early &mdash; its
-              opener pick scores 0.
+              three-set shows adjust how many regular picks you make. Opener and
+              encore picks are never a penalty: they score like a regular pick
+              when the song is played outside their slot.
             </p>
           </div>
         </div>

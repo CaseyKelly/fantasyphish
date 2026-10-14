@@ -20,12 +20,19 @@
 - **Set opener**: 3 points each, one pick per set (must be the first song of
   the set it was picked for)
 - **Encore**: 3 points (must be in encore set)
+- **Opener/encore played elsewhere**: an opener or encore pick that misses its
+  slot but is played anywhere in the show earns 1 point, like a regular pick -
+  the slot is a bonus, never a penalty
 - **Regular**: 1 point each (anywhere in setlist); regular picks fill out the
   13, so there are 11 / 10 / 9 of them for 1 / 2 / 3-set shows
 - **Maximum**: 17 / 19 / 21 points for 1 / 2 / 3-set shows (see
   `getMaxPoints()` in `src/lib/pick-rules.ts`)
-- A set's opener pick settles as a miss once a later set or the encore starts
-  without that set, or once the show is final
+- An opener pick's slot settles once its set starts, a later set or the encore
+  starts without that set, or the show is final; an unplayed pick then shows
+  as a miss, but still flips to 1 point if the song is played later
+- `wasPlayed` means "played anywhere in the show" for every pick type; an
+  opener/encore slot hit is `pointsEarned` reaching the full 3 (`isSlotHit()`),
+  which is what Perfect Opener / Perfect Closer and the profile hit rates use
 
 ---
 
