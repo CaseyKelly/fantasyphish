@@ -53,33 +53,46 @@ export function scoreSubmission(
     let wasPlayed: boolean | null = null
     let pointsEarned = 0
 
-    if (pick.pickType === "OPENER") {
-      // Opener must match the first song of the set it was picked for
-      const setNumber = getOpenerSet(pick)
-      const setOpener = parsed.setOpeners[setNumber]
-      if (setOpener) {
-        wasPlayed = normalizeSongName(setOpener) === normalizedPickName
-        pointsEarned = wasPlayed ? POINTS.OPENER : 0
-      } else if (options.isFinal || hasShowMovedPastSet(parsed, setNumber)) {
-        wasPlayed = false
-      }
-      // Otherwise the set hasn't started yet, so wasPlayed stays null
-    } else if (pick.pickType === "ENCORE") {
-      // Encore must be in the encore set
-      if (parsed.encoreSongs.length > 0) {
-        wasPlayed = parsed.encoreSongs.some(
+    const playedAnywhere = parsed.allSongs.some(
+      (song) => normalizeSongName(song) === normalizedPickName
+    )
+
+    if (pick.pickType === "OPENER" || pick.pickType === "ENCORE") {
+      // Landing in the slot (opening the picked set, or in the encore) earns
+      // the full bonus. Otherwise the pick still counts like a regular pick
+      // if the song is played anywhere - a slot pick is never a penalty.
+      let inSlot: boolean
+      let slotSettled: boolean
+      if (pick.pickType === "OPENER") {
+        const setNumber = getOpenerSet(pick)
+        const setOpener = parsed.setOpeners[setNumber]
+        inSlot =
+          setOpener !== undefined &&
+          normalizeSongName(setOpener) === normalizedPickName
+        slotSettled =
+          setOpener !== undefined ||
+          Boolean(options.isFinal) ||
+          hasShowMovedPastSet(parsed, setNumber)
+      } else {
+        inSlot = parsed.encoreSongs.some(
           (song) => normalizeSongName(song) === normalizedPickName
         )
-        pointsEarned = wasPlayed ? POINTS.ENCORE : 0
-      } else if (options.isFinal) {
+        slotSettled = parsed.encoreSongs.length > 0 || Boolean(options.isFinal)
+      }
+
+      if (inSlot) {
+        wasPlayed = true
+        pointsEarned = POINTS[pick.pickType]
+      } else if (playedAnywhere) {
+        wasPlayed = true
+        pointsEarned = POINTS.REGULAR
+      } else if (slotSettled) {
         wasPlayed = false
       }
-      // If no encore yet, wasPlayed stays null
+      // Otherwise the slot hasn't happened yet, so wasPlayed stays null
     } else {
       // Regular pick - just needs to be played anywhere
-      wasPlayed = parsed.allSongs.some(
-        (song) => normalizeSongName(song) === normalizedPickName
-      )
+      wasPlayed = playedAnywhere
       pointsEarned = wasPlayed ? POINTS.REGULAR : 0
     }
 

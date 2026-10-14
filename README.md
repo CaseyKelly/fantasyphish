@@ -34,8 +34,9 @@ Fantasy sports for Phish fans: pick 13 songs before each show, score points live
 | Set opener (first song of each set, one per set) | 3 each |
 | Encore (any song in the encore)                  | 3      |
 | Regular (rest of the 13 picks, played anywhere)  | 1 each |
+| Opener/encore pick played anywhere else          | 1      |
 
-Admins mark each show as 1, 2 (the default) or 3 sets, which sets how many opener picks it gets. Regular picks fill out the 13, so a perfect show is worth **17 / 19 / 21 points** for 1 / 2 / 3 sets.
+Admins mark each show as 1, 2 (the default) or 3 sets, which sets how many opener picks it gets. Regular picks fill out the 13, so a perfect show is worth **17 / 19 / 21 points** for 1 / 2 / 3 sets. Opener and encore picks are a bonus, never a penalty: a song that misses its slot but is played anywhere in the show still earns 1 point like a regular pick.
 
 <table>
   <tr>

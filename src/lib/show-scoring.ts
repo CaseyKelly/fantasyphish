@@ -163,6 +163,7 @@ export async function scoreShow(
         return {
           ...scoredPick,
           previousWasPlayed: existingPick?.wasPlayed ?? null,
+          previousPointsEarned: existingPick?.pointsEarned ?? null,
         }
       })
 
