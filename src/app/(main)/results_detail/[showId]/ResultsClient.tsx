@@ -227,11 +227,39 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
   // Track which songs have already been displayed with points/badges
   const songsProcessed = new Set<string>()
 
+  // Where an opener/encore pick landed in its slot, keyed by song. A song
+  // can be played more than once, so the pick's badge goes on the in-slot
+  // occurrence when there is one, not just the first time it shows up.
+  const slotPositionBySong = new Map<string, number>()
+  for (const pick of submission.picks) {
+    const songKey = pick.song.toLowerCase().trim()
+    const slotSong =
+      pick.pickType === "OPENER"
+        ? setlistBySets?.[String(getOpenerSet(pick))]?.reduce<
+            SetlistSong | undefined
+          >(
+            (first, song) =>
+              !first || song.position < first.position ? song : first,
+            undefined
+          )
+        : pick.pickType === "ENCORE"
+          ? setlist?.songs?.find(
+              (song) =>
+                song.set.toLowerCase() === "e" &&
+                song.song.toLowerCase().trim() === songKey
+            )
+          : undefined
+    if (slotSong && slotSong.song.toLowerCase().trim() === songKey) {
+      slotPositionBySong.set(songKey, slotSong.position)
+    }
+  }
+
   // Helper function to check if a song was picked by the user
   const getSongPickInfo = (
     songName: string,
     setName: string,
-    isFirstOfSet: boolean
+    isFirstOfSet: boolean,
+    position: number
   ) => {
     // Check if this song was picked by the user
     const userPick = submission.picks.find(
@@ -243,6 +271,12 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
     }
 
     const songKey = songName.toLowerCase().trim()
+
+    // An opener/encore pick that landed in its slot shows only there
+    const slotPosition = slotPositionBySong.get(songKey)
+    if (slotPosition !== undefined && slotPosition !== position) {
+      return null
+    }
 
     // Check if this song has already been processed (appears earlier in setlist)
     const isFirstOccurrence = !songsProcessed.has(songKey)
@@ -411,7 +445,8 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
                       const pickInfo = getSongPickInfo(
                         song.song,
                         setName,
-                        songs.every((s) => s.position >= song.position)
+                        songs.every((s) => s.position >= song.position),
+                        song.position
                       )
                       return (
                         <div

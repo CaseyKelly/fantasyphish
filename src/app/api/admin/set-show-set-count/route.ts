@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { withRetry } from "@/lib/db-retry"
 import { isAdminFeaturesEnabled } from "@/lib/env"
+import { hasShowStarted } from "@/lib/phishnet"
 import {
   getPickUpdateNeeded,
   MAX_SET_COUNT,
@@ -41,7 +42,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (show.lockTime && show.lockTime <= new Date()) {
+    // Same lock rule as /api/picks (7 PM venue time, or the setlist has
+    // started), plus the stored lock time, so a set count never changes once
+    // users can no longer update their picks to match it
+    const showStarted =
+      (show.lockTime !== null && show.lockTime <= new Date()) ||
+      (await hasShowStarted(
+        show.showDate.toISOString().split("T")[0],
+        show.timezone,
+        show.state
+      ))
+    if (showStarted) {
       return NextResponse.json(
         { error: "Picks have already locked for this show" },
         { status: 400 }
