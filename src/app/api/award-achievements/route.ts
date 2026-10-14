@@ -27,26 +27,22 @@ export async function POST(request: Request) {
   )
 
   try {
-    // Verify cron secret (optional to configure, but enforced when CRON_SECRET is set)
-    // Vercel cron jobs send "Vercel-Cron" as user-agent and are allowed without CRON_SECRET
-    // Manual triggers require the correct CRON_SECRET when it is configured
+    // Require the exact Bearer secret and fail closed when it's unset.
+    // Vercel cron sends this header automatically when CRON_SECRET is
+    // configured; a User-Agent is spoofable, so it's never proof of origin.
     const authHeader = request.headers.get("authorization")
-    const userAgent = request.headers.get("user-agent")
-    const token = authHeader?.replace("Bearer ", "")
     const cronSecret = process.env.CRON_SECRET
-    const isVercelCron = userAgent === "Vercel-Cron"
 
-    console.log(
-      `[AwardAchievements:POST] Auth check: cronSecret=${cronSecret ? "SET" : "NOT_SET"}, authHeader=${authHeader ? "PROVIDED" : "MISSING"}, isVercelCron=${isVercelCron}`
-    )
-
-    // Allow requests from:
-    // 1. Vercel cron (user-agent: "Vercel-Cron")
-    // 2. Manual triggers with correct CRON_SECRET
-    if (!isVercelCron && cronSecret && token !== cronSecret) {
-      console.error(
-        "[AwardAchievements:POST] Unauthorized: not Vercel cron and invalid/missing CRON_SECRET"
+    if (!cronSecret) {
+      console.error("[AwardAchievements:POST] CRON_SECRET not configured")
+      return NextResponse.json(
+        { error: "CRON_SECRET not configured" },
+        { status: 500 }
       )
+    }
+
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      console.error("[AwardAchievements:POST] Unauthorized request")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
