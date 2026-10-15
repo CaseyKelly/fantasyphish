@@ -136,7 +136,9 @@ comment (no baseline on `main` yet) - every PR after that will.
 
 ### Claude Code Review (`claude-code-review.yml`)
 
-Runs on pull requests to `main` (skips drafts). Runs this repo's `/code-review`
+Runs on pull requests to `main` (skips drafts and bot-authored PRs such as
+Renovate's - claude-code-action rejects non-human actors, and dependency bumps
+are a non-goal of the skill). Runs this repo's `/code-review`
 skill and posts findings as inline PR review comments. Authenticates via workload
 identity federation (see above).
 
