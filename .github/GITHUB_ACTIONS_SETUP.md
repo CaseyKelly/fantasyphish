@@ -82,14 +82,18 @@ coverage on PRs.
   (`fail_ci_if_error: false`) - tests aren't blocked, you just won't get coverage
   comments until it's set
 
-#### `ANTHROPIC_API_KEY`
+#### Claude API access (no secret needed)
 
-Anthropic API key used by `claude-code-review.yml` to run this repo's `/code-review`
-skill against every PR and post findings as inline comments.
+`claude-code-review.yml` authenticates to the Claude API with workload identity
+federation instead of an `ANTHROPIC_API_KEY` secret: claude-code-action exchanges
+the workflow's GitHub OIDC token for a short-lived Anthropic token.
 
-- Get it from: https://console.anthropic.com/settings/keys
-- Without this secret, the review job's steps are skipped (the check passes with a
-  notice) and no review comment is posted - other workflows are unaffected
+- The federation rule, organization, service account, and workspace IDs live in
+  the workflow file - they aren't secrets; the federation rule (Claude Console >
+  identity federation) controls which repos and workflow events may use them
+- The rule must accept `pull_request` runs from this repo (OIDC subject
+  `repo:CaseyKelly/fantasyphish:pull_request`), or the review step fails auth
+- Fork PRs don't get an OIDC token, so the review can't run on them
 
 ## Workflows
 
@@ -133,8 +137,8 @@ comment (no baseline on `main` yet) - every PR after that will.
 ### Claude Code Review (`claude-code-review.yml`)
 
 Runs on pull requests to `main` (skips drafts). Runs this repo's `/code-review`
-skill and posts findings as inline PR review comments. Requires `ANTHROPIC_API_KEY`
-(see above).
+skill and posts findings as inline PR review comments. Authenticates via workload
+identity federation (see above).
 
 ### Database Cleanup (`cleanup-db-branches.yml`)
 
