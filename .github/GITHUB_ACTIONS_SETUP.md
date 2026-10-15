@@ -93,7 +93,7 @@ the workflow's GitHub OIDC token for a short-lived Anthropic token.
   identity federation) controls which repos and workflow events may use them
 - The rule must accept `pull_request` runs from this repo (OIDC subject
   `repo:CaseyKelly/fantasyphish:pull_request`), or the review step fails auth
-- Fork PRs don't get an OIDC token, so the review can't run on them
+- Fork PRs don't get an OIDC token, so the review job skips them
 
 ## Workflows
 

@@ -27,7 +27,11 @@ permissions:
 
 jobs:
   review:
-    if: github.event.pull_request.draft == false
+    # Fork PRs don't get an OIDC token, so federation can't authenticate them -
+    # skip rather than fail.
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository
     timeout-minutes: 15
     runs-on: ubuntu-latest
 
