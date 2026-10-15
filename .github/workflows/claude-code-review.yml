@@ -3,8 +3,11 @@ name: Claude Code Review
 # Runs this repo's own /code-review skill against every PR and posts findings
 # as inline PR comments, via https://github.com/anthropics/claude-code-action.
 #
-# Requires an ANTHROPIC_API_KEY repository secret (Settings > Secrets and
-# variables > Actions) - see .github/GITHUB_ACTIONS_SETUP.md.
+# Authenticates to the Claude API with workload identity federation: the
+# action exchanges this workflow's GitHub OIDC token for a short-lived
+# Anthropic token, so no API key is stored in the repo. The IDs below aren't
+# secrets - the federation rule in the Claude Console decides which repos and
+# workflows may use them. See .github/GITHUB_ACTIONS_SETUP.md.
 
 on:
   pull_request:
@@ -18,40 +21,33 @@ concurrency:
 permissions:
   contents: read
   pull-requests: write
-  # claude-code-action needs this to mint its GitHub token via OIDC, even
-  # when auth to the Anthropic API itself is via anthropic_api_key below -
-  # without it the action fails before ever reaching the Anthropic call.
+  # Required for workload identity federation (and for claude-code-action to
+  # mint its GitHub token) - the OIDC token is what gets exchanged.
   id-token: write
 
 jobs:
   review:
-    if: github.event.pull_request.draft == false
+    # Fork PRs don't get an OIDC token, so federation can't authenticate them -
+    # skip rather than fail.
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository
     timeout-minutes: 15
     runs-on: ubuntu-latest
-    # Skip (not fail) when the repo secret hasn't been configured yet, so
-    # this workflow degrades gracefully rather than showing a permanently
-    # red required check until ANTHROPIC_API_KEY is added. The `secrets`
-    # context isn't allowed in a job-level `if:` (GitHub rejects the whole
-    # workflow file), so expose whether it's set via env and gate the steps.
-    env:
-      HAS_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
 
     steps:
-      - name: Skip notice
-        if: env.HAS_ANTHROPIC_API_KEY != 'true'
-        run: echo "::notice::ANTHROPIC_API_KEY secret is not set; skipping Claude Code Review."
-
       - name: Checkout code
-        if: env.HAS_ANTHROPIC_API_KEY == 'true'
         uses: actions/checkout@v7
         with:
           fetch-depth: 1
 
       - name: Run /code-review
-        if: env.HAS_ANTHROPIC_API_KEY == 'true'
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          anthropic_federation_rule_id: fdrl_01TmCaWaq9mVwfpiZPfw4yGT
+          anthropic_organization_id: 0bcba049-4ac3-4743-8b46-9a5f1577d730
+          anthropic_service_account_id: svac_01AbVedmnFRZEjUrRLhfGtgi
+          anthropic_workspace_id: wrkspc_01Ey3dq8jZjJ6ztsTw3rLwJT
           # medium: fewer, high-confidence findings - tuned for unattended
           # per-PR runs so this doesn't flood every PR with low-confidence
           # noise. --comment posts findings as inline PR review comments
