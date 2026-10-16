@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Test the score cron endpoint locally or in production
-# Usage: ./test-score-cron.sh [production-url]
+# Usage: ./scripts/test-score-cron.sh [production-url]
 
 set -e
 

@@ -1,167 +1,183 @@
+<div align="center">
+
+<img src="public/android-chrome-192x192.png" alt="FantasyPhish donut logo" width="96" height="96" />
+
 # FantasyPhish
 
-A fantasy game for Phish fans. Pick 13 songs before each show, score points when they play your picks, and compete on the tour leaderboard.
+**You knew they'd bust out Fluffhead. Now prove it.**
+
+Fantasy sports for Phish fans: pick 13 songs before each show, score points live as the band plays them, and climb the tour leaderboard.
+
+### [▶ Play at fantasyphish.com](https://www.fantasyphish.com)
+
+[![CI](https://github.com/CaseyKelly/fantasyphish/actions/workflows/e2e-tests.yml/badge.svg)](https://github.com/CaseyKelly/fantasyphish/actions/workflows/e2e-tests.yml)
+[![Unit Tests](https://github.com/CaseyKelly/fantasyphish/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/CaseyKelly/fantasyphish/actions/workflows/unit-tests.yml)
+[![codecov](https://codecov.io/gh/CaseyKelly/fantasyphish/graph/badge.svg)](https://codecov.io/gh/CaseyKelly/fantasyphish)
+![Next.js 16](https://img.shields.io/badge/Next.js-16-000?logo=nextdotjs)
+![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-Postgres-2d3748?logo=prisma)
+[![License: MIT](https://img.shields.io/badge/License-MIT-c23a3a.svg)](LICENSE)
+
+<img src="docs/screenshots/landing.png" alt="FantasyPhish landing page with the song picker" width="100%" />
+
+</div>
+
+## How it works
+
+1. **Make your picks.** Before each show, choose an opener, an encore and 11 more songs from Phish's catalog. You can see how long it's been since each song was played.
+2. **Picks lock at 7 PM venue time.** That's 7 PM wherever the show is, whether it's Madison Square Garden or the Gorge.
+3. **Watch the points roll in.** Scores update live during the show as the setlist comes in from [phish.net](https://phish.net).
+4. **Climb the leaderboard.** Every tour has its own standings, with a podium for the top three.
+
+| Pick                                | Points        |
+| ----------------------------------- | ------------- |
+| Opener (first song of Set 1)        | 3             |
+| Encore (any song in the encore)     | 3             |
+| Regular (11 songs, played anywhere) | 1 each        |
+| **Perfect show**                    | **17 points** |
+
+<table>
+  <tr>
+    <td width="66%"><img src="docs/screenshots/leaderboard.png" alt="Tour leaderboard with podium" /></td>
+    <td width="34%"><img src="docs/screenshots/mobile.png" alt="Mobile song picker" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Tour leaderboard</sub></td>
+    <td align="center"><sub>Built for the lot: mobile-first, installable PWA</sub></td>
+  </tr>
+</table>
 
 ## Features
 
-- **Pick 13 Songs**: Select your opener (3 pts), encore (3 pts), and 11 regular songs (1 pt each)
-- **Timezone-Aware Locking**: Submissions lock at 7 PM in the venue's timezone
-- **Progressive Scoring**: Live score updates every 5 minutes as songs are played
-- **Real-Time Results**: View your scores with auto-refresh during shows
-- **Tour Leaderboards**: Compete with other fans on tour-based leaderboards
-- **Pick History**: View all your past submissions and scores
-- **Admin Panel**: Test scoring with random historical setlists
+- 🎯 **Live, progressive scoring.** A scheduled job re-scores every submission every 10 minutes during a show.
+- 🕖 **Locking by time zone.** Each show locks at 7 PM in the venue's own time zone, with a fallback that checks whether the setlist has already started.
+- 🏆 **Tour leaderboards** with podiums, averages and pick streaks.
+- 🍩 **Achievements with deep cuts:**
+  - **Helping Friendly Book:** summon Icculus by turning on notifications
+  - **Jackpot:** pick Harpua and have it played
+  - **Couch Tour → Tour Rat → Lot Lifer → Never Miss a Sunday Show:** pick streaks of 5, 10, 25 and 50 shows
+  - **Donut Devotee:** catch 20 donuts in the hidden Donut Catch mini-game
+  - **Sample in a Jar:** vote in a site poll
+  - …and more
+- 🔔 **Reminders** by email and web push at noon Mountain time on show days, sent only if you haven't picked yet.
+- 📱 **Installable PWA** with a service worker, so it works like an app on your phone.
+- 🗳️ **Polls**, user profiles, and admin tools for impersonating users and resetting shows.
 
-## Tech Stack
+## Under the hood
 
-- **Next.js 16** with App Router
-- **TypeScript** (Strict mode)
-- **Prisma** + PostgreSQL (Vercel Postgres)
-- **NextAuth.js v5** for authentication
-- **Tailwind CSS v4** for styling
-- **Resend** for email verification
-- **phish.net API** for setlist data
-- **Vercel Cron** for automated scoring and tour sync
+```mermaid
+flowchart LR
+    PN[(phish.net API)] -->|setlists, every 10 min| SC[Scoring job<br/>/api/score]
+    PN -->|tours & shows, daily| ST[Tour sync job]
+    PN -->|song stats, daily| SS[Song stats job]
+    SC -->|progressive scores<br/>+ inline achievements| DB[(Neon Postgres<br/>via Prisma)]
+    ST --> DB
+    SS --> DB
+    AA[Achievement backup job] --> DB
+    DB --> RM[Reminder job]
+    RM -->|email + web push| U((Players))
+    DB --> APP[Next.js 16 app<br/>on Vercel]
+    APP <--> U
+```
 
-## Getting Started
+### Problems that turned out to be interesting
+
+- **"When does the show start?"** Picks lock at 7 PM in the venue's time zone. `src/lib/timezone.ts` maps each venue's state or province to an IANA time zone and works out the exact lock time, daylight saving included. Vercel's scheduled jobs only run on fixed UTC times, so the reminder job is scheduled twice a day and only the run that lands at noon Mountain actually sends.
+- **When is a show over?** The setlist arrives song by song. If a show were marked complete as soon as an encore appeared, a double encore would be scored wrong. So the scoring job tracks when the encore started and how many songs it has. It waits 60 minutes after the last encore song, and restarts that wait whenever a new encore song shows up.
+- **Matching song names.** "Down with Disease" vs. "Down With Disease" vs. "Down with Disease " all count as the same song. Every comparison goes through one shared normalization function.
+- **Awarding achievements twice, safely.** Achievements are awarded during scoring as soon as they're earned. A daily backup job awards anything that was missed. Both paths are idempotent, so running them twice never awards anything twice.
+- **Preview deploys never touch production data.** Each pull request gets its own Neon database branch. The build applies migrations to that branch's database, and if the preview's database turns out to be production, it skips migrations instead of applying unmerged ones (`src/lib/migration-url.ts`). A stuck migration lock is recovered automatically during the build.
+- **Retrying database calls.** Database calls in scheduled jobs go through `withRetry()`, which retries temporary connection errors with exponential backoff.
+
+### Tech stack
+
+| Layer          | Tools                                                                                                                 |
+| -------------- | --------------------------------------------------------------------------------------------------------------------- |
+| App            | Next.js 16 (App Router), React 19, TypeScript (strict), Tailwind CSS v4                                               |
+| Data           | Prisma 7, Neon Postgres (with per-PR database branches)                                                               |
+| Auth           | NextAuth.js v5 (credentials + email verification)                                                                     |
+| Notifications  | Resend (email), Web Push, Serwist service worker                                                                      |
+| Infrastructure | Vercel (hosting + scheduled jobs), Sentry, Vercel Analytics & Speed Insights                                          |
+| Quality        | Vitest unit tests, Playwright E2E tests (4 parallel workers) with axe accessibility checks, CodeQL, Codecov, Renovate |
+| Data source    | [phish.net API v5](https://phish.net/api)                                                                             |
+
+## Running it locally
 
 ### Prerequisites
 
-- Node.js 18+
-- PostgreSQL database (or Vercel Postgres)
-- phish.net API key
-- Resend API key
+- [mise](https://mise.jdx.dev), which installs the exact Node version pinned in `mise.toml` (Node 24)
+- A PostgreSQL database (a [Neon](https://neon.tech) branch works well)
+- A [phish.net API key](https://phish.net/api) and a [Resend](https://resend.com) API key
 
-### Environment Variables
+### Environment variables
 
-Create a `.env` file based on `.env.example`:
+Create a `.env` file **before** running any database commands. Without one, Prisma falls back to a local `postgresql://localhost:5432/fantasyphish` database:
 
 ```bash
-# Database (Vercel Postgres)
-DATABASE_URL="postgres://..."
-DIRECT_URL="postgres://..."
-
-# NextAuth
-AUTH_SECRET=""
+DATABASE_URL="postgres://..."         # pooled connection
+DIRECT_URL="postgres://..."           # direct connection (used for migrations)
+AUTH_SECRET=""                        # openssl rand -base64 32
 NEXTAUTH_URL="http://localhost:3000"
-
-# phish.net API
-PHISHNET_API_KEY="your-phishnet-api-key"
-
-# Resend (Email)
-RESEND_API_KEY="re_..."
-
-# App URL (for email links)
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
-
-# Cron Secret (for scheduled jobs)
-CRON_SECRET=""
+PHISHNET_API_KEY=""
+RESEND_API_KEY=""
+CRON_SECRET=""                        # optional locally
+PRIVATE_VIEWER_EMAIL=""               # account allowed to view owner-only pages
 ```
 
-### Installation
+### Setup
 
 ```bash
-# Install dependencies
-npm install
+mise install                  # install the pinned Node version
+mise exec -- npm install      # install dependencies with that Node
 
-# Push database schema
-npm run db:push
+npm run db:migrate            # apply Prisma migrations
+npm run db:seed               # seed the song catalog from phish.net
+npm run db:sync-tours 2026    # optional: sync tours/shows for a year
 
-# Seed songs from phish.net
-npm run db:seed
-
-# Optionally sync tours for a specific year
-npm run db:sync-tours 2024
-
-# Start development server
-npm run dev
+npm run dev                   # http://localhost:3000
 ```
 
-Visit `http://localhost:3000` to see the app.
-
-### Setting Up an Admin User
-
-To access the admin panel, you need to mark a user as an admin in the database:
+To make yourself an admin:
 
 ```sql
-UPDATE "User" SET "isAdmin" = true WHERE email = 'your@email.com';
+UPDATE "User" SET "isAdmin" = true WHERE email = 'you@example.com';
 ```
 
-## Deployment to Vercel
+### Useful commands
 
-1. Push code to GitHub
-2. Import project in Vercel
-3. Add Vercel Postgres database
-4. Set environment variables:
-   - `AUTH_SECRET` (generate with `openssl rand -base64 32`)
-   - `CRON_SECRET` (generate with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`)
-   - `PHISHNET_API_KEY`
-   - `RESEND_API_KEY`
-   - `NEXT_PUBLIC_APP_URL` (your Vercel URL)
-5. Deploy
+| Command                 | What it does                                 |
+| ----------------------- | -------------------------------------------- |
+| `npm run test:unit`     | Vitest unit tests                            |
+| `npm test`              | Playwright E2E tests                         |
+| `npm run lint`          | ESLint (zero warnings allowed)               |
+| `npm run typecheck`     | TypeScript type check                        |
+| `npm run watch:scoring` | Watch the scoring job locally                |
+| `npm run db:branch`     | Create, reset or list Neon database branches |
 
-After deployment:
+## Deployment
 
-1. Run database migration: `npm run db:push`
-2. Seed songs: `npm run db:seed`
-3. The cron jobs will run automatically:
-   - Scoring: Every 5 minutes (`/api/score`)
-   - Tour sync: Daily at 6 AM UTC (`/api/sync-tours`)
-4. Set at least one user as admin (see above)
+The app is deployed on Vercel. Pushing to `main` deploys production, and every pull request gets its own preview deploy and database branch. The `build` script runs `prisma migrate deploy` automatically, so schema changes ship with the code and no manual database steps are needed.
 
-See [CRON_JOBS.md](CRON_JOBS.md) for detailed cron configuration and monitoring.
+Scheduled jobs (`vercel.json`). Each one returns early unless at least one tour has status `ACTIVE`; tours that are only upcoming (`FUTURE`) don't turn them on. The one exception is the achievements job: before that check, it backfills the notification, poll and streak achievements, so those still get awarded between tours.
 
-## Scoring System
-
-| Pick Type                           | Points        |
-| ----------------------------------- | ------------- |
-| Opener (first song of Set 1)        | 3 points      |
-| Encore (any song in encore)         | 3 points      |
-| Regular (11 songs, played anywhere) | 1 point each  |
-| **Maximum per show**                | **17 points** |
-
-## Project Structure
-
-```
-src/
-├── app/
-│   ├── (auth)/         # Login, register, verify pages
-│   ├── (main)/         # Dashboard, pick, history, results, leaderboard, admin
-│   ├── api/            # API routes
-│   └── page.tsx        # Landing page
-├── components/         # React components
-├── lib/               # Utilities (auth, prisma, phishnet, scoring, timezone)
-└── types/             # TypeScript types
-```
-
-## API Routes
-
-### User Endpoints
-
-- `POST /api/auth/register` - User registration
-- `GET /api/auth/verify` - Email verification
-- `GET /api/shows` - Get upcoming shows
-- `GET /api/songs` - Get all songs
-- `GET/POST /api/picks` - Get/submit picks for a show
-- `GET /api/results/[showId]` - Get scored picks and setlist for a show
-- `GET /api/history` - Get user's submission history
-- `GET /api/leaderboard` - Get tour leaderboard
-
-### Cron Endpoints (Require CRON_SECRET)
-
-- `POST /api/score` - Progressive scoring (runs every 5 minutes)
-- `POST /api/sync-tours` - Sync tour data (runs daily at 6 AM UTC)
-
-### Admin Endpoints (Require admin user)
-
-- `POST /api/admin/reset-show` - Reset show scores and setlist
+| Job                       | Schedule (UTC)                                                           |
+| ------------------------- | ------------------------------------------------------------------------ |
+| `/api/score`              | Every 10 minutes                                                         |
+| `/api/sync-tours`         | Daily at 06:00                                                           |
+| `/api/sync-song-stats`    | Daily at 07:00                                                           |
+| `/api/award-achievements` | Daily at 08:00                                                           |
+| `/api/send-reminders`     | Daily at 18:00 and 19:00 (noon Mountain, either side of daylight saving) |
 
 ## Documentation
 
-- [CRON_JOBS.md](CRON_JOBS.md) - Cron job configuration and monitoring
-- [SCORING_GUIDE.md](SCORING_GUIDE.md) - How the scoring system works
-- [AGENTS.md](AGENTS.md) - Guidelines for AI coding agents
+- [Scoring guide](docs/SCORING_GUIDE.md): how scoring works
+- [Scheduled jobs](docs/CRON_JOBS.md): job configuration and monitoring
+- [Monitoring guide](docs/MONITORING_GUIDE.md): debugging the scoring job
+- [Custom tours](docs/CUSTOM_TOURS.md)
+- [Local database setup](docs/LOCAL_DATABASE_SETUP.md)
+- [AGENTS.md](AGENTS.md) / [CLAUDE.md](CLAUDE.md): guidelines for AI coding agents
 
 ## License
 
-MIT
+[MIT](LICENSE). Setlist data courtesy of [phish.net](https://phish.net). This is a fan project and is not affiliated with Phish.
