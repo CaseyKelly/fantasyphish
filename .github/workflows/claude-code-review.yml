@@ -28,10 +28,13 @@ permissions:
 jobs:
   review:
     # Fork PRs don't get an OIDC token, so federation can't authenticate them -
-    # skip rather than fail.
+    # skip rather than fail. Bot-authored PRs (Renovate) are skipped too:
+    # claude-code-action refuses non-human actors and fails the job, and the
+    # /code-review skill treats dependency bumps as a non-goal anyway.
     if: >-
       github.event.pull_request.draft == false &&
-      github.event.pull_request.head.repo.full_name == github.repository
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.type != 'Bot'
     timeout-minutes: 15
     runs-on: ubuntu-latest
 
