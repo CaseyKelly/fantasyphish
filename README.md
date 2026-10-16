@@ -109,22 +109,9 @@ flowchart LR
 - A PostgreSQL database (a [Neon](https://neon.tech) branch works well)
 - A [phish.net API key](https://phish.net/api) and a [Resend](https://resend.com) API key
 
-### Setup
-
-```bash
-mise install                  # install the pinned Node version
-mise exec -- npm install      # install dependencies with that Node
-
-npm run db:migrate            # apply Prisma migrations
-npm run db:seed               # seed the song catalog from phish.net
-npm run db:sync-tours 2026    # optional: sync tours/shows for a year
-
-npm run dev                   # http://localhost:3000
-```
-
 ### Environment variables
 
-Create a `.env` file:
+Create a `.env` file **before** running any database commands. Without one, Prisma falls back to a local `postgresql://localhost:5432/fantasyphish` database:
 
 ```bash
 DATABASE_URL="postgres://..."         # pooled connection
@@ -136,6 +123,19 @@ PHISHNET_API_KEY=""
 RESEND_API_KEY=""
 CRON_SECRET=""                        # optional locally
 PRIVATE_VIEWER_EMAIL=""               # account allowed to view owner-only pages
+```
+
+### Setup
+
+```bash
+mise install                  # install the pinned Node version
+mise exec -- npm install      # install dependencies with that Node
+
+npm run db:migrate            # apply Prisma migrations
+npm run db:seed               # seed the song catalog from phish.net
+npm run db:sync-tours 2026    # optional: sync tours/shows for a year
+
+npm run dev                   # http://localhost:3000
 ```
 
 To make yourself an admin:
@@ -159,7 +159,7 @@ UPDATE "User" SET "isAdmin" = true WHERE email = 'you@example.com';
 
 The app is deployed on Vercel. Pushing to `main` deploys production, and every pull request gets its own preview deploy and database branch. The `build` script runs `prisma migrate deploy` automatically, so schema changes ship with the code and no manual database steps are needed.
 
-Scheduled jobs (`vercel.json`), which only run while a tour is active or upcoming:
+Scheduled jobs (`vercel.json`). Each one returns early unless at least one tour has status `ACTIVE`; tours that are only upcoming (`FUTURE`) don't turn them on. The one exception is the achievements job: before that check, it backfills the notification, poll and streak achievements, so those still get awarded between tours.
 
 | Job                       | Schedule (UTC)                                                           |
 | ------------------------- | ------------------------------------------------------------------------ |
