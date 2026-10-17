@@ -29,6 +29,10 @@ This repo requires exactly the Node version pinned in `mise.toml` (kept current 
 - `npm run test:ui` - Run tests with Playwright UI
 - `npm run test:headed` - Run tests in headed mode
 - `npm run test:trace` - Download and view latest GitHub Actions test traces
+- `npm run test:unit` - Run Vitest unit tests (colocated `*.test.ts` files under `src/`)
+- `npm run test:unit:coverage` - Unit tests with coverage (uploaded to Codecov in CI)
+
+Unit tests mock Prisma with `createPrismaMock()` from `src/test-utils/prisma-mock.ts` (every `prisma.<model>.<method>` is an auto-created `vi.fn()`) and call route handlers directly using `makeRequest()`/`routeParams()`/`sessionFor()` from `src/test-utils/request.ts`. See any `route.test.ts` under `src/app/api/` for the pattern.
 
 ### Database
 
