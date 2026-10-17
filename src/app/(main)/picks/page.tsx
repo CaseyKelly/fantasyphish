@@ -7,7 +7,6 @@ import { Sparkles } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { DonutLogo } from "@/components/DonutLogo"
 import { SongPicker } from "@/components/SongPicker"
-import { FormatPoll } from "@/components/FormatPoll"
 import { LoadingDonut } from "@/components/LoadingDonut"
 import { LiveBadge } from "@/components/LiveBadge"
 import {
@@ -15,12 +14,6 @@ import {
   parseUTCDate,
   formatTimeOfDay,
 } from "@/lib/date-utils"
-import { SET2_OPENER_POLL } from "@/lib/polls"
-
-// While true, /picks shows the Set 2 Opener format poll instead of the
-// next-show picker. Flip back to false before the next show to restore
-// picks (/pick/[showId] is unaffected either way).
-const SHOW_FORMAT_POLL = true
 
 interface Song {
   id: string
@@ -76,26 +69,6 @@ interface Show {
 }
 
 export default function PicksPage() {
-  return SHOW_FORMAT_POLL ? <FormatPollSection /> : <NextShowPicks />
-}
-
-function FormatPollSection() {
-  return (
-    <div className="space-y-8 pb-8">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold font-display text-white">
-          Make Your Picks
-        </h1>
-        <p className="text-slate-400 mt-1">
-          Help shape the next tour&apos;s format
-        </p>
-      </div>
-      <FormatPoll poll={SET2_OPENER_POLL} />
-    </div>
-  )
-}
-
-function NextShowPicks() {
   const { data: session } = useSession()
   const [nextShow, setNextShow] = useState<Show | null>(null)
   const [songs, setSongs] = useState<Song[]>([])
