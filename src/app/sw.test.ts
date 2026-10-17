@@ -1,14 +1,20 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest"
 
+// Plain records rather than vi.fn() call history: the worker is constructed
+// once at import time, and beforeEach's clearAllMocks would wipe mock.calls
 const serwist = vi.hoisted(() => ({
-  ctor: vi.fn(),
-  addEventListeners: vi.fn(),
+  options: [] as unknown[],
+  listenersAdded: 0,
 }))
 vi.mock("serwist", () => ({
-  Serwist: vi.fn(function (opts: unknown) {
-    serwist.ctor(opts)
-    return { addEventListeners: serwist.addEventListeners }
-  }),
+  Serwist: function (opts: unknown) {
+    serwist.options.push(opts)
+    return {
+      addEventListeners: () => {
+        serwist.listenersAdded++
+      },
+    }
+  },
 }))
 
 type Handler = (event: Record<string, unknown>) => void
@@ -61,8 +67,16 @@ async function dispatch(type: string, event: Record<string, unknown>) {
 
 describe("service worker", () => {
   it("precaches the build manifest with no runtime caching", () => {
-    // Construction happened at import time, before clearAllMocks
-    expect(handlers.push).toBeDefined()
+    expect(serwist.options).toEqual([
+      {
+        precacheEntries: [{ url: "/a.js", revision: "1" }],
+        skipWaiting: true,
+        clientsClaim: true,
+        navigationPreload: false,
+        runtimeCaching: [],
+      },
+    ])
+    expect(serwist.listenersAdded).toBe(1)
   })
 
   it("shows push notifications and increments the badge", async () => {
