@@ -72,10 +72,14 @@ export async function scoreShow(
       show.lastEncoreCount !== null &&
       currentEncoreCount > show.lastEncoreCount
 
-    gracePeriodExpired = Boolean(
-      show.encoreStartedAt &&
-      Date.now() - show.encoreStartedAt.getTime() >= GRACE_PERIOD_MS
-    )
+    // A new encore song restarts the timer below, so it can't also finish
+    // the show in the same pass (expiry is measured from the old start)
+    gracePeriodExpired =
+      !newEncoreSongsAdded &&
+      Boolean(
+        show.encoreStartedAt &&
+        Date.now() - show.encoreStartedAt.getTime() >= GRACE_PERIOD_MS
+      )
   }
 
   const showComplete = gracePeriodExpired
