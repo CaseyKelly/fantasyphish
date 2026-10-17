@@ -166,6 +166,22 @@ describe("scoreShow", () => {
     expect(data.lastEncoreCount).toBe(2)
   })
 
+  it("restarts the timer instead of completing when a new encore song arrives after the grace period", async () => {
+    const show = makeShow({
+      encoreStartedAt: new Date(NOW.getTime() - GRACE_PERIOD_MS - 60_000),
+      lastEncoreCount: 1,
+    })
+
+    const result = await scoreShow(show, withTwoEncores)
+
+    const data = db.show.update.mock.calls[0][0].data
+    expect(result.status).toBe("in_progress")
+    expect(data.isComplete).toBe(false)
+    expect(data.encoreStartedAt).toEqual(NOW)
+    expect(data.lastEncoreCount).toBe(2)
+    expect(db.submission.update.mock.calls[0][0].data.isScored).toBe(false)
+  })
+
   it("keeps the timer while the grace period is still running", async () => {
     const started = new Date(NOW.getTime() - 10 * 60 * 1000)
     const show = makeShow({ encoreStartedAt: started, lastEncoreCount: 1 })
