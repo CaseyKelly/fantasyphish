@@ -1129,7 +1129,7 @@ export function SongPicker({
                   {renderPickCard(
                     openerSlot(set),
                     `${getOpenerTitle(set)} Pick`,
-                    `${POINTS.OPENER} points if it opens ${setCount === 1 ? "the show" : `Set ${set}`}, ${POINTS.REGULAR} if played anywhere`,
+                    `${POINTS.OPENER} pts · ${POINTS.REGULAR} if played elsewhere`,
                     <Star
                       aria-hidden="true"
                       className="h-5 w-5 text-[#c23a3a]"
@@ -1141,7 +1141,7 @@ export function SongPicker({
               {renderPickCard(
                 "encore",
                 "Encore Pick",
-                `${POINTS.ENCORE} points if played in the encore, ${POINTS.REGULAR} if played anywhere`,
+                `${POINTS.ENCORE} pts · ${POINTS.REGULAR} if played elsewhere`,
                 <Star aria-hidden="true" className="h-5 w-5 text-[#c23a3a]" />,
                 encorePick
               )}
