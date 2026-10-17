@@ -29,6 +29,9 @@ const WARMUP_PATHS = [
 ]
 
 const WARMUP_API_REQUESTS: { path: string; init: RequestInit }[] = [
+  // /picks no longer renders the format poll, so nothing hits this route
+  // before poll.spec.ts's API test does
+  { path: "/api/polls/warmup", init: { method: "GET" } },
   { path: "/api/admin/delete-submission/warmup", init: { method: "DELETE" } },
   {
     path: "/api/admin/reset-show",
