@@ -150,7 +150,9 @@ export async function scoreShow(
     const previousSongCount = submission.lastSongCount || 0
 
     const { scoredPicks, totalPoints, currentSongCount, hasNewSongs } =
-      scoreSubmissionProgressive(submission.picks, setlist, previousSongCount)
+      scoreSubmissionProgressive(submission.picks, setlist, previousSongCount, {
+        isFinal: gracePeriodExpired,
+      })
 
     // Only update if there are new songs or grace period just expired
     if (hasNewSongs || (gracePeriodExpired && !submission.isScored)) {
@@ -161,6 +163,7 @@ export async function scoreShow(
         return {
           ...scoredPick,
           previousWasPlayed: existingPick?.wasPlayed ?? null,
+          previousPointsEarned: existingPick?.pointsEarned ?? null,
         }
       })
 

@@ -32,7 +32,11 @@ export async function GET(
               include: {
                 picks: {
                   include: { song: true },
-                  orderBy: [{ pickType: "asc" }, { song: { name: "asc" } }],
+                  orderBy: [
+                    { pickType: "asc" },
+                    { openerSet: "asc" },
+                    { song: { name: "asc" } },
+                  ],
                 },
                 user: {
                   // Include user info for admin context
@@ -88,6 +92,7 @@ export async function GET(
         state: show.state,
         showDate: show.showDate,
         isComplete: show.isComplete,
+        setCount: show.setCount,
         lockTime: show.lockTime,
         lastScoredAt: show.lastScoredAt,
       },
@@ -100,6 +105,7 @@ export async function GET(
           id: pick.id,
           song: pick.song.name,
           pickType: pick.pickType,
+          openerSet: pick.openerSet,
           wasPlayed: pick.wasPlayed,
           pointsEarned: pick.pointsEarned,
         })),

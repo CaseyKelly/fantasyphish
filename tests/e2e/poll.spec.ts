@@ -12,57 +12,11 @@ async function login(page: Page, email: string, password: string) {
   await expect(page).toHaveURL(/\/picks/, { timeout: 10000 })
 }
 
-test.describe("Set 2 Opener format poll", () => {
-  test("user votes once on /picks and then sees results", async ({
-    page,
-    createUser,
-    prisma,
-  }) => {
-    const username = uniqueUsername("polluser")
-    const email = `${username}@example.com`
-    const password = "PollPassword123!"
-    await createUser({ email, username, password, verified: true })
-
-    await login(page, email, password)
-
-    await expect(
-      page.getByRole("heading", { name: SET2_OPENER_POLL.question })
-    ).toBeVisible()
-    const submit = page.getByRole("button", { name: "Submit Vote" })
-    await expect(submit).toBeDisabled()
-
-    await page.getByLabel("Yes, add a Set 2 Opener pick").check()
-    await submit.click()
-
-    await expect(page.getByText("Your vote")).toBeVisible()
-    await expect(submit).toHaveCount(0)
-
-    const user = await prisma.user.findUniqueOrThrow({ where: { email } })
-    const vote = await prisma.pollVote.findUnique({
-      where: {
-        pollSlug_userId: { pollSlug: SET2_OPENER_POLL.slug, userId: user.id },
-      },
-    })
-    expect(vote?.option).toBe("yes")
-
-    // Voting earns the Sample in a Jar achievement
-    const award = await prisma.userAchievement.findFirst({
-      where: { userId: user.id, achievement: { slug: "sample-in-a-jar" } },
-      include: { achievement: true },
-    })
-    expect(award?.achievement.name).toBe("Sample in a Jar")
-
-    // Returning to the page shows results instead of asking again
-    await page.reload()
-    await expect(page.getByText("Your vote")).toBeVisible()
-    await expect(page.getByRole("button", { name: "Submit Vote" })).toHaveCount(
-      0
-    )
-  })
-
+test.describe("Polls API", () => {
   test("API only accepts one valid vote per user", async ({
     page,
     createUser,
+    prisma,
   }) => {
     const username = uniqueUsername("pollapi")
     const email = `${username}@example.com`
@@ -91,6 +45,14 @@ test.describe("Set 2 Opener format poll", () => {
     const firstBody = await first.json()
     expect(firstBody.userVote).toBe("no")
     expect(firstBody.results.totalVotes).toBeGreaterThanOrEqual(1)
+
+    // Voting earns the Sample in a Jar achievement
+    const user = await prisma.user.findUniqueOrThrow({ where: { email } })
+    const award = await prisma.userAchievement.findFirst({
+      where: { userId: user.id, achievement: { slug: "sample-in-a-jar" } },
+      include: { achievement: true },
+    })
+    expect(award?.achievement.name).toBe("Sample in a Jar")
 
     const second = await page.request.post(POLL_API, {
       data: { option: "yes" },

@@ -15,6 +15,7 @@ interface Pick {
   songId: string
   songName: string
   pickType: "OPENER" | "ENCORE" | "REGULAR"
+  openerSet?: number | null
 }
 
 interface GuestRegistrationModalProps {
@@ -94,6 +95,7 @@ export function GuestRegistrationModal({
           picks: picks.map((p) => ({
             songId: p.songId,
             pickType: p.pickType,
+            openerSet: p.openerSet,
           })),
         }),
       })
@@ -146,6 +148,7 @@ export function GuestRegistrationModal({
           picks: picks.map((p) => ({
             songId: p.songId,
             pickType: p.pickType,
+            openerSet: p.openerSet,
           })),
         }),
       })

@@ -1,8 +1,10 @@
 import type { PickType } from "@prisma/client"
+import { isSlotHit } from "@/lib/pick-rules"
 
 export interface ProfileStatsPick {
   pickType: PickType
   wasPlayed: boolean | null
+  pointsEarned: number | null
   song: { id: string; name: string }
 }
 
@@ -65,13 +67,16 @@ export function computePickBreakdown(
 
     for (const pick of submission.picks) {
       const hit = pick.wasPlayed === true
+      // Opener/encore rates count slot hits only - a slot pick played
+      // elsewhere in the show still counts as a song hit below
+      const typeHit = pick.pickType === "REGULAR" ? hit : isSlotHit(pick)
       totals[pick.pickType].attempts++
-      if (hit) {
+      if (typeHit) {
         totals[pick.pickType].hits++
-        showHits++
         if (pick.pickType === "OPENER") openerHit = true
         if (pick.pickType === "ENCORE") encoreHit = true
       }
+      if (hit) showHits++
 
       const song = songs.get(pick.song.id) ?? {
         name: pick.song.name,

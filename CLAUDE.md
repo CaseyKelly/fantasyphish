@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-FantasyPhish is a fantasy game for Phish fans. Users pick 13 songs before each show, score points when they play their picks, and compete on tour leaderboards. The app uses progressive scoring with timezone-aware locking, achievements, and real-time updates during shows.
+FantasyPhish is a fantasy game for Phish fans. Users pick 13 songs before each show (one opener per set, an encore, and regular picks), score points when they play their picks, and compete on tour leaderboards. The app uses progressive scoring with timezone-aware locking, achievements, and real-time updates during shows.
 
 ## Node Version (mise)
 
@@ -72,10 +72,20 @@ The scoring logic is split between:
 
 **Points:**
 
-- Opener (first song of Set 1): 3 points
+- Set opener (first song of each set, one pick per set): 3 points each
 - Encore (any song in encore): 3 points
-- Regular (11 songs, anywhere): 1 point each
-- Maximum: 17 points per show
+- Regular (fills the rest of the 13 picks, anywhere): 1 point each
+- An opener/encore pick played outside its slot still earns 1 point, like a regular pick (the slot is a bonus, never a penalty)
+- `Pick.wasPlayed` means "played anywhere"; a slot hit is `isSlotHit()` (`pointsEarned` reached the full 3), which drives PERFECT_OPENER/PERFECT_CLOSER and profile hit rates
+- Maximum depends on `Show.setCount`: 17 (1 set), 19 (2 sets, the default), 21 (3 sets) - see `getMaxPoints()`
+
+**Set counts (`src/lib/pick-rules.ts`):**
+
+- `Show.setCount` (1-3, default 2) is set by admins on `/admin/shows`; sync-tours never touches it
+- Each opener pick stores which set it's for in `Pick.openerSet` (picks made before this existed are set 1 openers)
+- `validatePicks()` is the single source of truth for a valid submission, shared by `/api/picks` and guest registration
+- Once a show has any submission its set count can only go up (lowering returns 409; nothing changes after lock). Raising leaves existing submissions short an opener: they keep scoring as saved, `getPickUpdateNeeded()` flags them, and the picker shows a banner asking the user to add the new set opener and drop the extra regular pick(s)
+- A set's opener slot settles once the set starts, a later set or the encore starts without that set, or the show is final; an unplayed pick then shows as a miss but still flips to 1 point if the song is played later
 
 ### Timezone-Aware Locking (`src/lib/timezone.ts`)
 
@@ -91,7 +101,7 @@ Shows lock at 7 PM in the venue's timezone:
 All external setlist/show data comes from phish.net v5 API:
 
 - `getSetlist(showDate, { noCache: true })` - Fetch setlist (use noCache during scoring)
-- `parseSetlist()` - Extract opener, encoreSongs, allSongs for scoring
+- `parseSetlist()` - Extract setOpeners (first song of each set), encoreSongs, allSongs for scoring
 - `normalizeSongName()` - Normalize for comparison (lowercase, trim, no punctuation)
 - `getShowsByYear(year)` - Fetch all shows for tour sync
 - `getAllSongs()` - Fetch all songs for seeding/stats
@@ -143,11 +153,13 @@ Key relationships:
 Important fields:
 
 - `Show.lockTime` - When picks locked (7 PM venue timezone)
+- `Show.setCount` - Number of sets (1-3); one opener pick per set
 - `Show.isComplete` - Show complete (after grace period)
 - `Show.encoreStartedAt` - When encore first detected (for grace period)
 - `Show.lastEncoreCount` - Track encore count to detect resets
 - `Submission.lastSongCount` - Track song count for progressive scoring
-- `Pick.wasPlayed` - Tri-state: null (not scored), true, false
+- `Pick.openerSet` - Set an OPENER pick is for (null for encore/regular)
+- `Pick.wasPlayed` - Tri-state: null (not scored), true (played anywhere in the show), false
 
 ### NextAuth v5 Setup (`src/lib/auth.ts`)
 
@@ -203,7 +215,7 @@ src/app/
 │   ├── shows            # Upcoming/recent shows
 │   ├── songs            # All songs with stats
 │   ├── leaderboard      # Tour leaderboard
-│   └── admin/           # Admin endpoints (reset-show, impersonate)
+│   └── admin/           # Admin endpoints (reset-show, impersonate, set-show-set-count)
 └── page.tsx             # Public landing page
 ```
 
