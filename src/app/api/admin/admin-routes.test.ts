@@ -8,7 +8,10 @@ vi.mock("@/lib/prisma", async () => {
 })
 vi.mock("@/lib/auth", () => ({ auth: vi.fn() }))
 vi.mock("@/lib/env", () => ({ isAdminFeaturesEnabled: vi.fn(() => true) }))
-vi.mock("@/lib/phishnet", () => ({ getSetlist: vi.fn() }))
+vi.mock("@/lib/phishnet", () => ({
+  getSetlist: vi.fn(),
+  hasShowStarted: vi.fn(),
+}))
 vi.mock("@/lib/show-scoring", () => ({
   scoreShow: vi.fn(),
   showWithSubmissionsInclude: {},
@@ -19,7 +22,7 @@ vi.mock("@/lib/reminders", () => ({ sendPickReminders: vi.fn() }))
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { isAdminFeaturesEnabled } from "@/lib/env"
-import { getSetlist } from "@/lib/phishnet"
+import { getSetlist, hasShowStarted } from "@/lib/phishnet"
 import { scoreShow } from "@/lib/show-scoring"
 import { sendPushNotification } from "@/lib/push"
 import { sendPickReminders } from "@/lib/reminders"
@@ -32,6 +35,7 @@ import { POST as impersonate } from "./impersonate/route"
 import { POST as markOldShowsComplete } from "./mark-old-shows-complete/route"
 import { POST as resetShow } from "./reset-show/route"
 import { POST as setLockOverride } from "./set-show-lock-override/route"
+import { POST as setSetCount } from "./set-show-set-count/route"
 import { POST as stopImpersonate } from "./stop-impersonate/route"
 import { POST as testPush } from "./test-push/route"
 import { POST as testReminders } from "./test-reminders/route"
@@ -71,6 +75,10 @@ describe("admin auth gate", () => {
     [
       "set-show-lock-override",
       () => setLockOverride(post("/x", { showId: "s", lockTime: null })),
+    ],
+    [
+      "set-show-set-count",
+      () => setSetCount(post("/x", { showId: "s", setCount: 2 })),
     ],
     ["test-push", () => testPush()],
     ["test-reminders", () => testReminders(post("/x", {}))],
@@ -476,6 +484,125 @@ describe("POST /api/admin/set-show-lock-override", () => {
       (await setLockOverride(post("/x", { showId: "s", lockTime: null })))
         .status
     ).toBe(500)
+  })
+})
+
+describe("POST /api/admin/set-show-set-count", () => {
+  const startedMock = vi.mocked(hasShowStarted)
+  const show = {
+    id: "s1",
+    showDate: new Date("2030-07-04T00:00:00Z"),
+    timezone: "America/New_York",
+    state: "NY",
+    lockTime: new Date("2030-07-04T23:00:00Z"),
+    isComplete: false,
+    setCount: 1,
+  }
+  // A one-set submission: one opener, one encore, 11 regular picks
+  const oneSetSubmission = {
+    picks: [
+      { pickType: "OPENER", openerSet: 1 },
+      { pickType: "ENCORE", openerSet: null },
+      ...Array.from({ length: 11 }, () => ({
+        pickType: "REGULAR",
+        openerSet: null,
+      })),
+    ],
+  }
+  const setCount = (body: unknown) =>
+    setSetCount(post("/api/admin/set-show-set-count", body))
+
+  beforeEach(() => {
+    startedMock.mockResolvedValue(false)
+    db.show.findUnique.mockResolvedValue(show)
+    db.submission.findMany.mockResolvedValue([])
+  })
+
+  it.each([0, 4, 1.5])("rejects set count %s", async (value) => {
+    const res = await setCount({ showId: "s1", setCount: value })
+    expect(res.status).toBe(400)
+    expect(db.show.findUnique).not.toHaveBeenCalled()
+  })
+
+  it("404s an unknown show", async () => {
+    db.show.findUnique.mockResolvedValue(null)
+    expect((await setCount({ showId: "s1", setCount: 2 })).status).toBe(404)
+  })
+
+  it("refuses completed shows", async () => {
+    db.show.findUnique.mockResolvedValue({ ...show, isComplete: true })
+    const res = await setCount({ showId: "s1", setCount: 2 })
+    expect(res.status).toBe(400)
+    expect((await res.json()).error).toContain("completed show")
+  })
+
+  it("refuses once the stored lock time has passed", async () => {
+    db.show.findUnique.mockResolvedValue({
+      ...show,
+      lockTime: new Date(Date.now() - 60_000),
+    })
+    const res = await setCount({ showId: "s1", setCount: 2 })
+    expect(res.status).toBe(400)
+    expect((await res.json()).error).toContain("already locked")
+    expect(db.show.update).not.toHaveBeenCalled()
+  })
+
+  it("refuses once the setlist has started, like /api/picks", async () => {
+    startedMock.mockResolvedValue(true)
+    const res = await setCount({ showId: "s1", setCount: 2 })
+    expect(res.status).toBe(400)
+    expect(startedMock).toHaveBeenCalledWith(
+      "2030-07-04",
+      "America/New_York",
+      "NY"
+    )
+    expect(db.show.update).not.toHaveBeenCalled()
+  })
+
+  it("raises the set count and reports submissions that need updating", async () => {
+    db.submission.findMany.mockResolvedValue([oneSetSubmission])
+    const res = await setCount({ showId: "s1", setCount: 2 })
+    expect(await res.json()).toEqual({
+      success: true,
+      show: { id: "s1", setCount: 2 },
+      submissionsNeedingUpdate: 1,
+    })
+    expect(db.show.update).toHaveBeenCalledWith({
+      where: { id: "s1" },
+      data: { setCount: 2 },
+    })
+  })
+
+  it("lowers the set count only while nobody has picked", async () => {
+    db.show.findUnique.mockResolvedValue({ ...show, setCount: 3 })
+    db.show.updateMany.mockResolvedValue({ count: 1 })
+    const res = await setCount({ showId: "s1", setCount: 2 })
+    expect(res.status).toBe(200)
+    expect(db.show.updateMany).toHaveBeenCalledWith({
+      where: { id: "s1", isComplete: false, submissions: { none: {} } },
+      data: { setCount: 2 },
+    })
+  })
+
+  it("409s lowering once someone has picked", async () => {
+    db.show.findUnique.mockResolvedValue({ ...show, setCount: 3 })
+    db.show.updateMany.mockResolvedValue({ count: 0 })
+    const res = await setCount({ showId: "s1", setCount: 2 })
+    expect(res.status).toBe(409)
+    expect((await res.json()).error).toContain("can only go up")
+  })
+
+  it("leaves an unchanged set count alone", async () => {
+    db.submission.findMany.mockResolvedValue([oneSetSubmission])
+    const json = await (await setCount({ showId: "s1", setCount: 1 })).json()
+    expect(json.submissionsNeedingUpdate).toBe(0)
+    expect(db.show.update).not.toHaveBeenCalled()
+    expect(db.show.updateMany).not.toHaveBeenCalled()
+  })
+
+  it("returns 500 on unexpected errors", async () => {
+    db.show.findUnique.mockRejectedValue(new Error("db"))
+    expect((await setCount({ showId: "s1", setCount: 2 })).status).toBe(500)
   })
 })
 
