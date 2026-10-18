@@ -382,6 +382,8 @@ describe("show lock overrides", () => {
         timezone: null,
         lockTime: null,
         lockTimeOverride: null,
+        setCount: 2,
+        submissions: [],
       },
       {
         id: "s2",
@@ -392,10 +394,25 @@ describe("show lock overrides", () => {
         timezone: "America/New_York",
         lockTime: new Date("2025-07-05T23:00:00Z"),
         lockTimeOverride: new Date("2025-07-05T23:00:00Z"),
+        setCount: 2,
+        // Picked as a one-set show before it was raised to two sets
+        submissions: [
+          {
+            picks: [
+              { pickType: "OPENER", openerSet: 1 },
+              { pickType: "ENCORE", openerSet: null },
+              ...Array.from({ length: 11 }, () => ({
+                pickType: "REGULAR",
+                openerSet: null,
+              })),
+            ],
+          },
+        ],
       },
     ])
     render(await AdminShowsPage())
     expect(screen.getByText(/No lock time set/)).toBeInTheDocument()
+    expect(screen.getByText(/1 submission needs updating/)).toBeInTheDocument()
     expect(screen.getByLabelText("Lock time (MT)")).toHaveValue("19:00")
     expect(screen.getByText("(manual override)")).toBeInTheDocument()
   })

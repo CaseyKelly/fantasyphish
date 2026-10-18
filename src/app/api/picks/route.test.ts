@@ -35,6 +35,8 @@ const show = {
   timezone: null,
   state: "NY",
   lockTime: null,
+  // One set: one opener, one encore, 11 regular picks (validPicks())
+  setCount: 1,
 }
 
 function post(body: unknown) {
@@ -108,12 +110,21 @@ describe("POST /api/picks", () => {
       "exactly 11 regular",
     ],
   ])("enforces the %s count", async (_label, mutate, message) => {
+    db.show.findUnique.mockResolvedValue(show)
     const res = await post({ showId: "show-1", picks: mutate(validPicks()) })
     expect(res.status).toBe(400)
     expect((await res.json()).error).toContain(message)
   })
 
+  it("validates the opener count against the show's set count", async () => {
+    db.show.findUnique.mockResolvedValue({ ...show, setCount: 2 })
+    const res = await post({ showId: "show-1", picks: validPicks() })
+    expect(res.status).toBe(400)
+    expect((await res.json()).error).toContain("exactly 2 openers")
+  })
+
   it("rejects duplicate songs", async () => {
+    db.show.findUnique.mockResolvedValue(show)
     const picks = validPicks()
     picks[2].songId = "o"
     const res = await post({ showId: "show-1", picks })

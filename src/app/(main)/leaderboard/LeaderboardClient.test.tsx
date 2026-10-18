@@ -46,6 +46,7 @@ function showPicks(id: string, day: number, points: number) {
       venue: `Venue ${day}`,
       city: day % 2 ? "Denver" : null,
       state: day % 2 ? "CO" : null,
+      setCount: 1,
     },
     totalPoints: points,
     picks: [
@@ -54,30 +55,35 @@ function showPicks(id: string, day: number, points: number) {
         wasPlayed: true,
         pointsEarned: 3,
         pickType: "OPENER",
+        openerSet: 1,
       },
       {
         songName: "Fee",
         wasPlayed: true,
         pointsEarned: 1,
         pickType: "REGULAR",
+        openerSet: null,
       },
       {
         songName: "Ghost",
         wasPlayed: false,
         pointsEarned: 0,
         pickType: "REGULAR",
+        openerSet: null,
       },
       {
         songName: "Harpua",
         wasPlayed: false,
         pointsEarned: 0,
         pickType: "ENCORE",
+        openerSet: null,
       },
       {
         songName: "Slave",
         wasPlayed: true,
         pointsEarned: 3,
         pickType: "ENCORE",
+        openerSet: null,
       },
     ],
   }

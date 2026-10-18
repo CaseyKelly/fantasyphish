@@ -41,7 +41,10 @@ function pick(
   id: string,
   name: string,
   pickType: string,
-  wasPlayed: boolean | null
+  wasPlayed: boolean | null,
+  // A played opener/encore defaults to a slot hit (3); pass 1 for one
+  // played elsewhere in the show
+  pointsEarned = wasPlayed ? (pickType === "REGULAR" ? 1 : 3) : 0
 ) {
   return {
     id,
@@ -58,7 +61,7 @@ function pick(
       updatedAt: new Date(),
     },
     wasPlayed,
-    pointsEarned: wasPlayed ? 1 : 0,
+    pointsEarned,
   }
 }
 
@@ -86,6 +89,7 @@ function submission(
       pick("o", "Tweezer", "OPENER", true),
       pick("e", "Harpua", "ENCORE", false),
       pick("x", "Ghost", "ENCORE", null),
+      pick("o2", "Carini", "OPENER", true, 1),
       pick("r1", "Fee", "REGULAR", true),
       pick("r2", "Slave", "REGULAR", false),
       pick("r3", "Bowie", "REGULAR", null),
@@ -175,6 +179,8 @@ describe("ResultsClient (results list)", () => {
     expect(screen.getByText("Jul 6, 2025")).toBeInTheDocument()
     expect(screen.getAllByText("Invalid date")).toHaveLength(2)
     expect(screen.getAllByText("+3").length).toBeGreaterThan(0)
+    // An opener played outside its slot shows the regular point it earned
+    expect(screen.getAllByText("+1").length).toBeGreaterThan(0)
     expect(screen.getAllByText("View Details")[0]).toHaveAttribute(
       "href",
       "/results_detail/show-a"
