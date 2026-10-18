@@ -127,14 +127,42 @@ describe("layouts", () => {
 })
 
 describe("/picks", () => {
-  it("shows the format poll while it's enabled", () => {
-    render(<PicksPage />)
-    expect(
-      screen.getByText("Help shape the next tour's format")
-    ).toBeInTheDocument()
-    expect(fetchMock).toHaveBeenCalledWith("/api/polls/set2-opener-format", {
-      cache: "no-store",
+  function respondWith(nextShow: unknown) {
+    fetchMock.mockImplementation(async (url: string) => ({
+      ok: true,
+      json: async () =>
+        url === "/api/shows?next=true"
+          ? { nextShow }
+          : { songs: [{ id: "song-1", name: "Tweezer" }] },
+    }))
+  }
+
+  it("hands the next show, with its set count, to the song picker", async () => {
+    respondWith({
+      id: "s1",
+      venue: "MSG",
+      city: "New York",
+      state: "NY",
+      showDate: "2030-12-30T00:00:00.000Z",
+      lockTime: null,
+      setCount: 2,
+      tour: { name: "NYE Run" },
+      userSubmission: null,
     })
+    render(<PicksPage />)
+
+    const props = JSON.parse(
+      (await screen.findByTestId("song-picker")).textContent ?? "{}"
+    )
+    expect(props.show).toMatchObject({ id: "s1", setCount: 2 })
+    expect(props.songs).toEqual([{ id: "song-1", name: "Tweezer" }])
+    expect(screen.queryByText(/format/i)).not.toBeInTheDocument()
+  })
+
+  it("says picks are opening soon when there's no upcoming show", async () => {
+    respondWith(null)
+    render(<PicksPage />)
+    expect(await screen.findByText("Picks Opening Soon!")).toBeInTheDocument()
   })
 })
 

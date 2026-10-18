@@ -24,17 +24,19 @@ Fantasy sports for Phish fans: pick 13 songs before each show, score points live
 
 ## How it works
 
-1. **Make your picks.** Before each show, choose an opener, an encore and 11 more songs from Phish's catalog. You can see how long it's been since each song was played.
+1. **Make your picks.** Before each show, choose an opener for each set, an encore, and regular songs to fill out 13 picks from Phish's catalog. You can see how long it's been since each song was played.
 2. **Picks lock at 7 PM venue time.** That's 7 PM wherever the show is, whether it's Madison Square Garden or the Gorge.
 3. **Watch the points roll in.** Scores update live during the show as the setlist comes in from [phish.net](https://phish.net).
 4. **Climb the leaderboard.** Every tour has its own standings, with a podium for the top three.
 
-| Pick                                | Points        |
-| ----------------------------------- | ------------- |
-| Opener (first song of Set 1)        | 3             |
-| Encore (any song in the encore)     | 3             |
-| Regular (11 songs, played anywhere) | 1 each        |
-| **Perfect show**                    | **17 points** |
+| Pick                                             | Points |
+| ------------------------------------------------ | ------ |
+| Set opener (first song of each set, one per set) | 3 each |
+| Encore (any song in the encore)                  | 3      |
+| Regular (rest of the 13 picks, played anywhere)  | 1 each |
+| Opener/encore pick played anywhere else          | 1      |
+
+Admins mark each show as 1, 2 (the default) or 3 sets, which sets how many opener picks it gets. Regular picks fill out the 13, so a perfect show is worth **17 / 19 / 21 points** for 1 / 2 / 3 sets. Opener and encore picks are a bonus, never a penalty: a song that misses its slot but is played anywhere in the show still earns 1 point like a regular pick.
 
 <table>
   <tr>

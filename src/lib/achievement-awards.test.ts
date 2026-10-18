@@ -241,15 +241,33 @@ describe("processPickAchievements", () => {
   it("awards opener/closer and JACKPOT only for picks that just became correct", async () => {
     const result = await processPickAchievements(
       [
-        { id: "p-open", wasPlayed: true, previousWasPlayed: null },
+        {
+          id: "p-open",
+          wasPlayed: true,
+          previousWasPlayed: null,
+          pointsEarned: 3,
+          previousPointsEarned: null,
+        },
         // Encore + Harpua: earns both PERFECT_CLOSER and JACKPOT
-        { id: "p-enc", wasPlayed: true, previousWasPlayed: false },
+        {
+          id: "p-enc",
+          wasPlayed: true,
+          previousWasPlayed: false,
+          pointsEarned: 3,
+          previousPointsEarned: 0,
+        },
         // Regular non-Harpua: no achievement
-        { id: "p-reg", wasPlayed: true },
+        { id: "p-reg", wasPlayed: true, pointsEarned: 1 },
         // Already correct last run: skipped
-        { id: "p-harp", wasPlayed: true, previousWasPlayed: true },
+        {
+          id: "p-harp",
+          wasPlayed: true,
+          previousWasPlayed: true,
+          pointsEarned: 1,
+          previousPointsEarned: 1,
+        },
         // Not played: skipped
-        { id: "missing", wasPlayed: false },
+        { id: "missing", wasPlayed: false, pointsEarned: 0 },
       ],
       submission
     )
@@ -261,10 +279,36 @@ describe("processPickAchievements", () => {
     expect(slugs).toEqual(["perfect-opener", "perfect-closer", "jackpot"])
   })
 
+  it("only awards opener/closer when the pick lands in its slot", async () => {
+    const result = await processPickAchievements(
+      [
+        // Played elsewhere in the show: regular points, no PERFECT_OPENER
+        { id: "p-open", wasPlayed: true, pointsEarned: 1 },
+        // Played elsewhere, then landed in its slot later: PERFECT_CLOSER
+        // even though wasPlayed was already true (no JACKPOT - that one
+        // follows wasPlayed, which didn't change)
+        {
+          id: "p-enc",
+          wasPlayed: true,
+          previousWasPlayed: true,
+          pointsEarned: 3,
+          previousPointsEarned: 1,
+        },
+      ],
+      submission
+    )
+
+    const slugs = db.achievement.upsert.mock.calls.map(
+      (c) => (c[0] as { where: { slug: string } }).where.slug
+    )
+    expect(slugs).toEqual(["perfect-closer"])
+    expect(result).toEqual({ awarded: 1, errors: 0 })
+  })
+
   it("ignores scored picks that aren't in the submission", async () => {
     expect(
       await processPickAchievements(
-        [{ id: "unknown", wasPlayed: true }],
+        [{ id: "unknown", wasPlayed: true, pointsEarned: 1 }],
         submission
       )
     ).toEqual({ awarded: 0, errors: 0 })
@@ -279,8 +323,8 @@ describe("processPickAchievements", () => {
 
     const result = await processPickAchievements(
       [
-        { id: "p-open", wasPlayed: true },
-        { id: "p-enc", wasPlayed: true },
+        { id: "p-open", wasPlayed: true, pointsEarned: 3 },
+        { id: "p-enc", wasPlayed: true, pointsEarned: 3 },
       ],
       submission
     )
@@ -292,7 +336,7 @@ describe("processPickAchievements", () => {
     db.userAchievement.findUnique.mockResolvedValue({ id: "owned" })
     expect(
       await processPickAchievements(
-        [{ id: "p-harp", wasPlayed: true }],
+        [{ id: "p-harp", wasPlayed: true, pointsEarned: 1 }],
         submission
       )
     ).toEqual({ awarded: 0, errors: 0 })

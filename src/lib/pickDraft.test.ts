@@ -33,7 +33,9 @@ afterEach(() => {
 })
 
 const draft: PickDraft = {
-  openerPick: { songId: "s1", songName: "Tweezer", pickType: "OPENER" },
+  openerPicks: [
+    { songId: "s1", songName: "Tweezer", pickType: "OPENER", openerSet: 1 },
+  ],
   encorePick: { songId: "s2", songName: "Harpua", pickType: "ENCORE" },
   regularPicks: [{ songId: "s3", songName: "Fee", pickType: "REGULAR" }],
 }
@@ -41,7 +43,7 @@ const draft: PickDraft = {
 describe("server-side (no window)", () => {
   it("all helpers no-op", () => {
     vi.unstubAllGlobals()
-    expect(readPickDraft("user-1", "show-1", valid)).toBeNull()
+    expect(readPickDraft("user-1", "show-1", valid, 1)).toBeNull()
     writePickDraft("user-1", "show-1", draft)
     clearPickDraft("user-1", "show-1")
     expect(storage.setItem).not.toHaveBeenCalled()
@@ -53,13 +55,13 @@ describe("writePickDraft / readPickDraft", () => {
   it("round-trips a draft", () => {
     writePickDraft("user-1", "show-1", draft)
     expect(storage.store.has(KEY)).toBe(true)
-    expect(readPickDraft("user-1", "show-1", valid)).toEqual(draft)
+    expect(readPickDraft("user-1", "show-1", valid, 1)).toEqual(draft)
   })
 
   it("removes the key when the draft is empty", () => {
     storage.store.set(KEY, "x")
     writePickDraft("user-1", "show-1", {
-      openerPick: null,
+      openerPicks: [null],
       encorePick: null,
       regularPicks: [],
     })
@@ -80,24 +82,43 @@ describe("writePickDraft / readPickDraft", () => {
         ],
       })
     )
-    expect(readPickDraft("user-1", "show-1", valid)).toEqual({
-      openerPick: null,
+    expect(readPickDraft("user-1", "show-1", valid, 1)).toEqual({
+      openerPicks: [null],
       encorePick: null,
       regularPicks: [draft.regularPicks[0]],
     })
   })
 
+  it("restores a pre-set-openers draft's single opener as the Set 1 opener", () => {
+    storage.store.set(
+      KEY,
+      JSON.stringify({
+        openerPick: { songId: "s1", songName: "Tweezer", pickType: "OPENER" },
+        encorePick: null,
+        regularPicks: [],
+      })
+    )
+    expect(readPickDraft("user-1", "show-1", valid, 2)).toEqual({
+      openerPicks: [
+        { songId: "s1", songName: "Tweezer", pickType: "OPENER", openerSet: 1 },
+        null,
+      ],
+      encorePick: null,
+      regularPicks: [],
+    })
+  })
+
   it("returns null when nothing survives validation", () => {
     storage.store.set(KEY, JSON.stringify({ regularPicks: "nope" }))
-    expect(readPickDraft("user-1", "show-1", valid)).toBeNull()
+    expect(readPickDraft("user-1", "show-1", valid, 1)).toBeNull()
   })
 
   it("returns null for missing, non-object, or corrupt data", () => {
-    expect(readPickDraft("user-1", "show-1", valid)).toBeNull()
+    expect(readPickDraft("user-1", "show-1", valid, 1)).toBeNull()
     storage.store.set(KEY, "42")
-    expect(readPickDraft("user-1", "show-1", valid)).toBeNull()
+    expect(readPickDraft("user-1", "show-1", valid, 1)).toBeNull()
     storage.store.set(KEY, "{not json")
-    expect(readPickDraft("user-1", "show-1", valid)).toBeNull()
+    expect(readPickDraft("user-1", "show-1", valid, 1)).toBeNull()
     expect(console.warn).toHaveBeenCalled()
   })
 

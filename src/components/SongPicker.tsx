@@ -26,6 +26,16 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { LiveBadge } from "@/components/LiveBadge"
 import { useFocusTrap } from "@/hooks/useFocusTrap"
 import { readPickDraft, writePickDraft, clearPickDraft } from "@/lib/pickDraft"
+import {
+  describePickUpdateNeeded,
+  getOpenerLabel,
+  getOpenerSet,
+  getOpenerSets,
+  getPickUpdateNeeded,
+  getRegularPickCount,
+  POINTS,
+  TOTAL_PICKS,
+} from "@/lib/pick-rules"
 
 interface Song {
   id: string
@@ -41,8 +51,33 @@ interface Pick {
   songId: string
   songName: string
   pickType: "OPENER" | "ENCORE" | "REGULAR"
+  openerSet?: number | null
   wasPlayed?: boolean | null
   pointsEarned?: number | null
+}
+
+// One picker section per opener set, plus the encore and regular sections
+type Slot = `opener-${number}` | "encore" | "regular"
+
+function openerSlot(set: number): Slot {
+  return `opener-${set}`
+}
+
+function slotOpenerSet(slot: Slot): number | null {
+  return slot.startsWith("opener-")
+    ? Number(slot.slice("opener-".length))
+    : null
+}
+
+function buildOpenerPicks(
+  setCount: number,
+  picks: Pick[] | undefined
+): (Pick | null)[] {
+  return getOpenerSets(setCount).map(
+    (set) =>
+      picks?.find((p) => p.pickType === "OPENER" && getOpenerSet(p) === set) ??
+      null
+  )
 }
 
 interface Show {
@@ -52,6 +87,7 @@ interface Show {
   state: string
   showDate: string
   isComplete?: boolean
+  setCount: number
 }
 
 interface SongPickerProps {
@@ -80,15 +116,15 @@ export function SongPicker({
   userId,
 }: SongPickerProps) {
   const router = useRouter()
+  const setCount = show.setCount
+  const regularCount = getRegularPickCount(setCount)
   const [searchQuery, setSearchQuery] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [expandedSection, setExpandedSection] = useState<string | null>(
-    "opener"
+  const [expandedSection, setExpandedSection] = useState<Slot | null>(
+    openerSlot(1)
   )
   const [isMobile, setIsMobile] = useState(false)
-  const [mobileModalOpen, setMobileModalOpen] = useState<
-    "OPENER" | "ENCORE" | "REGULAR" | null
-  >(null)
+  const [mobileModalOpen, setMobileModalOpen] = useState<Slot | null>(null)
   const [justSaved, setJustSaved] = useState(false)
   const mobileModalRef = useRef<HTMLDivElement>(null)
 
@@ -169,8 +205,8 @@ export function SongPicker({
   }, [])
 
   // Initialize picks from existing submission
-  const [openerPick, setOpenerPick] = useState<Pick | null>(
-    existingPicks?.find((p) => p.pickType === "OPENER") || null
+  const [openerPicks, setOpenerPicks] = useState<(Pick | null)[]>(() =>
+    buildOpenerPicks(setCount, existingPicks)
   )
   const [encorePick, setEncorePick] = useState<Pick | null>(
     existingPicks?.find((p) => p.pickType === "ENCORE") || null
@@ -204,19 +240,21 @@ export function SongPicker({
       restoredDraftKeyRef.current = key
 
       const validSongIds = new Set(songs.map((s) => s.id))
-      const draft = readPickDraft(userId, show.id, validSongIds)
+      const draft = readPickDraft(userId, show.id, validSongIds, setCount)
 
       if (draft) {
         const draftRegularIds = new Set(draft.regularPicks.map((p) => p.songId))
         const currentRegularIds = new Set(regularPicks.map((p) => p.songId))
         const changed =
-          (draft.openerPick?.songId ?? null) !== (openerPick?.songId ?? null) ||
+          draft.openerPicks.some(
+            (p, i) => (p?.songId ?? null) !== (openerPicks[i]?.songId ?? null)
+          ) ||
           (draft.encorePick?.songId ?? null) !== (encorePick?.songId ?? null) ||
           draftRegularIds.size !== currentRegularIds.size ||
           [...draftRegularIds].some((id) => !currentRegularIds.has(id))
 
         if (changed) {
-          setOpenerPick(draft.openerPick)
+          setOpenerPicks(draft.openerPicks)
           setEncorePick(draft.encorePick)
           setRegularPicks(draft.regularPicks)
           toast.info("Restored your unsaved picks from last time")
@@ -235,14 +273,14 @@ export function SongPicker({
   // just-restored draft with the stale pre-restore values on mount.
   useEffect(() => {
     if (guestMode || isLocked || !userId || !draftHydrated) return
-    writePickDraft(userId, show.id, { openerPick, encorePick, regularPicks })
+    writePickDraft(userId, show.id, { openerPicks, encorePick, regularPicks })
   }, [
     userId,
     show.id,
     guestMode,
     isLocked,
     draftHydrated,
-    openerPick,
+    openerPicks,
     encorePick,
     regularPicks,
   ])
@@ -287,22 +325,24 @@ export function SongPicker({
   // Get all selected song IDs
   const selectedSongIds = useMemo(() => {
     const ids = new Set<string>()
-    if (openerPick) ids.add(openerPick.songId)
+    openerPicks.forEach((p) => p && ids.add(p.songId))
     if (encorePick) ids.add(encorePick.songId)
     regularPicks.forEach((p) => ids.add(p.songId))
     return ids
-  }, [openerPick, encorePick, regularPicks])
+  }, [openerPicks, encorePick, regularPicks])
 
   // Track if the current on-screen picks differ from what's saved on the
   // server - true both for edits to an already-submitted set, and for a
   // first-time selection that's never been submitted at all.
   const hasUnsavedChanges = useMemo(() => {
-    const existingOpener = existingPicks?.find((p) => p.pickType === "OPENER")
+    const existingOpeners = buildOpenerPicks(setCount, existingPicks)
     const existingEncore = existingPicks?.find((p) => p.pickType === "ENCORE")
     const existingRegular =
       existingPicks?.filter((p) => p.pickType === "REGULAR") ?? []
 
-    if (openerPick?.songId !== existingOpener?.songId) return true
+    if (openerPicks.some((p, i) => p?.songId !== existingOpeners[i]?.songId)) {
+      return true
+    }
     if (encorePick?.songId !== existingEncore?.songId) return true
     if (regularPicks.length !== existingRegular.length) return true
 
@@ -314,31 +354,44 @@ export function SongPicker({
     }
 
     return false
-  }, [openerPick, encorePick, regularPicks, existingPicks])
+  }, [openerPicks, encorePick, regularPicks, existingPicks, setCount])
 
-  const handleSelectSong = (
-    song: Song,
-    pickType: "OPENER" | "ENCORE" | "REGULAR"
-  ) => {
+  const handleSelectSong = (song: Song, slot: Slot) => {
     if (isLocked) return
 
     // Clear "just saved" state when making changes
     if (justSaved) setJustSaved(false)
 
+    const openerSet = slotOpenerSet(slot)
+
+    if (openerSet !== null) {
+      const pick: Pick = {
+        songId: song.id,
+        songName: song.name,
+        pickType: "OPENER",
+        openerSet,
+      }
+      setOpenerPicks(
+        openerPicks.map((p, i) => (i === openerSet - 1 ? pick : p))
+      )
+      if (isMobile) {
+        closeMobileModal()
+      } else {
+        setExpandedSection(
+          openerSet < setCount ? openerSlot(openerSet + 1) : "encore"
+        )
+      }
+      return
+    }
+
+    const pickType = slot === "encore" ? "ENCORE" : "REGULAR"
     const pick: Pick = {
       songId: song.id,
       songName: song.name,
       pickType,
     }
 
-    if (pickType === "OPENER") {
-      setOpenerPick(pick)
-      if (isMobile) {
-        closeMobileModal()
-      } else {
-        setExpandedSection("encore")
-      }
-    } else if (pickType === "ENCORE") {
+    if (pickType === "ENCORE") {
       setEncorePick(pick)
       if (isMobile) {
         closeMobileModal()
@@ -346,9 +399,9 @@ export function SongPicker({
         setExpandedSection("regular")
       }
     } else {
-      if (regularPicks.length < 11) {
+      if (regularPicks.length < regularCount) {
         setRegularPicks([...regularPicks, pick])
-        if (regularPicks.length === 10) {
+        if (regularPicks.length === regularCount - 1) {
           if (isMobile) {
             closeMobileModal()
           } else {
@@ -359,18 +412,18 @@ export function SongPicker({
     }
   }
 
-  const handleRemovePick = (
-    pickType: "OPENER" | "ENCORE" | "REGULAR",
-    songId?: string
-  ) => {
+  const handleRemovePick = (slot: Slot, songId?: string) => {
     if (isLocked) return
 
     // Clear "just saved" state when making changes
     if (justSaved) setJustSaved(false)
 
-    if (pickType === "OPENER") {
-      setOpenerPick(null)
-    } else if (pickType === "ENCORE") {
+    const openerSet = slotOpenerSet(slot)
+    if (openerSet !== null) {
+      setOpenerPicks(
+        openerPicks.map((p, i) => (i === openerSet - 1 ? null : p))
+      )
+    } else if (slot === "encore") {
       setEncorePick(null)
     } else if (songId) {
       setRegularPicks(regularPicks.filter((p) => p.songId !== songId))
@@ -378,14 +431,19 @@ export function SongPicker({
   }
 
   const handleSubmit = async () => {
-    if (!openerPick || !encorePick || regularPicks.length !== 11) {
+    const chosenOpeners = openerPicks.filter((p): p is Pick => p !== null)
+    if (
+      chosenOpeners.length !== setCount ||
+      !encorePick ||
+      regularPicks.length !== regularCount
+    ) {
       toast.error("Please complete all picks before submitting")
       return
     }
 
     // If in guest mode, call the onGuestSubmit callback
     if (guestMode && onGuestSubmit) {
-      const allPicks = [openerPick, encorePick, ...regularPicks]
+      const allPicks = [...chosenOpeners, encorePick, ...regularPicks]
       onGuestSubmit(allPicks)
       return
     }
@@ -394,7 +452,11 @@ export function SongPicker({
 
     try {
       const picks = [
-        { songId: openerPick.songId, pickType: "OPENER" },
+        ...chosenOpeners.map((p) => ({
+          songId: p.songId,
+          pickType: "OPENER",
+          openerSet: p.openerSet,
+        })),
         { songId: encorePick.songId, pickType: "ENCORE" },
         ...regularPicks.map((p) => ({ songId: p.songId, pickType: "REGULAR" })),
       ]
@@ -431,9 +493,38 @@ export function SongPicker({
     }
   }
 
-  const isComplete = openerPick && encorePick && regularPicks.length === 11
+  const isComplete =
+    openerPicks.every((p) => p !== null) &&
+    !!encorePick &&
+    regularPicks.length === regularCount
 
-  const renderSongList = (pickType: "OPENER" | "ENCORE" | "REGULAR") => (
+  // Saved picks made before an admin raised the show's set count. They keep
+  // scoring as they are, but need the new set openers (and room made for
+  // them among the regular picks) before they can be saved again.
+  const savedPicksNeedUpdate =
+    !isLocked &&
+    !!existingPicks &&
+    existingPicks.length > 0 &&
+    getPickUpdateNeeded(existingPicks, setCount) !== null
+  const currentUpdateNeeded = getPickUpdateNeeded(
+    [
+      ...openerPicks.filter((p): p is Pick => p !== null),
+      ...(encorePick ? [encorePick] : []),
+      ...regularPicks,
+    ],
+    setCount
+  )
+  const extraRegularPicks = currentUpdateNeeded?.extraRegularPicks ?? 0
+  const remainingText =
+    extraRegularPicks > 0 && currentUpdateNeeded
+      ? describePickUpdateNeeded(currentUpdateNeeded)
+      : `${TOTAL_PICKS - selectedSongIds.size} ${
+          TOTAL_PICKS - selectedSongIds.size === 1 ? "pick" : "picks"
+        } remaining`
+
+  const getOpenerTitle = (set: number) => getOpenerLabel(set, setCount)
+
+  const renderSongList = (slot: Slot) => (
     <div className="max-h-64 overflow-y-auto space-y-1 p-1">
       {filteredSongs.length === 0 ? (
         <p className="text-center text-gray-400 py-4">No songs found</p>
@@ -445,7 +536,7 @@ export function SongPicker({
           return (
             <button
               key={song.id}
-              onClick={() => !isDisabled && handleSelectSong(song, pickType)}
+              onClick={() => !isDisabled && handleSelectSong(song, slot)}
               disabled={isDisabled}
               aria-pressed={isSelected}
               className={`w-full text-left px-3 py-2 rounded-lg transition-all ${
@@ -488,15 +579,17 @@ export function SongPicker({
   const renderMobileModal = () => {
     if (!mobileModalOpen) return null
 
-    const pickType = mobileModalOpen
+    const slot = mobileModalOpen
+    const openerSet = slotOpenerSet(slot)
+    const isRegular = slot === "regular"
     let title = ""
     let currentPick = null
     let picks: Pick[] = []
 
-    if (pickType === "OPENER") {
-      title = "Select Opener"
-      currentPick = openerPick
-    } else if (pickType === "ENCORE") {
+    if (openerSet !== null) {
+      title = `Select ${getOpenerTitle(openerSet)}`
+      currentPick = openerPicks[openerSet - 1]
+    } else if (slot === "encore") {
       title = "Select Encore"
       currentPick = encorePick
     } else {
@@ -534,10 +627,10 @@ export function SongPicker({
           </div>
 
           {/* Current Selection */}
-          {pickType !== "REGULAR" && currentPick && !isLocked && (
+          {!isRegular && currentPick && !isLocked && (
             <div className="p-4 border-b-2 border-[#4a6b7d]/60">
               <button
-                onClick={() => handleRemovePick(pickType)}
+                onClick={() => handleRemovePick(slot)}
                 className="w-full flex items-center justify-between px-4 py-3 bg-[#4a6b7d] rounded-lg text-white hover:bg-[#5a7b8d] transition-colors"
               >
                 <span>Current: {currentPick.songName}</span>
@@ -546,16 +639,16 @@ export function SongPicker({
             </div>
           )}
 
-          {pickType === "REGULAR" && picks.length > 0 && !isLocked && (
+          {isRegular && picks.length > 0 && !isLocked && (
             <div className="p-4 border-b-2 border-[#4a6b7d]/60">
               <p className="text-sm text-gray-400 mb-2">
-                Selected ({picks.length}/11):
+                Selected ({picks.length}/{regularCount}):
               </p>
               <div className="flex flex-wrap gap-2">
                 {picks.map((pick) => (
                   <button
                     key={pick.songId}
-                    onClick={() => handleRemovePick("REGULAR", pick.songId)}
+                    onClick={() => handleRemovePick("regular", pick.songId)}
                     aria-label={`Remove ${pick.songName}`}
                     className="flex items-center space-x-1 px-3 py-1.5 bg-[#4a6b7d] rounded-full text-sm text-white hover:bg-[#5a7b8d] transition-colors"
                   >
@@ -596,12 +689,18 @@ export function SongPicker({
 
           {/* Song List */}
           <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
-            {pickType === "REGULAR" && picks.length === 11 ? (
+            {isRegular && picks.length > regularCount ? (
+              <p className="text-center text-yellow-400 py-4">
+                Remove {picks.length - regularCount} regular{" "}
+                {picks.length - regularCount === 1 ? "pick" : "picks"} above to
+                make room
+              </p>
+            ) : isRegular && picks.length === regularCount ? (
               <p className="text-center text-green-400 py-4">
-                All 11 regular picks selected!
+                All {regularCount} regular picks selected!
               </p>
             ) : (
-              renderSongList(pickType)
+              renderSongList(slot)
             )}
           </div>
         </div>
@@ -658,7 +757,7 @@ export function SongPicker({
       )
     }
 
-    const opener = picks.find((p) => p.pickType === "OPENER")
+    const openers = buildOpenerPicks(setCount, picks)
     const encore = picks.find((p) => p.pickType === "ENCORE")
     const regulars = picks.filter((p) => p.pickType === "REGULAR")
     const hasScoringStarted = picks.some(
@@ -701,7 +800,7 @@ export function SongPicker({
               pick.wasPlayed ? "text-green-400" : "text-red-400"
             }`}
           >
-            {pick.wasPlayed ? "+3" : "0"}
+            {pick.wasPlayed ? `+${pick.pointsEarned ?? 0}` : "0"}
           </span>
         )}
       </div>
@@ -728,7 +827,14 @@ export function SongPicker({
           </p>
 
           <div className="text-left mb-6 space-y-2">
-            {opener && renderSpecialPick("Opener", opener)}
+            {openers.map(
+              (opener, i) =>
+                opener && (
+                  <div key={opener.songId}>
+                    {renderSpecialPick(getOpenerTitle(i + 1), opener)}
+                  </div>
+                )
+            )}
             {encore && renderSpecialPick("Encore", encore)}
             {regulars.length > 0 && (
               <div className="flex flex-wrap gap-2 pt-1">
@@ -787,16 +893,17 @@ export function SongPicker({
   }
 
   const renderPickCard = (
-    pickType: "OPENER" | "ENCORE" | "REGULAR",
+    slot: Slot,
     title: string,
     subtitle: string,
     icon: React.ReactNode,
     currentPick: Pick | null,
     pickCount?: number
   ) => {
-    const isExpanded = expandedSection === pickType.toLowerCase()
+    const isExpanded = expandedSection === slot
+    const isRegular = slot === "regular"
 
-    const panelId = `picker-panel-${pickType}`
+    const panelId = `picker-panel-${slot}`
 
     return (
       <Card className="overflow-hidden" blur={false}>
@@ -812,9 +919,9 @@ export function SongPicker({
             aria-controls={!isMobile ? panelId : undefined}
             onClick={() => {
               if (isMobile && !isLocked) {
-                setMobileModalOpen(pickType)
+                setMobileModalOpen(slot)
               } else {
-                setExpandedSection(isExpanded ? null : pickType.toLowerCase())
+                setExpandedSection(isExpanded ? null : slot)
               }
             }}
           >
@@ -822,7 +929,7 @@ export function SongPicker({
               <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                 <div
                   className={`p-2 rounded-lg flex-shrink-0 ${
-                    pickType === "REGULAR"
+                    isRegular
                       ? "bg-[#4a6b7d]"
                       : "bg-[#c23a3a]/30 border border-[#c23a3a]/30"
                   }`}
@@ -839,14 +946,18 @@ export function SongPicker({
                 </div>
               </div>
               <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-                {pickType === "REGULAR" ? (
-                  pickCount === 11 ? (
+                {isRegular ? (
+                  (pickCount || 0) > regularCount ? (
+                    <span className="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-sm font-medium whitespace-nowrap">
+                      Remove {(pickCount || 0) - regularCount}
+                    </span>
+                  ) : pickCount === regularCount ? (
                     <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium whitespace-nowrap">
                       Complete
                     </span>
                   ) : (
                     <span className="text-gray-300 text-sm whitespace-nowrap">
-                      {11 - (pickCount || 0)} more needed
+                      {regularCount - (pickCount || 0)} more needed
                     </span>
                   )
                 ) : currentPick ? (
@@ -876,21 +987,21 @@ export function SongPicker({
         </CardHeader>
         {!isMobile && isExpanded && (
           <CardContent id={panelId}>
-            {pickType !== "REGULAR" && currentPick && !isLocked && (
+            {!isRegular && currentPick && !isLocked && (
               <button
-                onClick={() => handleRemovePick(pickType)}
+                onClick={() => handleRemovePick(slot)}
                 className="mb-4 flex items-center space-x-2 px-3 py-2 bg-[#4a6b7d] rounded-lg text-sm text-white hover:bg-[#5a7b8d] transition-colors"
               >
                 <X aria-hidden="true" className="h-4 w-4" />
                 <span>Remove: {currentPick.songName}</span>
               </button>
             )}
-            {pickType === "REGULAR" && (pickCount || 0) > 0 && !isLocked && (
+            {isRegular && (pickCount || 0) > 0 && !isLocked && (
               <div className="mb-4 flex flex-wrap gap-2">
                 {regularPicks.map((pick) => (
                   <button
                     key={pick.songId}
-                    onClick={() => handleRemovePick("REGULAR", pick.songId)}
+                    onClick={() => handleRemovePick("regular", pick.songId)}
                     aria-label={`Remove ${pick.songName}`}
                     className="flex items-center space-x-1 px-3 py-1.5 bg-[#4a6b7d] rounded-full text-sm text-white hover:bg-[#5a7b8d] transition-colors"
                   >
@@ -900,12 +1011,18 @@ export function SongPicker({
                 ))}
               </div>
             )}
-            {pickType === "REGULAR" && pickCount === 11 ? (
+            {isRegular && (pickCount || 0) > regularCount ? (
+              <p className="text-center text-yellow-400 py-4">
+                Remove {(pickCount || 0) - regularCount} regular{" "}
+                {(pickCount || 0) - regularCount === 1 ? "pick" : "picks"} above
+                to make room
+              </p>
+            ) : isRegular && pickCount === regularCount ? (
               <p className="text-center text-green-400 py-4">
-                All 11 regular picks selected!
+                All {regularCount} regular picks selected!
               </p>
             ) : (
-              renderSongList(pickType)
+              renderSongList(slot)
             )}
           </CardContent>
         )}
@@ -982,26 +1099,56 @@ export function SongPicker({
               </div>
             )}
 
+            {savedPicksNeedUpdate && (
+              <div
+                role="status"
+                className="mb-4 flex items-start gap-3 rounded-xl border-2 border-yellow-500/50 bg-yellow-500/10 p-3 sm:p-4"
+              >
+                <AlertCircle
+                  aria-hidden="true"
+                  className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5"
+                />
+                <div className="text-sm">
+                  <p className="font-medium text-white">
+                    This show now has {setCount} sets
+                  </p>
+                  <p className="text-gray-300">
+                    {currentUpdateNeeded
+                      ? `${describePickUpdateNeeded(currentUpdateNeeded)}, then update your picks.`
+                      : "Click update to save your changes."}{" "}
+                    Your saved picks still count until you do.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Pick Sections */}
             <div className={`space-y-4 ${isLocked ? "opacity-30" : ""}`}>
+              {getOpenerSets(setCount).map((set) => (
+                <div key={set}>
+                  {renderPickCard(
+                    openerSlot(set),
+                    `${getOpenerTitle(set)} Pick`,
+                    `${POINTS.OPENER} pts · ${POINTS.REGULAR} if played elsewhere`,
+                    <Star
+                      aria-hidden="true"
+                      className="h-5 w-5 text-[#c23a3a]"
+                    />,
+                    openerPicks[set - 1]
+                  )}
+                </div>
+              ))}
               {renderPickCard(
-                "OPENER",
-                "Opener Pick",
-                "3 points if correct",
-                <Star aria-hidden="true" className="h-5 w-5 text-[#c23a3a]" />,
-                openerPick
-              )}
-              {renderPickCard(
-                "ENCORE",
+                "encore",
                 "Encore Pick",
-                "3 points if correct",
+                `${POINTS.ENCORE} pts · ${POINTS.REGULAR} if played elsewhere`,
                 <Star aria-hidden="true" className="h-5 w-5 text-[#c23a3a]" />,
                 encorePick
               )}
               {renderPickCard(
-                "REGULAR",
+                "regular",
                 "Regular Picks",
-                `1 point each (${regularPicks.length}/11 selected)`,
+                `1 point each (${regularPicks.length}/${regularCount} selected)`,
                 <Music aria-hidden="true" className="h-5 w-5 text-white" />,
                 null,
                 regularPicks.length
@@ -1065,10 +1212,10 @@ export function SongPicker({
                         ? existingPicks
                           ? "Click update to save your changes"
                           : "Click submit to save your picks"
-                        : `${13 - selectedSongIds.size} picks remaining — not yet saved`
+                        : `${remainingText} — not yet saved`
                       : isComplete
                         ? "All picks completed"
-                        : `${13 - selectedSongIds.size} picks remaining`}
+                        : remainingText}
                 </p>
               </div>
             </div>

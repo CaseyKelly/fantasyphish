@@ -56,6 +56,8 @@ const show = {
   city: "New York",
   state: "NY",
   showDate: "2025-07-04T00:00:00.000Z",
+  // One set keeps these flows at one opener, one encore and 11 regular picks
+  setCount: 1,
 }
 
 type PickType = "OPENER" | "ENCORE" | "REGULAR"
@@ -322,7 +324,7 @@ describe("SongPicker (desktop)", () => {
     fireEvent.click(screen.getByText("Encore Pick").closest("button")!)
     fireEvent.click(screen.getByText(`Remove: ${name(1)}`))
     expect(
-      screen.getByText("1 picks remaining — not yet saved")
+      screen.getByText("1 pick remaining — not yet saved")
     ).toBeInTheDocument()
   })
 })
@@ -383,6 +385,7 @@ describe("SongPicker locked panel", () => {
         isLocked
         existingPicks={fullPicks((i) => ({
           wasPlayed: i === 0 || i === 2 ? true : i === 3 ? null : false,
+          pointsEarned: i === 0 ? 3 : i === 2 ? 1 : 0,
         }))}
         totalPoints={4}
       />
@@ -391,6 +394,23 @@ describe("SongPicker locked panel", () => {
     expect(screen.getByText("0")).toBeInTheDocument()
     expect(screen.getByText("Final score:")).toBeInTheDocument()
     expect(screen.getByText("4 pts")).toBeInTheDocument()
+  })
+
+  it("shows the regular point for an opener played outside its slot", () => {
+    render(
+      <SongPicker
+        show={{ ...show, isComplete: true }}
+        songs={songs}
+        isLocked
+        existingPicks={fullPicks((i) => ({
+          wasPlayed: i === 0,
+          pointsEarned: i === 0 ? 1 : 0,
+        }))}
+        totalPoints={1}
+      />
+    )
+    expect(screen.getByText("+1")).toBeInTheDocument()
+    expect(screen.queryByText("+3")).toBeNull()
   })
 
   it("polls results every 10 minutes until the show completes", async () => {
@@ -508,6 +528,23 @@ describe("SongPicker (mobile)", () => {
     ).toBeInTheDocument()
   })
 
+  it("gives each set its own opener slot with the short points hint", () => {
+    render(
+      <SongPicker
+        show={{ ...show, setCount: 2 }}
+        songs={songs}
+        isLocked={false}
+      />
+    )
+    expect(screen.getByText("Set 1 Opener Pick")).toBeInTheDocument()
+    expect(screen.getByText("Set 2 Opener Pick")).toBeInTheDocument()
+    expect(screen.getAllByText("3 pts · 1 if played elsewhere")).toHaveLength(3)
+    // Two openers + encore leave 10 regular picks
+    expect(
+      screen.getByText(/1 point each \(0\/10 selected\)/)
+    ).toBeInTheDocument()
+  })
+
   it("replaces the picker with the locked panel", () => {
     render(<SongPicker show={show} songs={songs} isLocked />)
     expect(screen.getByText("Picks Are Closed")).toBeInTheDocument()
@@ -518,7 +555,7 @@ describe("SongPicker (mobile)", () => {
 describe("SongPicker drafts", () => {
   it("restores a saved draft once and persists later changes", () => {
     vi.mocked(readPickDraft).mockReturnValue({
-      openerPick: pick(5, "OPENER") as never,
+      openerPicks: [pick(5, "OPENER", { openerSet: 1 }) as never],
       encorePick: null,
       regularPicks: [pick(6, "REGULAR") as never],
     })
@@ -536,14 +573,14 @@ describe("SongPicker drafts", () => {
       "u1",
       "show-1",
       expect.objectContaining({
-        openerPick: expect.objectContaining({ songId: "s1" }),
+        openerPicks: [expect.objectContaining({ songId: "s1", openerSet: 1 })],
       })
     )
   })
 
   it("doesn't announce a draft identical to the saved picks", () => {
     vi.mocked(readPickDraft).mockReturnValue({
-      openerPick: pick(0, "OPENER") as never,
+      openerPicks: [pick(0, "OPENER", { openerSet: 1 }) as never],
       encorePick: pick(1, "ENCORE") as never,
       regularPicks: fullPicks().slice(2) as never,
     })

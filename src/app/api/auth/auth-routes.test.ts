@@ -179,6 +179,8 @@ describe("POST /api/auth/register", () => {
     db.user.findMany.mockResolvedValue([])
     db.user.create.mockResolvedValue({ id: "u1", email: "new@b.com" })
     db.submission.create.mockResolvedValue({ id: "sub-1" })
+    // picks() is a one-set submission: one opener, one encore, 11 regular
+    db.show.findUnique.mockResolvedValue({ setCount: 1 })
     verifyEmailMock.mockResolvedValue({ success: false, error: "quota" })
 
     const json = await (
@@ -189,6 +191,29 @@ describe("POST /api/auth/register", () => {
     expect(
       db.submission.create.mock.calls[0][0].data.picks.create
     ).toHaveLength(13)
+  })
+
+  it("rejects guest picks that don't match the show's set count", async () => {
+    db.user.findUnique.mockResolvedValue(null)
+    db.user.findMany.mockResolvedValue([])
+    db.show.findUnique.mockResolvedValue({ setCount: 2 })
+
+    const res = await register(post({ ...body, showId: "s1", picks: picks() }))
+
+    expect(res.status).toBe(400)
+    expect((await res.json()).error).toContain("exactly 2 openers")
+    expect(db.user.create).not.toHaveBeenCalled()
+  })
+
+  it("404s guest picks for an unknown show", async () => {
+    db.user.findUnique.mockResolvedValue(null)
+    db.user.findMany.mockResolvedValue([])
+    db.show.findUnique.mockResolvedValue(null)
+
+    const res = await register(post({ ...body, showId: "s1", picks: picks() }))
+
+    expect(res.status).toBe(404)
+    expect(db.user.create).not.toHaveBeenCalled()
   })
 
   it("returns 500 with details on unexpected errors", async () => {

@@ -52,6 +52,7 @@ import AdminImpersonatePage from "./impersonate/page"
 import ImpersonateClient from "./impersonate/ImpersonateClient"
 import AdminShowsPage from "./shows/page"
 import { ShowLockOverrideForm } from "./shows/ShowLockOverrideForm"
+import { ShowSetCountForm } from "./shows/ShowSetCountForm"
 import AdminUsagePage from "./usage/page"
 import { UsageOverview } from "./usage/UsageOverview"
 import { UsageTables } from "./usage/UsageTables"
@@ -382,6 +383,8 @@ describe("show lock overrides", () => {
         timezone: null,
         lockTime: null,
         lockTimeOverride: null,
+        setCount: 2,
+        submissions: [],
       },
       {
         id: "s2",
@@ -392,10 +395,25 @@ describe("show lock overrides", () => {
         timezone: "America/New_York",
         lockTime: new Date("2025-07-05T23:00:00Z"),
         lockTimeOverride: new Date("2025-07-05T23:00:00Z"),
+        setCount: 2,
+        // Picked as a one-set show before it was raised to two sets
+        submissions: [
+          {
+            picks: [
+              { pickType: "OPENER", openerSet: 1 },
+              { pickType: "ENCORE", openerSet: null },
+              ...Array.from({ length: 11 }, () => ({
+                pickType: "REGULAR",
+                openerSet: null,
+              })),
+            ],
+          },
+        ],
       },
     ])
     render(await AdminShowsPage())
     expect(screen.getByText(/No lock time set/)).toBeInTheDocument()
+    expect(screen.getByText(/1 submission needs updating/)).toBeInTheDocument()
     expect(screen.getByLabelText("Lock time (MT)")).toHaveValue("19:00")
     expect(screen.getByText("(manual override)")).toBeInTheDocument()
   })
@@ -686,5 +704,90 @@ describe("usage", () => {
       />
     )
     expect(screen.getByText("No users yet.")).toBeInTheDocument()
+  })
+})
+
+describe("show set count form", () => {
+  const props = {
+    showId: "s1",
+    setCount: 2,
+    submissionCount: 0,
+    submissionsNeedingUpdate: 0,
+    isLocked: false,
+  }
+  const select = () => screen.getByLabelText("Sets")
+  const save = () => screen.getByRole("button", { name: "Save sets" })
+
+  it("describes the show and saves a new set count", async () => {
+    fetchMock.mockResolvedValue(json({ success: true }))
+    render(<ShowSetCountForm {...props} />)
+    expect(
+      screen.getByText(
+        /2 sets — 2 openers, 1 encore, 10 regular \(19 pts max\)/
+      )
+    ).toBeInTheDocument()
+    expect(save()).toBeDisabled()
+
+    fireEvent.change(select(), { target: { value: "1" } })
+    await act(async () => {
+      fireEvent.click(save())
+    })
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/admin/set-show-set-count",
+      expect.objectContaining({ method: "POST" })
+    )
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      showId: "s1",
+      setCount: 1,
+    })
+    expect(refresh).toHaveBeenCalled()
+  })
+
+  it("only offers raising once someone has picked, and warns about it", () => {
+    render(
+      <ShowSetCountForm
+        {...props}
+        submissionCount={3}
+        submissionsNeedingUpdate={2}
+      />
+    )
+    expect(
+      screen.getByText(/3 submissions in — the set count can only go up/)
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/2 submissions need updating for the new set openers/)
+    ).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "1" })).toBeDisabled()
+    expect(screen.getByRole("option", { name: "3" })).not.toBeDisabled()
+
+    fireEvent.change(select(), { target: { value: "3" } })
+    expect(
+      screen.getByText(
+        /asks everyone who already picked to add the new set opener;/
+      )
+    ).toBeInTheDocument()
+  })
+
+  it("shows the server's error", async () => {
+    fetchMock.mockResolvedValue(
+      json({ error: "Picks have already locked for this show" }, false)
+    )
+    render(<ShowSetCountForm {...props} />)
+    fireEvent.change(select(), { target: { value: "3" } })
+    await act(async () => {
+      fireEvent.click(save())
+    })
+    expect(
+      screen.getByText("Picks have already locked for this show")
+    ).toBeInTheDocument()
+    expect(refresh).not.toHaveBeenCalled()
+  })
+
+  it("hides the controls once picks have locked", () => {
+    render(<ShowSetCountForm {...props} isLocked />)
+    expect(
+      screen.getByText(/the set count can no longer change/)
+    ).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Save sets" })).toBeNull()
   })
 })

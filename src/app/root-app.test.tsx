@@ -117,7 +117,8 @@ describe("landing page", () => {
     fetchMock.mockReturnValue(new Promise(() => {}))
     render(await LandingPage())
     expect(screen.getByText(/You Knew/)).toBeInTheDocument()
-    expect(screen.getByText("17 pts")).toBeInTheDocument()
+    // Max points for the default two-set show
+    expect(screen.getByText("19 pts")).toBeInTheDocument()
   })
 })
 

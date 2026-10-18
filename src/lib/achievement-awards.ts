@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { ACHIEVEMENT_DEFINITIONS, AchievementSlug } from "@/lib/achievements"
 import { PickType, Prisma } from "@prisma/client"
 import { normalizeSongName } from "@/lib/phishnet"
+import { isSlotHit } from "@/lib/pick-rules"
 
 /**
  * Award opener or closer achievement to a user
@@ -149,6 +150,8 @@ export async function processPickAchievements(
     id: string
     wasPlayed: boolean | null
     previousWasPlayed?: boolean | null
+    pointsEarned: number
+    previousPointsEarned?: number | null
   }>,
   submission: {
     userId: string
@@ -172,44 +175,54 @@ export async function processPickAchievements(
   let errors = 0
 
   for (const scoredPick of scoredPicks) {
+    // Find the full pick details
+    const pick = submission.picks.find((p) => p.id === scoredPick.id)
+    if (!pick) continue
+
+    // Perfect opener/closer only for a pick that just landed in its slot -
+    // an opener/encore pick played elsewhere in the show doesn't count
+    if (
+      (pick.pickType === "OPENER" || pick.pickType === "ENCORE") &&
+      isSlotHit({
+        pickType: pick.pickType,
+        pointsEarned: scoredPick.pointsEarned,
+      }) &&
+      !isSlotHit({
+        pickType: pick.pickType,
+        pointsEarned: scoredPick.previousPointsEarned,
+      })
+    ) {
+      const result = await awardPickAchievement(
+        submission.userId,
+        pick.pickType,
+        {
+          showDate: submission.show.showDate,
+          venue: submission.show.venue,
+          songName: pick.song.name,
+        }
+      )
+
+      if (result.awarded) {
+        awarded++
+        console.log(
+          `[ProcessPickAchievements] ✓ Awarded ${pick.pickType} achievement to user ${submission.userId}`
+        )
+      } else if (result.error) {
+        errors++
+        console.error(
+          `[ProcessPickAchievements] ✗ Failed to award ${pick.pickType} achievement:`,
+          result.error
+        )
+      }
+      // If result.awarded is false but no error, user already has achievement (not an error)
+    }
+
     // Only award if pick just became correct (changed from null/false to true)
     if (
       scoredPick.wasPlayed === true &&
       scoredPick.previousWasPlayed !== true
     ) {
-      // Find the full pick details
-      const pick = submission.picks.find((p) => p.id === scoredPick.id)
-
-      if (pick && (pick.pickType === "OPENER" || pick.pickType === "ENCORE")) {
-        const result = await awardPickAchievement(
-          submission.userId,
-          pick.pickType,
-          {
-            showDate: submission.show.showDate,
-            venue: submission.show.venue,
-            songName: pick.song.name,
-          }
-        )
-
-        if (result.awarded) {
-          awarded++
-          console.log(
-            `[ProcessPickAchievements] ✓ Awarded ${pick.pickType} achievement to user ${submission.userId}`
-          )
-        } else if (result.error) {
-          errors++
-          console.error(
-            `[ProcessPickAchievements] ✗ Failed to award ${pick.pickType} achievement:`,
-            result.error
-          )
-        }
-        // If result.awarded is false but no error, user already has achievement (not an error)
-      }
-
-      if (
-        pick &&
-        normalizeSongName(pick.song.name) === normalizeSongName("Harpua")
-      ) {
+      if (normalizeSongName(pick.song.name) === normalizeSongName("Harpua")) {
         const result = await awardSongPickAchievement(
           submission.userId,
           "JACKPOT",

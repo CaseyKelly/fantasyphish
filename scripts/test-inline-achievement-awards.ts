@@ -6,6 +6,7 @@
 import { PrismaClient } from "@prisma/client"
 import { PrismaPg } from "@prisma/adapter-pg"
 import { config } from "dotenv"
+import { POINTS } from "../src/lib/pick-rules"
 import { processPickAchievements } from "../src/lib/achievement-awards"
 
 config({ path: ".env.local" })
@@ -19,7 +20,7 @@ async function main() {
   const openerPick = await prisma.pick.findFirst({
     where: {
       pickType: "OPENER",
-      wasPlayed: true,
+      pointsEarned: { gte: POINTS.OPENER },
     },
     include: {
       submission: {
@@ -59,6 +60,8 @@ async function main() {
       id: openerPick.id,
       wasPlayed: true,
       previousWasPlayed: null, // Simulate first time being scored
+      pointsEarned: POINTS.OPENER, // Landed in its slot
+      previousPointsEarned: null,
     },
   ]
 

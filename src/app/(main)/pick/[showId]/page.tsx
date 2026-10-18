@@ -143,6 +143,7 @@ export default async function PickPage({ params }: PickPageProps) {
     songId: pick.songId,
     songName: pick.song.name,
     pickType: pick.pickType,
+    openerSet: pick.openerSet,
     wasPlayed: pick.wasPlayed,
     pointsEarned: pick.pointsEarned,
   }))
@@ -157,6 +158,7 @@ export default async function PickPage({ params }: PickPageProps) {
           state: show.state || "",
           showDate: show.showDate.toISOString(),
           isComplete: show.isComplete,
+          setCount: show.setCount,
         }}
         songs={songs}
         existingPicks={existingPicks}

@@ -75,6 +75,7 @@ describe("parseSetlist", () => {
   it("returns a zeroed shape for a null setlist", () => {
     expect(parseSetlist(null)).toEqual({
       opener: null,
+      setOpeners: {},
       encoreSongs: [],
       allSongs: [],
       setsBySong: {},
@@ -84,6 +85,7 @@ describe("parseSetlist", () => {
   it("returns a zeroed shape for an empty-songs setlist", () => {
     expect(parseSetlist(makeSetlist([]))).toEqual({
       opener: null,
+      setOpeners: {},
       encoreSongs: [],
       allSongs: [],
       setsBySong: {},
@@ -96,6 +98,21 @@ describe("parseSetlist", () => {
       makeSong({ song: "Tweezer", set: "1", position: 1 }),
     ])
     expect(parseSetlist(setlist).opener).toBe("Tweezer")
+  })
+
+  it("records the opener of every numbered set", () => {
+    const setlist = makeSetlist([
+      makeSong({ song: "Ghost", set: "2", position: 12 }),
+      makeSong({ song: "Down with Disease", set: "2", position: 11 }),
+      makeSong({ song: "Sand", set: "3", position: 20 }),
+      makeSong({ song: "Tweezer", set: "1", position: 1 }),
+      makeSong({ song: "Character Zero", set: "e", position: 25 }),
+    ])
+    expect(parseSetlist(setlist).setOpeners).toEqual({
+      1: "Tweezer",
+      2: "Down with Disease",
+      3: "Sand",
+    })
   })
 
   it("detects encore songs case-insensitively on the set field", () => {

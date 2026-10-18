@@ -26,9 +26,10 @@ function pick(
   song: string,
   pickType: string,
   wasPlayed: boolean | null,
-  pointsEarned = 0
+  pointsEarned = 0,
+  openerSet: number | null = null
 ) {
-  return { id, song, pickType, wasPlayed, pointsEarned }
+  return { id, song, pickType, wasPlayed, pointsEarned, openerSet }
 }
 
 function results(overrides: Record<string, unknown> = {}) {
@@ -42,6 +43,7 @@ function results(overrides: Record<string, unknown> = {}) {
       isComplete: true,
       lockTime: null,
       lastScoredAt: null,
+      setCount: 2,
     },
     submission: {
       id: "sub-1",
@@ -49,11 +51,12 @@ function results(overrides: Record<string, unknown> = {}) {
       isScored: true,
       username: "bob",
       picks: [
-        pick("p1", "Tweezer", "OPENER", true, 3),
+        pick("p1", "Tweezer", "OPENER", true, 3, 1),
         pick("p2", "Harpua", "ENCORE", false),
         pick("p3", "Fee", "REGULAR", true, 1),
         pick("p4", "Mike's Song", "REGULAR", null),
-        pick("p5", "Ghost", "OPENER", false),
+        // Set 2 opener pick played later in set 2: regular points only
+        pick("p5", "Ghost", "OPENER", true, 1, 2),
       ],
     },
     setlist: {
@@ -61,8 +64,8 @@ function results(overrides: Record<string, unknown> = {}) {
       songs: [
         { song: "Tweezer", set: "1", position: 1, footnote: "" },
         { song: "Fee", set: "1", position: 2, footnote: "With a tease" },
-        { song: "Ghost", set: "2", position: 3, footnote: "" },
-        { song: "Mike's Song", set: "2", position: 4, footnote: "" },
+        { song: "Mike's Song", set: "2", position: 3, footnote: "" },
+        { song: "Ghost", set: "2", position: 4, footnote: "" },
         { song: "Tweezer", set: "e", position: 5, footnote: "" },
         { song: "Harpua", set: "e", position: 6, footnote: "" },
       ],
@@ -117,10 +120,12 @@ describe("ResultsClient", () => {
   it("labels setlist songs by pick type, only on their first appearance", async () => {
     fetchMock.mockResolvedValue(json(results()))
     await renderLoaded()
-    // Tweezer opened the show and repeats in the encore unlabeled; Ghost was
-    // also picked as an opener but came later
-    expect(screen.getByText("Opener")).toBeInTheDocument()
-    expect(screen.getByText("Opener (wrong)")).toBeInTheDocument()
+    // Tweezer opened set 1 and repeats in the encore unlabeled; Ghost was
+    // picked to open set 2 but came later in the set
+    expect(screen.getByText("Set 1 Opener")).toBeInTheDocument()
+    expect(
+      screen.getByText("Set 2 Opener pick (played elsewhere)")
+    ).toBeInTheDocument()
     expect(screen.getByText("Encore")).toBeInTheDocument()
     expect(screen.getAllByText("Pick")).toHaveLength(2)
     // Shown both in the setlist and the picks summary
@@ -137,7 +142,7 @@ describe("ResultsClient", () => {
     ).toBeInTheDocument()
   })
 
-  it("marks a picked opener that came later as wrong", async () => {
+  it("labels an opener pick played in a different set as played elsewhere", async () => {
     const data = results()
     data.setlist.songs = [
       { song: "Fee", set: "1", position: 1, footnote: "" },
@@ -145,18 +150,37 @@ describe("ResultsClient", () => {
     ]
     fetchMock.mockResolvedValue(json(data))
     await renderLoaded()
-    expect(screen.getByText("Opener (wrong)")).toBeInTheDocument()
+    expect(
+      screen.getByText("Set 2 Opener pick (played elsewhere)")
+    ).toBeInTheDocument()
   })
 
-  it("marks an encore pick played in the main set as an encore pick", async () => {
+  it("labels an encore pick played in the main set as played elsewhere, with its point", async () => {
     const data = results()
-    data.submission.picks = [pick("p2", "Harpua", "ENCORE", false)]
+    data.submission.picks = [pick("p2", "Harpua", "ENCORE", true, 1)]
     data.setlist.songs = [
       { song: "Harpua", set: "1", position: 3, footnote: "" },
     ]
     fetchMock.mockResolvedValue(json(data))
     await renderLoaded()
-    expect(screen.getByText("Encore")).toBeInTheDocument()
+    expect(
+      screen.getByText("Encore pick (played elsewhere)")
+    ).toBeInTheDocument()
+    expect(screen.getAllByText("+1").length).toBeGreaterThan(0)
+  })
+
+  it("puts the badge on the in-slot play of a song played more than once", async () => {
+    const data = results()
+    data.submission.picks = [pick("p5", "Ghost", "OPENER", true, 3, 2)]
+    data.setlist.songs = [
+      { song: "Fee", set: "1", position: 1, footnote: "" },
+      { song: "Ghost", set: "1", position: 2, footnote: "" },
+      { song: "Ghost", set: "2", position: 3, footnote: "" },
+    ]
+    fetchMock.mockResolvedValue(json(data))
+    await renderLoaded()
+    expect(screen.getByText("Set 2 Opener")).toBeInTheDocument()
+    expect(screen.queryByText(/played elsewhere/)).toBeNull()
   })
 
   it("expands show notes", async () => {

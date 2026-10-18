@@ -22,6 +22,22 @@ describe("submitPicksSchema", () => {
     expect(result.success).toBe(true)
   })
 
+  it("accepts an opener pick tagged with its set", () => {
+    const result = submitPicksSchema.safeParse({
+      showId: "show-1",
+      picks: [{ songId: "song-1", pickType: "OPENER", openerSet: 2 }],
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it("rejects an opener set outside 1-3", () => {
+    const result = submitPicksSchema.safeParse({
+      showId: "show-1",
+      picks: [{ songId: "song-1", pickType: "OPENER", openerSet: 4 }],
+    })
+    expect(result.success).toBe(false)
+  })
+
   it("rejects an invalid pickType", () => {
     const result = submitPicksSchema.safeParse({
       showId: "show-1",

@@ -1,12 +1,21 @@
 import { describe, it, expect } from "vitest"
 import { computePickBreakdown, type ProfileStatsPick } from "./profile-stats"
+import { POINTS } from "./pick-rules"
 
+// A played pick earns its full points (a slot hit for opener/encore)
+// unless pointsEarned says otherwise
 function pick(
   pickType: ProfileStatsPick["pickType"],
   songName: string,
-  wasPlayed: boolean | null
+  wasPlayed: boolean | null,
+  pointsEarned: number | null = wasPlayed ? POINTS[pickType] : 0
 ): ProfileStatsPick {
-  return { pickType, wasPlayed, song: { id: songName, name: songName } }
+  return {
+    pickType,
+    wasPlayed,
+    pointsEarned,
+    song: { id: songName, name: songName },
+  }
 }
 
 describe("computePickBreakdown", () => {
@@ -104,5 +113,21 @@ describe("computePickBreakdown", () => {
     ])
     expect(alpha.favoriteSong).toEqual({ name: "Fee", count: 1 })
     expect(alpha.mostReliableSong).toBeNull()
+  })
+
+  it("counts an opener/encore played elsewhere as a song hit, not a slot hit", () => {
+    const result = computePickBreakdown([
+      {
+        picks: [
+          pick("OPENER", "Tweezer", true, POINTS.REGULAR),
+          pick("ENCORE", "Slave", true, POINTS.ENCORE),
+        ],
+      },
+    ])
+
+    expect(result.opener).toEqual({ hits: 0, attempts: 1, rate: 0 })
+    expect(result.encore).toEqual({ hits: 1, attempts: 1, rate: 100 })
+    expect(result.bookendShows).toBe(0)
+    expect(result.mostHitsInShow).toBe(2)
   })
 })
