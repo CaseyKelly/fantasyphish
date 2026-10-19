@@ -10,6 +10,7 @@ import { getStreaksForAllUsers } from "@/lib/streaks"
 import { POINTS } from "@/lib/pick-rules"
 import { shouldRunCronJobs } from "@/lib/cron-helpers"
 import { withRetry } from "@/lib/db-retry"
+import { verifyCronRequest } from "@/lib/cron-auth"
 
 // Force dynamic rendering and disable caching
 export const dynamic = "force-dynamic"
@@ -28,24 +29,8 @@ export async function POST(request: Request) {
   )
 
   try {
-    // Require the exact Bearer secret and fail closed when it's unset.
-    // Vercel cron sends this header automatically when CRON_SECRET is
-    // configured; a User-Agent is spoofable, so it's never proof of origin.
-    const authHeader = request.headers.get("authorization")
-    const cronSecret = process.env.CRON_SECRET
-
-    if (!cronSecret) {
-      console.error("[AwardAchievements:POST] CRON_SECRET not configured")
-      return NextResponse.json(
-        { error: "CRON_SECRET not configured" },
-        { status: 500 }
-      )
-    }
-
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      console.error("[AwardAchievements:POST] Unauthorized request")
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const authError = verifyCronRequest(request, "[AwardAchievements:POST]")
+    if (authError) return authError
 
     console.log("[AwardAchievements:POST] Authorization successful")
 

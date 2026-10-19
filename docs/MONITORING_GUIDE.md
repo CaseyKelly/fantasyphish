@@ -95,10 +95,7 @@ vercel logs --follow | grep "\[Score\]"
 ### Method 3: Manual API Check
 
 ```bash
-# Check which shows are pending scoring
-curl https://your-domain.com/api/score
-
-# Manually trigger scoring (requires CRON_SECRET)
+# Manually trigger scoring (requires CRON_SECRET; GET does the same thing)
 curl -X POST https://your-domain.com/api/score \
   -H "Authorization: Bearer YOUR_CRON_SECRET"
 ```
@@ -217,13 +214,8 @@ You should see all the new `[Score]` logs in your terminal!
 
 ### If scores aren't updating:
 
-1. **Check the GET endpoint**
-
-   ```bash
-   curl https://your-domain.com/api/score
-   ```
-
-   This shows pending shows and their status
+1. **Check the scoring logs** in Vercel for `[Score:POST]` entries
+   (`GET /api/score` runs scoring just like `POST` — it isn't a status check)
 
 2. **Manually trigger scoring**
 

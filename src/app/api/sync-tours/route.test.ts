@@ -84,7 +84,7 @@ describe("/api/sync-tours auth and gating", () => {
 
   it("skips when no tours are active", async () => {
     cronMock.mockResolvedValue({ shouldRun: false, reason: "No active tours" })
-    const json = await (await GET(req({ "user-agent": "Vercel-Cron" }))).json()
+    const json = await (await GET(req())).json()
     expect(json).toEqual({ skipped: true, reason: "No active tours" })
   })
 })

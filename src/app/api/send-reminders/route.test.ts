@@ -50,7 +50,7 @@ describe("/api/send-reminders", () => {
 
   it("no-ops outside noon Mountain time", async () => {
     vi.setSystemTime(new Date("2025-07-04T19:00:00Z"))
-    const json = await (await GET(req({ "user-agent": "Vercel-Cron" }))).json()
+    const json = await (await GET(req())).json()
     expect(json).toEqual({
       skipped: true,
       reason: "Not the target Mountain hour",

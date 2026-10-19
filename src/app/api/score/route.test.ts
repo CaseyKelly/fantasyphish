@@ -66,18 +66,18 @@ describe("/api/score", () => {
     expect(db.$disconnect).toHaveBeenCalled()
   })
 
-  it("allows Vercel cron and a matching bearer token", async () => {
+  it("allows a matching bearer token but not a spoofed Vercel-Cron user agent", async () => {
     db.show.findMany.mockResolvedValue([])
-    expect((await POST(req({ "user-agent": "Vercel-Cron" }))).status).toBe(200)
+    expect((await POST(req({ "user-agent": "Vercel-Cron" }))).status).toBe(401)
     expect((await POST(req({ authorization: "Bearer secret" }))).status).toBe(
       200
     )
   })
 
-  it("allows any caller when CRON_SECRET is unset", async () => {
+  it("rejects every request when CRON_SECRET is unset", async () => {
     vi.stubEnv("CRON_SECRET", "")
-    db.show.findMany.mockResolvedValue([])
-    expect((await POST(req())).status).toBe(200)
+    expect((await POST(req())).status).toBe(500)
+    expect((await POST(req({ authorization: "Bearer " }))).status).toBe(500)
   })
 
   it("skips when no tours are active", async () => {

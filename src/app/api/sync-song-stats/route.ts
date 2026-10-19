@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { withRetry } from "@/lib/db-retry"
 import { shouldRunCronJobs } from "@/lib/cron-helpers"
+import { verifyCronRequest } from "@/lib/cron-auth"
 
 const PHISHNET_API_BASE = "https://api.phish.net/v5"
 
@@ -54,22 +55,8 @@ export async function POST(request: Request) {
       `[Sync Song Stats] Cron job started at ${new Date().toISOString()}`
     )
 
-    // Verify authorization
-    const authHeader = request.headers.get("authorization")
-    const cronSecret = process.env.CRON_SECRET
-
-    if (!cronSecret) {
-      console.error("[Sync Song Stats] ✗ CRON_SECRET not configured")
-      return NextResponse.json(
-        { error: "CRON_SECRET not configured" },
-        { status: 500 }
-      )
-    }
-
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      console.error("[Sync Song Stats] ✗ Unauthorized request")
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const authError = verifyCronRequest(request, "[Sync Song Stats]")
+    if (authError) return authError
 
     console.log("[Sync Song Stats] Authorization successful")
 

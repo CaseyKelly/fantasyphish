@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { shouldRunCronJobs } from "@/lib/cron-helpers"
 import { sendPickReminders } from "@/lib/reminders"
 import { getHourInTimezone } from "@/lib/date-utils"
+import { verifyCronRequest } from "@/lib/cron-auth"
 
 // This cron is scheduled twice daily (18:00 and 19:00 UTC) to cover both
 // MDT and MST, since Vercel cron schedules are fixed UTC and don't shift
@@ -22,25 +23,8 @@ export async function POST(request: Request) {
       `[Send Reminders] Cron job started at ${new Date().toISOString()}`
     )
 
-    // Verify authorization
-    // Vercel cron jobs send "Vercel-Cron" as user-agent and are allowed without CRON_SECRET
-    const authHeader = request.headers.get("authorization")
-    const userAgent = request.headers.get("user-agent")
-    const token = authHeader?.replace("Bearer ", "")
-    const cronSecret = process.env.CRON_SECRET
-    const isVercelCron = userAgent === "Vercel-Cron"
-
-    console.log(
-      `[Send Reminders] Auth check: cronSecret=${cronSecret ? "SET" : "NOT_SET"}, authHeader=${authHeader ? "PROVIDED" : "MISSING"}, isVercelCron=${isVercelCron}`
-    )
-
-    // Allow requests from:
-    // 1. Vercel cron (user-agent: "Vercel-Cron")
-    // 2. Manual triggers with correct CRON_SECRET
-    if (!isVercelCron && cronSecret && token !== cronSecret) {
-      console.error("[Send Reminders] ✗ Unauthorized request")
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const authError = verifyCronRequest(request, "[Send Reminders]")
+    if (authError) return authError
 
     console.log("[Send Reminders] Authorization successful")
 
