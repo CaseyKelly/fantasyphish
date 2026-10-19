@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import {
   ACHIEVEMENT_DEFINITIONS,
@@ -6,6 +7,7 @@ import {
   earnedStreakAchievements,
 } from "@/lib/achievements"
 import { getStreaksForAllUsers } from "@/lib/streaks"
+import { POINTS } from "@/lib/pick-rules"
 import { shouldRunCronJobs } from "@/lib/cron-helpers"
 import { withRetry } from "@/lib/db-retry"
 import { verifyCronRequest } from "@/lib/cron-auth"
@@ -39,6 +41,11 @@ export async function POST(request: Request) {
     // runs regardless of the shouldRunCronJobs() check below.
     const notificationsResults = await awardNotificationsAchievement()
     results.push(notificationsResults)
+
+    // Award SAMPLE_IN_A_JAR to everyone who has voted in a poll (backfills
+    // voters from before the achievement existed).
+    const pollVoterResults = await awardPollVoterAchievement()
+    results.push(pollVoterResults)
 
     // Award show-streak milestones. Also runs regardless of active tours so
     // the first deploy backfills everyone's existing best streaks.
@@ -156,7 +163,9 @@ async function awardAchievement(
       prisma.pick.findMany({
         where: {
           pickType: pickType,
-          wasPlayed: true,
+          // Landed in its slot - an opener/encore pick played elsewhere in
+          // the show only earns regular points
+          pointsEarned: { gte: POINTS[pickType] },
         },
         include: {
           submission: {
@@ -261,8 +270,15 @@ async function awardAchievement(
   }
 }
 
-async function awardNotificationsAchievement() {
-  const achievementDef = ACHIEVEMENT_DEFINITIONS.ICCULUS
+// Awards a one-off achievement to every user matching `where`, skipping
+// anyone who already has it. Backfills existing users and catches anyone
+// whose inline award at action time was missed.
+async function awardAchievementToMatchingUsers(
+  achievementKey: "ICCULUS" | "SAMPLE_IN_A_JAR",
+  where: Prisma.UserWhereInput,
+  usersLabel: string
+) {
+  const achievementDef = ACHIEVEMENT_DEFINITIONS[achievementKey]
 
   console.log(
     `[AwardAchievements:POST] ${achievementDef.icon} Awarding ${achievementDef.name} achievements...`
@@ -294,25 +310,14 @@ async function awardNotificationsAchievement() {
     `[AwardAchievements:POST] ✓ Achievement record ready: ${achievement.name}`
   )
 
-  // 2. Find all users who have email reminders or push notifications enabled
-  // (covers both existing opted-in users and anyone whose inline award at
-  // opt-in time was missed)
+  // 2. Find all qualifying users
   const users = await withRetry(
-    () =>
-      prisma.user.findMany({
-        where: {
-          OR: [
-            { emailPickReminders: true },
-            { pushSubscriptions: { some: {} } },
-          ],
-        },
-        select: { id: true },
-      }),
-    { operationName: "find users with notifications enabled" }
+    () => prisma.user.findMany({ where, select: { id: true } }),
+    { operationName: `find users ${usersLabel}` }
   )
 
   console.log(
-    `[AwardAchievements:POST] Found ${users.length} users with notifications enabled`
+    `[AwardAchievements:POST] Found ${users.length} users ${usersLabel}`
   )
 
   if (users.length === 0) {
@@ -349,6 +354,24 @@ async function awardNotificationsAchievement() {
     skipped,
     total: users.length,
   }
+}
+
+function awardNotificationsAchievement() {
+  return awardAchievementToMatchingUsers(
+    "ICCULUS",
+    {
+      OR: [{ emailPickReminders: true }, { pushSubscriptions: { some: {} } }],
+    },
+    "with notifications enabled"
+  )
+}
+
+function awardPollVoterAchievement() {
+  return awardAchievementToMatchingUsers(
+    "SAMPLE_IN_A_JAR",
+    { pollVotes: { some: {} } },
+    "who voted in a poll"
+  )
 }
 
 async function awardStreakAchievements() {

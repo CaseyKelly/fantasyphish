@@ -29,6 +29,7 @@ interface Pick {
   songId: string
   songName: string
   pickType: "OPENER" | "ENCORE" | "REGULAR"
+  openerSet?: number | null
   wasPlayed?: boolean | null
   pointsEarned?: number | null
 }
@@ -50,6 +51,7 @@ interface Show {
   isComplete: boolean
   lockTime: string | null
   timezone: string | null
+  setCount: number
   tour: Tour | null
   userSubmission?: {
     id: string
@@ -58,6 +60,7 @@ interface Show {
       id: string
       songId: string
       pickType: "OPENER" | "ENCORE" | "REGULAR"
+      openerSet: number | null
       song: Song
       wasPlayed: boolean | null
       pointsEarned: number | null
@@ -167,8 +170,9 @@ export default function PicksPage() {
               </h2>
 
               <p className="text-base text-gray-400 max-w-xl mx-auto mb-8 leading-relaxed">
-                Check back before the first show to make your picks! Choose your
-                opener, encore, and 11 regular songs to compete for glory.
+                Check back before the first show to make your picks! Choose 13
+                songs &mdash; an opener for each set, an encore, and regular
+                picks &mdash; to compete for glory.
               </p>
 
               {/* Status Box */}
@@ -191,6 +195,7 @@ export default function PicksPage() {
       songId: pick.songId,
       songName: pick.song.name,
       pickType: pick.pickType,
+      openerSet: pick.openerSet,
       wasPlayed: pick.wasPlayed,
       pointsEarned: pick.pointsEarned,
     })
@@ -230,6 +235,7 @@ export default function PicksPage() {
           state: nextShow.state || "",
           showDate: nextShow.showDate,
           isComplete: nextShow.isComplete,
+          setCount: nextShow.setCount,
         }}
         songs={songs}
         existingPicks={existingPicks}

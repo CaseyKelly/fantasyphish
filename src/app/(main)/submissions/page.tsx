@@ -8,6 +8,7 @@ import { withRetry } from "@/lib/db-retry"
 import { excludeTestShows } from "@/lib/test-filters"
 import { isPrivateViewerOwner } from "@/lib/private-access"
 import { parseUTCDate } from "@/lib/date-utils"
+import { getOpenerLabel, getOpenerSet } from "@/lib/pick-rules"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { LocalDateTime } from "@/components/LocalDateTime"
 
@@ -98,7 +99,9 @@ export default async function SubmissionsPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {submissions.map((submission) => {
-            const opener = submission.picks.find((p) => p.pickType === "OPENER")
+            const openers = submission.picks
+              .filter((p) => p.pickType === "OPENER")
+              .sort((a, b) => getOpenerSet(a) - getOpenerSet(b))
             const encore = submission.picks.find((p) => p.pickType === "ENCORE")
             const regulars = submission.picks
               .filter((p) => p.pickType === "REGULAR")
@@ -116,10 +119,15 @@ export default async function SubmissionsPage() {
                   />
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
-                  <p className="text-gray-300">
-                    <span className="text-gray-500">Opener: </span>
-                    {opener?.song.name || "—"}
-                  </p>
+                  {openers.map((opener) => (
+                    <p key={opener.id} className="text-gray-300">
+                      <span className="text-gray-500">
+                        {getOpenerLabel(opener.openerSet, nextShow.setCount)}
+                        :{" "}
+                      </span>
+                      {opener.song.name}
+                    </p>
+                  ))}
                   <p className="text-gray-300">
                     <span className="text-gray-500">Encore: </span>
                     {encore?.song.name || "—"}

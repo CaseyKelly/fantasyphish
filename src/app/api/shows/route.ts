@@ -62,6 +62,7 @@ export async function GET(request: NextRequest) {
           isComplete: nextShow.isComplete,
           lockTime: nextShow.lockTime,
           timezone: nextShow.timezone,
+          setCount: nextShow.setCount,
           tour: nextShow.tour,
           userSubmission,
         },

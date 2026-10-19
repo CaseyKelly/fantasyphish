@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-FantasyPhish is a fantasy game for Phish fans. Users pick 13 songs before each show, score points when they play their picks, and compete on tour leaderboards. The app uses progressive scoring with timezone-aware locking, achievements, and real-time updates during shows.
+FantasyPhish is a fantasy game for Phish fans. Users pick 13 songs before each show (one opener per set, an encore, and regular picks), score points when they play their picks, and compete on tour leaderboards. The app uses progressive scoring with timezone-aware locking, achievements, and real-time updates during shows.
 
 ## Node Version (mise)
 
@@ -29,6 +29,10 @@ This repo requires exactly the Node version pinned in `mise.toml` (kept current 
 - `npm run test:ui` - Run tests with Playwright UI
 - `npm run test:headed` - Run tests in headed mode
 - `npm run test:trace` - Download and view latest GitHub Actions test traces
+- `npm run test:unit` - Run Vitest unit tests (colocated `*.test.ts` files under `src/`)
+- `npm run test:unit:coverage` - Unit tests with coverage (uploaded to Codecov in CI)
+
+Unit tests mock Prisma with `createPrismaMock()` from `src/test-utils/prisma-mock.ts` (every `prisma.<model>.<method>` is an auto-created `vi.fn()`) and call route handlers directly using `makeRequest()`/`routeParams()`/`sessionFor()` from `src/test-utils/request.ts`. See any `route.test.ts` under `src/app/api/` for the pattern.
 
 ### Database
 
@@ -68,10 +72,20 @@ The scoring logic is split between:
 
 **Points:**
 
-- Opener (first song of Set 1): 3 points
+- Set opener (first song of each set, one pick per set): 3 points each
 - Encore (any song in encore): 3 points
-- Regular (11 songs, anywhere): 1 point each
-- Maximum: 17 points per show
+- Regular (fills the rest of the 13 picks, anywhere): 1 point each
+- An opener/encore pick played outside its slot still earns 1 point, like a regular pick (the slot is a bonus, never a penalty)
+- `Pick.wasPlayed` means "played anywhere"; a slot hit is `isSlotHit()` (`pointsEarned` reached the full 3), which drives PERFECT_OPENER/PERFECT_CLOSER and profile hit rates
+- Maximum depends on `Show.setCount`: 17 (1 set), 19 (2 sets, the default), 21 (3 sets) - see `getMaxPoints()`
+
+**Set counts (`src/lib/pick-rules.ts`):**
+
+- `Show.setCount` (1-3, default 2) is set by admins on `/admin/shows`; sync-tours never touches it
+- Each opener pick stores which set it's for in `Pick.openerSet` (picks made before this existed are set 1 openers)
+- `validatePicks()` is the single source of truth for a valid submission, shared by `/api/picks` and guest registration
+- Once a show has any submission its set count can only go up (lowering returns 409; nothing changes after lock). Raising leaves existing submissions short an opener: they keep scoring as saved, `getPickUpdateNeeded()` flags them, and the picker shows a banner asking the user to add the new set opener and drop the extra regular pick(s)
+- A set's opener slot settles once the set starts, a later set or the encore starts without that set, or the show is final; an unplayed pick then shows as a miss but still flips to 1 point if the song is played later
 
 ### Timezone-Aware Locking (`src/lib/timezone.ts`)
 
@@ -87,7 +101,7 @@ Shows lock at 7 PM in the venue's timezone:
 All external setlist/show data comes from phish.net v5 API:
 
 - `getSetlist(showDate, { noCache: true })` - Fetch setlist (use noCache during scoring)
-- `parseSetlist()` - Extract opener, encoreSongs, allSongs for scoring
+- `parseSetlist()` - Extract setOpeners (first song of each set), encoreSongs, allSongs for scoring
 - `normalizeSongName()` - Normalize for comparison (lowercase, trim, no punctuation)
 - `getShowsByYear(year)` - Fetch all shows for tour sync
 - `getAllSongs()` - Fetch all songs for seeding/stats
@@ -139,11 +153,13 @@ Key relationships:
 Important fields:
 
 - `Show.lockTime` - When picks locked (7 PM venue timezone)
+- `Show.setCount` - Number of sets (1-3); one opener pick per set
 - `Show.isComplete` - Show complete (after grace period)
 - `Show.encoreStartedAt` - When encore first detected (for grace period)
 - `Show.lastEncoreCount` - Track encore count to detect resets
 - `Submission.lastSongCount` - Track song count for progressive scoring
-- `Pick.wasPlayed` - Tri-state: null (not scored), true, false
+- `Pick.openerSet` - Set an OPENER pick is for (null for encore/regular)
+- `Pick.wasPlayed` - Tri-state: null (not scored), true (played anywhere in the show), false
 
 ### NextAuth v5 Setup (`src/lib/auth.ts`)
 
@@ -199,7 +215,7 @@ src/app/
 │   ├── shows            # Upcoming/recent shows
 │   ├── songs            # All songs with stats
 │   ├── leaderboard      # Tour leaderboard
-│   └── admin/           # Admin endpoints (reset-show, impersonate)
+│   └── admin/           # Admin endpoints (reset-show, impersonate, set-show-set-count)
 └── page.tsx             # Public landing page
 ```
 
@@ -277,7 +293,8 @@ Handles transient connection errors (exponential backoff, 3 retries).
    - Run `npm run db:migrate` locally to generate a migration file under `prisma/migrations/`, commit it with your PR
    - The `build` script runs `prisma migrate deploy` before `next build`, so Vercel applies pending migrations automatically on every deploy — no manual `db:push` against prod needed
    - `db:push` is fine for quick local prototyping, but any change that merges to `main` needs a real migration file
-   - **New databases need a one-time baseline before `migrate deploy` will work.** Any database whose schema was created outside of Prisma migrations (e.g. via `db:push`, or a Neon branch cloned from one) already has the tables but no `_prisma_migrations` history, so `prisma migrate deploy` fails with `P3005: The database schema is not empty`. Fix it once with `prisma migrate resolve --applied <migration_name>` against that database's **direct** (non-pooled) URL — this includes the Vercel/Neon integration's per-git-branch preview databases, which are cloned from prod and each need their own baseline the first time a branch with pending migrations is deployed
+   - **New databases need a one-time baseline before `migrate deploy` will work.** Any database whose schema was created outside of Prisma migrations (e.g. via `db:push`, or a Neon branch cloned from one) already has the tables but no `_prisma_migrations` history, so `prisma migrate deploy` fails with `P3005: The database schema is not empty`. Fix it once with `prisma migrate resolve --applied <migration_name>` against that database's **direct** (non-pooled) URL. (Vercel/Neon per-git-branch preview databases are cloned from prod, so they inherit prod's `_prisma_migrations` history and don't need this.)
+   - **Preview deploys migrate their own preview database, never prod.** On Vercel, `src/lib/migration-url.ts` targets the deployment's `DATABASE_URL` (the per-branch Neon database the app reads) with `-pooler` stripped from the host, not the project-wide `DIRECT_URL` (which points at prod). If a preview's `DATABASE_URL` resolves to the same host as `DIRECT_URL`, the build skips migrations instead of applying unmerged ones to prod. Off Vercel (local, CI) `DIRECT_URL` is still preferred
 
 ## Environment Variables
 

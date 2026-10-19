@@ -33,6 +33,8 @@ describe("ACHIEVEMENT_DEFINITIONS", () => {
         "STREAK_10",
         "STREAK_25",
         "STREAK_50",
+        "FEE_DBACK",
+        "SAMPLE_IN_A_JAR",
       ].sort()
     )
   })

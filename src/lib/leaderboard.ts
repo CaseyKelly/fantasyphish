@@ -8,6 +8,7 @@ export interface LeaderboardPick {
   wasPlayed: boolean | null
   pointsEarned: number
   pickType: string
+  openerSet: number | null
 }
 
 export interface LeaderboardShowPicks {
@@ -17,6 +18,7 @@ export interface LeaderboardShowPicks {
     venue: string
     city: string | null
     state: string | null
+    setCount: number
   }
   totalPoints: number
   picks: LeaderboardPick[]
@@ -98,6 +100,7 @@ export async function getLeaderboard(
                   venue: true,
                   city: true,
                   state: true,
+                  setCount: true,
                 },
               },
               picks: {
@@ -105,6 +108,7 @@ export async function getLeaderboard(
                   wasPlayed: true,
                   pointsEarned: true,
                   pickType: true,
+                  openerSet: true,
                   song: { select: { name: true } },
                 },
               },
@@ -139,6 +143,7 @@ export async function getLeaderboard(
             wasPlayed: pick.wasPlayed,
             pointsEarned: pick.pointsEarned || 0,
             pickType: pick.pickType,
+            openerSet: pick.openerSet,
           })),
         }))
         .sort(

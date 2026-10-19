@@ -23,7 +23,7 @@ export const ACHIEVEMENT_DEFINITIONS = {
   PERFECT_OPENER: {
     slug: "perfect-opener",
     name: "Perfect Opener",
-    description: "Correctly guessed a show opener",
+    description: "Correctly guessed a set opener",
     icon: "PlaneTakeoff",
     category: "MILESTONE" as AchievementCategory,
   },
@@ -98,6 +98,20 @@ export const ACHIEVEMENT_DEFINITIONS = {
     icon: "🌞",
     category: "MILESTONE" as AchievementCategory,
     metadata: { streakLength: 50 },
+  },
+  FEE_DBACK: {
+    slug: "fee-dback",
+    name: "Fee-dback",
+    description: "Sent Chalupa feedback by email",
+    icon: "🦦",
+    category: "SPECIAL" as AchievementCategory,
+  },
+  SAMPLE_IN_A_JAR: {
+    slug: "sample-in-a-jar",
+    name: "Sample in a Jar",
+    description: "Dropped your ballot in the jar by voting in a site poll",
+    icon: "🫙",
+    category: "PARTICIPATION" as AchievementCategory,
   },
   // Future achievement examples:
   // SUMMER_TOUR_2025_CHAMPION: {

@@ -220,6 +220,8 @@ export function isShowComplete(setlist: PhishNetSetlist | null): boolean {
 // Parse setlist into structured format for scoring
 export interface ParsedSetlist {
   opener: string | null
+  // First song of each numbered set, keyed by set number (1, 2, 3...)
+  setOpeners: Record<number, string>
   encoreSongs: string[]
   allSongs: string[]
   setsBySong: Record<string, string>
@@ -228,6 +230,7 @@ export interface ParsedSetlist {
 export function parseSetlist(setlist: PhishNetSetlist | null): ParsedSetlist {
   const result: ParsedSetlist = {
     opener: null,
+    setOpeners: {},
     encoreSongs: [],
     allSongs: [],
     setsBySong: {},
@@ -247,11 +250,15 @@ export function parseSetlist(setlist: PhishNetSetlist | null): ParsedSetlist {
     return a.position - b.position
   })
 
-  // Find opener (first song of set 1)
-  const set1Songs = sortedSongs.filter((s) => s.set === "1")
-  if (set1Songs.length > 0) {
-    result.opener = set1Songs[0].song
+  // Find the opener of each numbered set (songs are already in order, so
+  // the first one seen for a set is its opener)
+  for (const s of sortedSongs) {
+    const setNumber = Number(s.set)
+    if (Number.isInteger(setNumber) && !(setNumber in result.setOpeners)) {
+      result.setOpeners[setNumber] = s.song
+    }
   }
+  result.opener = result.setOpeners[1] ?? null
 
   // Find encore songs
   result.encoreSongs = sortedSongs

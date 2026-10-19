@@ -7,11 +7,13 @@ import { LoadingDonut } from "@/components/LoadingDonut"
 import { format, parseISO } from "date-fns"
 import { Trash2, ScrollText, ChevronDown } from "lucide-react"
 import { useRefetchOnReturn } from "@/hooks/useRefetchOnReturn"
+import { getOpenerLabel, getOpenerSet, POINTS } from "@/lib/pick-rules"
 
 interface Pick {
   id: string
   song: string
   pickType: string
+  openerSet: number | null
   wasPlayed: boolean | null
   pointsEarned: number
 }
@@ -31,6 +33,7 @@ interface Show {
   state: string
   showDate: string
   isComplete: boolean
+  setCount: number
   lockTime: string | null
   lastScoredAt: string | null
 }
@@ -189,7 +192,9 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
   const isTestShow = show.venue.includes("Test Venue")
 
   // Group picks by type
-  const openerPicks = submission.picks.filter((p) => p.pickType === "OPENER")
+  const openerPicks = submission.picks
+    .filter((p) => p.pickType === "OPENER")
+    .sort((a, b) => getOpenerSet(a) - getOpenerSet(b))
   const encorePicks = submission.picks.filter((p) => p.pickType === "ENCORE")
   const regularPicks = submission.picks.filter((p) => p.pickType === "REGULAR")
 
@@ -222,8 +227,40 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
   // Track which songs have already been displayed with points/badges
   const songsProcessed = new Set<string>()
 
+  // Where an opener/encore pick landed in its slot, keyed by song. A song
+  // can be played more than once, so the pick's badge goes on the in-slot
+  // occurrence when there is one, not just the first time it shows up.
+  const slotPositionBySong = new Map<string, number>()
+  for (const pick of submission.picks) {
+    const songKey = pick.song.toLowerCase().trim()
+    const slotSong =
+      pick.pickType === "OPENER"
+        ? setlistBySets?.[String(getOpenerSet(pick))]?.reduce<
+            SetlistSong | undefined
+          >(
+            (first, song) =>
+              !first || song.position < first.position ? song : first,
+            undefined
+          )
+        : pick.pickType === "ENCORE"
+          ? setlist?.songs?.find(
+              (song) =>
+                song.set.toLowerCase() === "e" &&
+                song.song.toLowerCase().trim() === songKey
+            )
+          : undefined
+    if (slotSong && slotSong.song.toLowerCase().trim() === songKey) {
+      slotPositionBySong.set(songKey, slotSong.position)
+    }
+  }
+
   // Helper function to check if a song was picked by the user
-  const getSongPickInfo = (songName: string, songPosition: number) => {
+  const getSongPickInfo = (
+    songName: string,
+    setName: string,
+    isFirstOfSet: boolean,
+    position: number
+  ) => {
     // Check if this song was picked by the user
     const userPick = submission.picks.find(
       (pick) => pick.song.toLowerCase().trim() === songName.toLowerCase().trim()
@@ -234,6 +271,12 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
     }
 
     const songKey = songName.toLowerCase().trim()
+
+    // An opener/encore pick that landed in its slot shows only there
+    const slotPosition = slotPositionBySong.get(songKey)
+    if (slotPosition !== undefined && slotPosition !== position) {
+      return null
+    }
 
     // Check if this song has already been processed (appears earlier in setlist)
     const isFirstOccurrence = !songsProcessed.has(songKey)
@@ -250,11 +293,18 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
     let points = 0
     let isCorrectPosition = false
 
-    if (userPick.pickType === "OPENER" && songPosition === 1) {
-      pickType = "Opener"
+    if (
+      userPick.pickType === "OPENER" &&
+      isFirstOfSet &&
+      Number(setName) === getOpenerSet(userPick)
+    ) {
+      pickType = getOpenerLabel(userPick.openerSet, show.setCount)
       points = userPick.pointsEarned || 0
       isCorrectPosition = true
-    } else if (userPick.pickType === "ENCORE") {
+    } else if (
+      userPick.pickType === "ENCORE" &&
+      setName.toLowerCase() === "e"
+    ) {
       pickType = "Encore"
       points = userPick.pointsEarned || 0
       isCorrectPosition = true
@@ -263,14 +313,13 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
       points = userPick.pointsEarned || 0
       isCorrectPosition = true
     } else {
-      // Song was picked but not in the right position (e.g., picked as opener but wasn't)
+      // Opener/encore pick played outside its slot - still earns regular
+      // points, the slot bonus just didn't land
       pickType =
         userPick.pickType === "OPENER"
-          ? "Opener (wrong)"
-          : userPick.pickType === "ENCORE"
-            ? "Encore (wrong)"
-            : "Pick"
-      points = 0
+          ? `${getOpenerLabel(userPick.openerSet, show.setCount)} pick (played elsewhere)`
+          : "Encore pick (played elsewhere)"
+      points = userPick.pointsEarned || 0
       isCorrectPosition = false
     }
 
@@ -393,7 +442,12 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
                   </h3>
                   <div className="space-y-1">
                     {songs.map((song, idx) => {
-                      const pickInfo = getSongPickInfo(song.song, song.position)
+                      const pickInfo = getSongPickInfo(
+                        song.song,
+                        setName,
+                        songs.every((s) => s.position >= song.position),
+                        song.position
+                      )
                       return (
                         <div
                           key={idx}
@@ -486,32 +540,28 @@ export default function ResultsClient({ showId, isAdmin }: ResultsClientProps) {
             )}
           </div>
 
-          {/* Opener */}
-          <div className="mb-6">
-            <h3 className="text-sm font-semibold text-slate-400 uppercase mb-2">
-              Opener (3 pts)
-            </h3>
-            <div className="space-y-2">
-              {openerPicks.map((pick) => (
-                <div
-                  key={pick.id}
-                  className="flex items-center justify-between py-2 border-b-2 border-[#4a6b7d]/40"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className={getPickStatus(pick)}>{pick.song}</span>
-                  </div>
-                  <span className={`font-semibold ${getPickStatus(pick)}`}>
-                    {pick.pointsEarned > 0 ? `+${pick.pointsEarned}` : ""}
-                  </span>
+          {/* Openers - one per set */}
+          {openerPicks.map((pick) => (
+            <div key={pick.id} className="mb-6">
+              <h3 className="text-sm font-semibold text-slate-400 uppercase mb-2">
+                {getOpenerLabel(pick.openerSet, show.setCount)} ({POINTS.OPENER}{" "}
+                pts)
+              </h3>
+              <div className="flex items-center justify-between py-2 border-b-2 border-[#4a6b7d]/40">
+                <div className="flex items-center gap-3">
+                  <span className={getPickStatus(pick)}>{pick.song}</span>
                 </div>
-              ))}
+                <span className={`font-semibold ${getPickStatus(pick)}`}>
+                  {pick.pointsEarned > 0 ? `+${pick.pointsEarned}` : ""}
+                </span>
+              </div>
             </div>
-          </div>
+          ))}
 
           {/* Encore */}
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-slate-400 uppercase mb-2">
-              Encore (3 pts)
+              Encore ({POINTS.ENCORE} pts)
             </h3>
             <div className="space-y-2">
               {encorePicks.map((pick) => (

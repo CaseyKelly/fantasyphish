@@ -6,10 +6,12 @@ import { ArrowLeft } from "lucide-react"
 import { prisma } from "@/lib/prisma"
 import { getTimezoneForLocation } from "@/lib/timezone"
 import { ShowLockOverrideForm } from "./ShowLockOverrideForm"
+import { ShowSetCountForm } from "./ShowSetCountForm"
+import { getPickUpdateNeeded } from "@/lib/pick-rules"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
 export const metadata: Metadata = {
-  title: "Show Lock Times",
+  title: "Show Settings",
   robots: {
     index: false,
     follow: false,
@@ -27,6 +29,7 @@ export default async function AdminShowsPage() {
     notFound()
   }
 
+  const now = new Date()
   const shows = await prisma.show.findMany({
     where: { isComplete: false },
     orderBy: { showDate: "asc" },
@@ -39,6 +42,10 @@ export default async function AdminShowsPage() {
       timezone: true,
       lockTime: true,
       lockTimeOverride: true,
+      setCount: true,
+      submissions: {
+        select: { picks: { select: { pickType: true, openerSet: true } } },
+      },
     },
   })
 
@@ -53,12 +60,18 @@ export default async function AdminShowsPage() {
           Admin
         </Link>
         <h1 className="mt-2 text-3xl font-bold font-display text-white">
-          Show Lock Times
+          Show Settings
         </h1>
         <p className="mt-1 text-gray-400">
           Picks normally lock at 7 PM venue time. Set a manual lock time to
           override that for a specific show &mdash; it will stick across daily
           tour syncs until cleared.
+        </p>
+        <p className="mt-1 text-gray-400">
+          Shows default to two sets, with one opener pick per set. Set the count
+          for single-set or three-set shows before anyone picks if you can. Once
+          picks are in it can still go up (anyone who already picked is asked to
+          add the new set&apos;s opener), but not down.
         </p>
       </div>
 
@@ -71,21 +84,38 @@ export default async function AdminShowsPage() {
             <p className="text-gray-400">No upcoming shows.</p>
           )}
           {shows.map((show) => (
-            <ShowLockOverrideForm
+            <div
               key={show.id}
-              show={{
-                id: show.id,
-                showDate: show.showDate.toISOString(),
-                venue: show.venue,
-                city: show.city,
-                state: show.state,
-                timezone: show.timezone || getTimezoneForLocation(show.state),
-                lockTime: show.lockTime ? show.lockTime.toISOString() : null,
-                lockTimeOverride: show.lockTimeOverride
-                  ? show.lockTimeOverride.toISOString()
-                  : null,
-              }}
-            />
+              className="space-y-3 border-b-2 border-[#4a6b7d]/30 pb-4 last:border-b-0 last:pb-0"
+            >
+              <ShowLockOverrideForm
+                show={{
+                  id: show.id,
+                  showDate: show.showDate.toISOString(),
+                  venue: show.venue,
+                  city: show.city,
+                  state: show.state,
+                  timezone: show.timezone || getTimezoneForLocation(show.state),
+                  lockTime: show.lockTime ? show.lockTime.toISOString() : null,
+                  lockTimeOverride: show.lockTimeOverride
+                    ? show.lockTimeOverride.toISOString()
+                    : null,
+                }}
+              />
+              <ShowSetCountForm
+                showId={show.id}
+                setCount={show.setCount}
+                submissionCount={show.submissions.length}
+                submissionsNeedingUpdate={
+                  show.submissions.filter(
+                    (submission) =>
+                      getPickUpdateNeeded(submission.picks, show.setCount) !==
+                      null
+                  ).length
+                }
+                isLocked={!!show.lockTime && show.lockTime <= now}
+              />
+            </div>
           ))}
         </CardContent>
       </Card>

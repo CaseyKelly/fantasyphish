@@ -28,8 +28,14 @@ change that:
 ## Scoring rules and progressive scoring
 
 `src/lib/scoring.ts` and `src/lib/show-scoring.ts` implement the scoring.
-Points are fixed: opener (first song of Set 1) = 3, encore (any encore song)
-= 3, each of the 11 regular picks played anywhere = 1, max 17 per show. Flag:
+Points are fixed: each set opener pick (first song of the set it was picked
+for, one opener pick per set) = 3, encore (any encore song) = 3, each regular
+pick played anywhere = 1. An opener/encore pick that misses its slot but is
+played anywhere still earns 1 (the slot is a bonus, never a penalty), and
+`wasPlayed` means "played anywhere" - slot hits come from `isSlotHit()`. A show's `setCount` (1-3, default 2) decides how
+many opener picks it has; regular picks fill out the 13 (11 / 10 / 9), so the
+max is 17 / 19 / 21 per show. Pick composition rules live in
+`src/lib/pick-rules.ts`. Flag:
 
 - Any change to those point values or to what counts as opener/encore that
   isn't called out as an intentional rules change in the PR description.

@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/nextjs"
-import { sentryDataCollection } from "@/lib/sentry"
+import { isGoogleRendererNoise, sentryDataCollection } from "@/lib/sentry"
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
@@ -22,7 +22,15 @@ Sentry.init({
     // redirected by Vercel deployment protection. Scoped to those hosts so a
     // redirect on the real domain still surfaces.
     /Failed to register a ServiceWorker for scope \('https:\/\/[^/']+\.vercel\.app\/'\).*behind a redirect/,
+    // Facebook's in-app browser injects a script that assumes a WKWebView
+    // message bridge exists
+    /window\.webkit\.messageHandlers/,
   ],
+  // Safari hides extension script URLs behind this scheme; their messaging
+  // errors ("Port ... not found", "Request timeout for contentScriptLoaded")
+  // aren't ours
+  denyUrls: [/^webkit-masked-url:\/\//],
+  beforeSend: (event) => (isGoogleRendererNoise(event) ? null : event),
 })
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart

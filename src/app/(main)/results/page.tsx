@@ -31,7 +31,7 @@ async function getResults(userId: string) {
           },
           picks: {
             include: { song: true },
-            orderBy: { pickType: "asc" },
+            orderBy: [{ pickType: "asc" }, { openerSet: "asc" }],
           },
         },
         orderBy: {

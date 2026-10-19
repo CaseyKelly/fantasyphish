@@ -44,9 +44,9 @@ export default async function AdminHubPage() {
           },
           {
             href: "/admin/shows",
-            title: "Show Lock Times",
+            title: "Show Settings",
             description:
-              "Set a manual pick lock time for a specific show, overriding the standard 7 PM venue-time rule.",
+              "Set a show's number of sets (one opener pick per set), or a manual pick lock time overriding the standard 7 PM venue-time rule.",
             icon: Clock,
           },
           {
