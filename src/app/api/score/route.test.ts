@@ -63,7 +63,7 @@ describe("/api/score", () => {
   it("rejects requests without the cron secret", async () => {
     const res = await POST(req())
     expect(res.status).toBe(401)
-    expect(db.$disconnect).toHaveBeenCalled()
+    expect(db.$disconnect).not.toHaveBeenCalled()
   })
 
   it("allows a matching bearer token but not a spoofed Vercel-Cron user agent", async () => {

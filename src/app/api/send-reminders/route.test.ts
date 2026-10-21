@@ -75,7 +75,7 @@ describe("/api/send-reminders", () => {
     })
     const json = await (await POST(req())).json()
     expect(json).toMatchObject({ success: true, sent: 2, pushSent: 1 })
-    expect(db.$disconnect).toHaveBeenCalled()
+    expect(db.$disconnect).not.toHaveBeenCalled()
   })
 
   it("returns 500 on failure", async () => {

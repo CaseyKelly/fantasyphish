@@ -66,7 +66,7 @@ describe("/api/award-achievements auth", () => {
     vi.stubEnv("CRON_SECRET", "")
     const res = await POST(authed())
     expect(res.status).toBe(500)
-    expect(db.$disconnect).toHaveBeenCalled()
+    expect(db.$disconnect).not.toHaveBeenCalled()
   })
 
   it("rejects a wrong or missing bearer token, even from Vercel-Cron", async () => {
