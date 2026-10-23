@@ -15,6 +15,7 @@ import {
   getTimezoneAbbr,
   parseUTCDate,
   formatTimeOfDay,
+  isValidTimeZone,
 } from "@/lib/date-utils"
 
 interface Song {
@@ -117,8 +118,8 @@ export function HomeClient() {
         const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone
         const userAbbr = getTimezoneAbbr(userTz)
 
-        // Only show local time if different from venue time
-        if (userTz !== timezone) {
+        // Only show local time if it's usable and different from venue time
+        if (isValidTimeZone(userTz) && userTz !== timezone) {
           const userTimeStr = formatTimeOfDay(lockDate, userTz)
           return `${venueTimeStr} ${venueAbbr} (${userTimeStr} ${userAbbr}) on ${formattedDate}`
         }

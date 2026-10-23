@@ -154,10 +154,25 @@ describe("HomeClient", () => {
     ).toBeInTheDocument()
   })
 
-  it("falls back to venue time and reports an unusable browser timezone", async () => {
+  it("falls back to venue time without reporting an unusable browser timezone", async () => {
     vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
       timeZone: "Etc/Unknown",
     } as Intl.ResolvedDateTimeFormatOptions)
+    respond(show())
+    await renderHome()
+    expect(
+      screen.getByText("Picks lock at 7 PM ET on Jul 4")
+    ).toBeInTheDocument()
+    expect(Sentry.captureException).not.toHaveBeenCalled()
+  })
+
+  it("falls back to venue time and reports an unexpected timezone error", async () => {
+    vi.spyOn(
+      Intl.DateTimeFormat.prototype,
+      "resolvedOptions"
+    ).mockImplementation(() => {
+      throw new Error("boom")
+    })
     respond(show())
     await renderHome()
     expect(
