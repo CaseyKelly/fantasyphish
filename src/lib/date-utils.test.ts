@@ -4,6 +4,7 @@ import {
   formatTimeOfDay,
   getHourInTimezone,
   getTimezoneAbbr,
+  isValidTimeZone,
 } from "./date-utils"
 
 describe("parseUTCDate", () => {
@@ -101,5 +102,19 @@ describe("getTimezoneAbbr", () => {
 
   it("falls back to the input string for an unknown timezone", () => {
     expect(getTimezoneAbbr("Europe/Paris")).toBe("Europe/Paris")
+  })
+})
+
+describe("isValidTimeZone", () => {
+  it("accepts real IANA timezones", () => {
+    expect(isValidTimeZone("America/Denver")).toBe(true)
+    expect(isValidTimeZone("Europe/Warsaw")).toBe(true)
+  })
+
+  it("rejects missing, placeholder, and unknown timezones", () => {
+    expect(isValidTimeZone(undefined)).toBe(false)
+    expect(isValidTimeZone("")).toBe(false)
+    expect(isValidTimeZone("Etc/Unknown")).toBe(false)
+    expect(isValidTimeZone("Bogus/Zone")).toBe(false)
   })
 })

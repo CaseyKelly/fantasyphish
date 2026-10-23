@@ -21,6 +21,22 @@ export function getTimezoneAbbr(timezone: string): string {
 }
 
 /**
+ * Whether an IANA timezone identifier can be used for formatting. Some
+ * browsers/WebViews report a placeholder like "Etc/Unknown" from
+ * `Intl.DateTimeFormat().resolvedOptions().timeZone`, which date-fns-tz
+ * can't format ("RangeError: Invalid time value").
+ */
+export function isValidTimeZone(timezone: string | undefined): boolean {
+  if (!timezone || timezone === "Etc/Unknown") return false
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: timezone })
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
  * Format a time-of-day in a given timezone as "7 PM", or "6:30 PM" when the
  * minutes aren't zero (e.g. a manually overridden show lock time).
  */
