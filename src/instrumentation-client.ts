@@ -22,6 +22,11 @@ Sentry.init({
     // redirected by Vercel deployment protection. Scoped to those hosts so a
     // redirect on the real domain still surfaces.
     /Failed to register a ServiceWorker for scope \('https:\/\/[^/']+\.vercel\.app\/'\).*behind a redirect/,
+    // Some crawlers (e.g. VibedProjectsBot) stub navigator.serviceWorker.register
+    // to resolve undefined instead of a ServiceWorkerRegistration, so Serwist's
+    // `this._registration.waiting` throws. A real browser can't produce this,
+    // and Serwist is the only code that reads `.waiting`.
+    /Cannot read properties of undefined \(reading 'waiting'\)/,
     // Facebook's in-app browser injects a script that assumes a WKWebView
     // message bridge exists
     /window\.webkit\.messageHandlers/,
