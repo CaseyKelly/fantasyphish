@@ -25,8 +25,8 @@ export async function POST(request: NextRequest) {
     const { email } = forgotPasswordSchema.parse(body)
 
     const rateLimit = await checkRateLimits([
-      [RATE_LIMITS.forgotPasswordEmail, normalizeEmailKey(email)],
       [RATE_LIMITS.forgotPasswordIp, getClientIp(request.headers)],
+      [RATE_LIMITS.forgotPasswordEmail, normalizeEmailKey(email)],
     ])
     if (!rateLimit.allowed) {
       return rateLimitResponse(

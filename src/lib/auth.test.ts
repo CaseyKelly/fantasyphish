@@ -93,8 +93,8 @@ describe("credentials authorize", () => {
     })
     await authorize({ email: "A@B.com", password: "pw" }, request)
     expect(db.$queryRaw.mock.calls.map((c) => c[1])).toEqual([
-      expect.stringMatching(/^login:email:/),
       expect.stringMatching(/^login:ip:/),
+      expect.stringMatching(/^login:email:/),
     ])
   })
 

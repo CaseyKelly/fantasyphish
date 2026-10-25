@@ -143,23 +143,35 @@ describe("checkRateLimit", () => {
     db.$queryRaw.mockResolvedValue(row(1))
     db.rateLimit.deleteMany.mockRejectedValue(new Error("x"))
     expect((await checkRateLimit(rule, "x")).allowed).toBe(true)
-    await vi.waitFor(() => expect(console.warn).toHaveBeenCalled())
+    expect(console.warn).toHaveBeenCalled()
   })
 })
 
 describe("checkRateLimits", () => {
-  it("counts every rule and blocks if any is exceeded", async () => {
+  it("finishes cleanup before the check returns", async () => {
+    vi.mocked(Math.random).mockReturnValue(0)
+    db.$queryRaw.mockResolvedValue(row(1))
+    let finished = false
+    db.rateLimit.deleteMany.mockImplementation(async () => {
+      await Promise.resolve()
+      finished = true
+      return { count: 0 }
+    })
+    await checkRateLimit(rule, "x")
+    expect(finished).toBe(true)
+  })
+
+  it("stops at the first exceeded rule without counting later ones", async () => {
     db.$queryRaw
       .mockResolvedValueOnce(row(1))
       .mockResolvedValueOnce(row(5, new Date(NOW.getTime() + 10_000)))
-      .mockResolvedValueOnce(row(7, new Date(NOW.getTime() + 50_000)))
     const result = await checkRateLimits([
       [rule, "a"],
       [rule, "b"],
       [rule, "c"],
     ])
-    expect(db.$queryRaw).toHaveBeenCalledTimes(3)
-    expect(result).toMatchObject({ allowed: false, retryAfterSeconds: 50 })
+    expect(db.$queryRaw).toHaveBeenCalledTimes(2)
+    expect(result).toMatchObject({ allowed: false, retryAfterSeconds: 10 })
   })
 
   it("returns the tightest remaining budget when all pass", async () => {

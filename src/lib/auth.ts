@@ -48,8 +48,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const rateLimit = await checkRateLimits(
           request?.headers
             ? [
-                [RATE_LIMITS.loginEmail, normalizeEmailKey(email)],
                 [RATE_LIMITS.loginIp, getClientIp(request.headers)],
+                [RATE_LIMITS.loginEmail, normalizeEmailKey(email)],
               ]
             : [[RATE_LIMITS.loginEmail, normalizeEmailKey(email)]]
         )

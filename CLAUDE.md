@@ -173,7 +173,7 @@ Important fields:
 
 Login (Credentials `authorize`), register, forgot-password, reset-password and resend-verification are rate limited with fixed windows stored in the `RateLimit` table, so limits are shared across serverless instances (never use an in-memory Map for this):
 
-- `checkRateLimit()`/`checkRateLimits()` do one atomic `INSERT ... ON CONFLICT DO UPDATE` per key; keys are `<rule>:<sha256 of email or IP>`. Limits live in `RATE_LIMITS`
+- `checkRateLimit()`/`checkRateLimits()` do one atomic `INSERT ... ON CONFLICT DO UPDATE` per key (`checkRateLimits()` runs rules in order and stops at the first exceeded one, so list the per-IP rule first); keys are `<rule>:<sha256 of email or IP>`. Limits live in `RATE_LIMITS`
 - Fails open (allows the request, logs a warning) if the DB call errors
 - API routes return 429 `{ error }` with `Retry-After` via `rateLimitResponse()`; login throws a `CredentialsSignin` with code `rate_limited` (`src/lib/auth-errors.ts`), which the login UI shows as "Too many sign-in attempts"
 - Client IP comes from `getClientIp()` (`x-forwarded-for` first hop, then `x-real-ip`)

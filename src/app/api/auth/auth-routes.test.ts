@@ -120,19 +120,30 @@ describe("POST /api/auth/forgot-password", () => {
     )
   })
 
-  it("rate limits per email and per IP", async () => {
-    db.$queryRaw
-      .mockResolvedValueOnce(rateLimitRow(1))
-      .mockResolvedValueOnce(rateLimitRow(21)) // IP over its limit of 20
+  it("rate limits per IP before counting the email", async () => {
+    db.$queryRaw.mockResolvedValueOnce(rateLimitRow(21)) // IP over its limit of 20
     const res = await forgotPassword(post({ email: "a@b.com" }))
     expect(res.status).toBe(429)
     expect(res.headers.get("Retry-After")).toBeTruthy()
     expect((await res.json()).error).toContain("Too many")
     expect(db.user.findUnique).not.toHaveBeenCalled()
     expect(resetEmailMock).not.toHaveBeenCalled()
+    // A blocked IP never touches the email counter, so it can't spend
+    // another user's budget
     expect(db.$queryRaw.mock.calls.map((c) => c[1])).toEqual([
-      expect.stringMatching(/^forgot-password:email:/),
       expect.stringMatching(/^forgot-password:ip:/),
+    ])
+  })
+
+  it("rate limits per email once the IP is within its limit", async () => {
+    db.$queryRaw
+      .mockResolvedValueOnce(rateLimitRow(1))
+      .mockResolvedValueOnce(rateLimitRow(6)) // email over its limit of 5
+    const res = await forgotPassword(post({ email: "a@b.com" }))
+    expect(res.status).toBe(429)
+    expect(db.$queryRaw.mock.calls.map((c) => c[1])).toEqual([
+      expect.stringMatching(/^forgot-password:ip:/),
+      expect.stringMatching(/^forgot-password:email:/),
     ])
   })
 
@@ -305,8 +316,8 @@ describe("POST /api/auth/resend-verification", () => {
   it("rate limits per email and per IP with a 429 and Retry-After", async () => {
     db.user.findUnique.mockResolvedValue(null)
     db.$queryRaw
-      .mockResolvedValueOnce(rateLimitRow(6)) // email over its limit of 5
       .mockResolvedValueOnce(rateLimitRow(1))
+      .mockResolvedValueOnce(rateLimitRow(6)) // email over its limit of 5
     const res = await resend(
       post({ email: "A@b.com" }, { "x-forwarded-for": "1.2.3.4, 10.0.0.1" })
     )
@@ -315,8 +326,8 @@ describe("POST /api/auth/resend-verification", () => {
     expect((await res.json()).error).toContain("Too many")
     expect(db.user.findUnique).not.toHaveBeenCalled()
     expect(db.$queryRaw.mock.calls.map((c) => c[1])).toEqual([
-      expect.stringMatching(/^resend-verification:email:/),
       expect.stringMatching(/^resend-verification:ip:/),
+      expect.stringMatching(/^resend-verification:email:/),
     ])
   })
 

@@ -101,14 +101,16 @@ function buildKey(rule: RateLimitRule, identifier: string): string {
 const CLEANUP_PROBABILITY = 0.01
 const CLEANUP_GRACE_MS = HOUR
 
-function maybeCleanup(now: Date): void {
+// Awaited rather than fired off: Vercel can freeze the function once the
+// response is sent, which would leave a detached delete unfinished.
+async function maybeCleanup(now: Date): Promise<void> {
   if (Math.random() >= CLEANUP_PROBABILITY) return
   const cutoff = new Date(now.getTime() - CLEANUP_GRACE_MS)
-  Promise.resolve(
-    prisma.rateLimit.deleteMany({ where: { resetAt: { lt: cutoff } } })
-  ).catch((error: unknown) => {
+  try {
+    await prisma.rateLimit.deleteMany({ where: { resetAt: { lt: cutoff } } })
+  } catch (error) {
     console.warn("[RateLimit] Failed to clean up expired rows:", error)
-  })
+  }
 }
 
 function allowAll(rule: RateLimitRule, now: Date): RateLimitResult {
@@ -150,7 +152,7 @@ export async function checkRateLimit(
     const row = rows?.[0]
     if (!row) throw new Error("rate limit upsert returned no row")
 
-    maybeCleanup(now)
+    await maybeCleanup(now)
 
     const count = Number(row.count)
     const resetAt = new Date(row.resetAt)
@@ -174,20 +176,21 @@ export async function checkRateLimit(
 }
 
 /**
- * Counts one request against every rule and returns the most restrictive
- * result: blocked if any rule is exceeded, with the longest Retry-After.
+ * Counts one request against each rule in order, stopping at the first one
+ * that is exceeded, and otherwise returns the tightest remaining budget.
+ *
+ * List the per-IP rule first: once an IP is over its limit, its requests
+ * stop before they reach the per-email counters, so one client can't keep
+ * burning through other users' email budgets and lock them out.
  */
 export async function checkRateLimits(
   checks: [RateLimitRule, string][]
 ): Promise<RateLimitResult> {
-  const results = await Promise.all(
-    checks.map(([rule, identifier]) => checkRateLimit(rule, identifier))
-  )
-  const blocked = results.filter((r) => !r.allowed)
-  if (blocked.length > 0) {
-    return blocked.reduce((a, b) =>
-      b.retryAfterSeconds > a.retryAfterSeconds ? b : a
-    )
+  const results: RateLimitResult[] = []
+  for (const [rule, identifier] of checks) {
+    const result = await checkRateLimit(rule, identifier)
+    if (!result.allowed) return result
+    results.push(result)
   }
   return results.reduce((a, b) => (b.remaining < a.remaining ? b : a))
 }

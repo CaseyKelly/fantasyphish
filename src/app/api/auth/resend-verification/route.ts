@@ -22,8 +22,8 @@ export async function POST(request: NextRequest) {
 
     const ip = getClientIp(request.headers)
     const rateLimit = await checkRateLimits([
-      [RATE_LIMITS.resendVerificationEmail, normalizeEmailKey(email)],
       [RATE_LIMITS.resendVerificationIp, ip],
+      [RATE_LIMITS.resendVerificationEmail, normalizeEmailKey(email)],
     ])
     if (!rateLimit.allowed) {
       return rateLimitResponse(
