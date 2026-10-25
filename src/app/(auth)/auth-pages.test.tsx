@@ -197,6 +197,21 @@ describe("LoginClient", () => {
     expect(refresh).toHaveBeenCalled()
   })
 
+  it("explains a rate-limited sign-in", async () => {
+    fetchMock.mockResolvedValue(json({ exists: true, verified: true }))
+    vi.mocked(signInWithRetry).mockResolvedValueOnce({
+      error: "CredentialsSignin",
+      code: "rate_limited",
+    } as never)
+    render(<LoginClient />)
+    fill()
+    await submit("Sign In")
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Too many sign-in attempts"
+    )
+    expect(push).not.toHaveBeenCalled()
+  })
+
   it("handles network errors", async () => {
     fetchMock.mockRejectedValue(new Error("offline"))
     render(<LoginClient />)

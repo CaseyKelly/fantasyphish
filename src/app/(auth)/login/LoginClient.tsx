@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { DonutLogo } from "@/components/DonutLogo"
 import { LoadingDonut } from "@/components/LoadingDonut"
 import { signInWithRetry } from "@/lib/auth-client"
+import { RATE_LIMITED_CODE } from "@/lib/auth-errors"
 
 // Map NextAuth error codes to friendly messages
 function getErrorMessage(errorCode: string | null) {
@@ -95,7 +96,11 @@ function LoginForm() {
       // Now attempt to sign in
       const result = await signInWithRetry(email, password)
 
-      if (result?.error) {
+      if (result?.code === RATE_LIMITED_CODE) {
+        setError(
+          "Too many sign-in attempts. Please wait a few minutes and try again."
+        )
+      } else if (result?.error) {
         setError("Incorrect password. Please try again.")
       } else {
         router.push(callbackUrl)

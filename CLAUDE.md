@@ -169,6 +169,17 @@ Important fields:
 - Email verification required before login
 - Username + email stored in session
 
+### Auth Rate Limiting (`src/lib/rate-limit.ts`)
+
+Login (Credentials `authorize`), register, forgot-password, reset-password and resend-verification are rate limited with fixed windows stored in the `RateLimit` table, so limits are shared across serverless instances (never use an in-memory Map for this):
+
+- `checkRateLimit()`/`checkRateLimits()` do one atomic `INSERT ... ON CONFLICT DO UPDATE` per key; keys are `<rule>:<sha256 of email or IP>`. Limits live in `RATE_LIMITS`
+- Fails open (allows the request, logs a warning) if the DB call errors
+- API routes return 429 `{ error }` with `Retry-After` via `rateLimitResponse()`; login throws a `CredentialsSignin` with code `rate_limited` (`src/lib/auth-errors.ts`), which the login UI shows as "Too many sign-in attempts"
+- Client IP comes from `getClientIp()` (`x-forwarded-for` first hop, then `x-real-ip`)
+- `RATE_LIMIT_DISABLED=true` turns it off (ignored when `VERCEL_ENV=production`); `playwright.config.ts` sets it so the e2e suite, which logs in and registers many times from one IP, can't trip the limits
+- Expired rows are deleted opportunistically (~1% of checks), no cron needed
+
 ### Cron Jobs (vercel.json)
 
 All cron endpoints require `Authorization: Bearer <CRON_SECRET>` via `verifyCronRequest()` (`src/lib/cron-auth.ts`), and reject every request when `CRON_SECRET` is unset. Vercel sends this header on cron invocations automatically; never trust the `User-Agent` header.

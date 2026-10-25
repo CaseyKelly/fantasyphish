@@ -160,6 +160,20 @@ describe("GuestRegistrationModal", () => {
       expect(signInWithRetry).not.toHaveBeenCalled()
     })
 
+    it("reports a rate-limited sign-in", async () => {
+      fetchMock.mockResolvedValue(json({ exists: true, verified: true }))
+      vi.mocked(signInWithRetry).mockResolvedValue({
+        error: "CredentialsSignin",
+        code: "rate_limited",
+      } as never)
+      renderModal()
+      switchToSignIn()
+      await submit()
+      expect(toast.error).toHaveBeenCalledWith(
+        "Too many sign-in attempts. Please try again later."
+      )
+    })
+
     it("reports a wrong password", async () => {
       fetchMock.mockResolvedValue(json({ exists: true, verified: true }))
       vi.mocked(signInWithRetry).mockResolvedValue({ error: "x" } as never)

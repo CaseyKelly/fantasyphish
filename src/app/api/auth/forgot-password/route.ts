@@ -3,6 +3,13 @@ import { randomBytes } from "crypto"
 import { prisma } from "@/lib/prisma"
 import { sendPasswordResetEmail } from "@/lib/email"
 import { z } from "zod"
+import {
+  RATE_LIMITS,
+  checkRateLimits,
+  getClientIp,
+  normalizeEmailKey,
+  rateLimitResponse,
+} from "@/lib/rate-limit"
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -16,6 +23,17 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { email } = forgotPasswordSchema.parse(body)
+
+    const rateLimit = await checkRateLimits([
+      [RATE_LIMITS.forgotPasswordEmail, normalizeEmailKey(email)],
+      [RATE_LIMITS.forgotPasswordIp, getClientIp(request.headers)],
+    ])
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(
+        rateLimit,
+        "Too many password reset requests. Please try again later."
+      )
+    }
 
     // Find user by email
     const user = await prisma.user.findUnique({

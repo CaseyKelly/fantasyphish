@@ -191,6 +191,18 @@ model PollVote {
   @@index([pollSlug])
 }
 
+// Fixed-window rate limit counters for the auth routes, shared across
+// serverless instances. One row per limiter key (e.g. "login:email:<hash>"),
+// written only by the single atomic upsert in src/lib/rate-limit.ts, which
+// also opportunistically deletes long-expired rows. Keys hash the email/IP.
+model RateLimit {
+  key     String   @id
+  count   Int
+  resetAt DateTime
+
+  @@index([resetAt])
+}
+
 enum AchievementCategory {
   PARTICIPATION // Participated in a tour/event
   RANKING       // Placed in leaderboard (1st, 2nd, 3rd)

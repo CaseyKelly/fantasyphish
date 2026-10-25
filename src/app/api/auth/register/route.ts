@@ -6,6 +6,12 @@ import { sendVerificationEmail } from "@/lib/email"
 import { z } from "zod"
 import { PickType } from "@prisma/client"
 import { validatePicks } from "@/lib/pick-rules"
+import {
+  RATE_LIMITS,
+  checkRateLimit,
+  getClientIp,
+  rateLimitResponse,
+} from "@/lib/rate-limit"
 import { registerSchema } from "./schema"
 
 export async function POST(request: NextRequest) {
@@ -13,6 +19,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { email, username, password, showId, picks } =
       registerSchema.parse(body)
+
+    const rateLimit = await checkRateLimit(
+      RATE_LIMITS.registerIp,
+      getClientIp(request.headers)
+    )
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(
+        rateLimit,
+        "Too many sign-up attempts from this network. Please try again later."
+      )
+    }
 
     // Check if email already exists
     const existingEmail = await prisma.user.findUnique({

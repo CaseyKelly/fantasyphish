@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { LoadingDonut } from "@/components/LoadingDonut"
 import { useFocusTrap } from "@/hooks/useFocusTrap"
 import { signInWithRetry } from "@/lib/auth-client"
+import { RATE_LIMITED_CODE } from "@/lib/auth-errors"
 
 interface Pick {
   songId: string
@@ -79,6 +80,12 @@ export function GuestRegistrationModal({
 
       // Sign in
       const result = await signInWithRetry(formData.email, formData.password)
+
+      if (result?.code === RATE_LIMITED_CODE) {
+        toast.error("Too many sign-in attempts. Please try again later.")
+        setIsSubmitting(false)
+        return
+      }
 
       if (result?.error) {
         toast.error("Incorrect password")
