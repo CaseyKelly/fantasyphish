@@ -4,7 +4,7 @@ import { getSetlist, parseSetlist } from "@/lib/phishnet"
 import { withRetry } from "@/lib/db-retry"
 import { shouldRunCronJobs } from "@/lib/cron-helpers"
 import { scoreShow } from "@/lib/show-scoring"
-import { verifyCronRequest } from "@/lib/cron-auth"
+import { CRON_MONITORS, runMonitoredCron } from "@/lib/cron-monitor"
 
 // Force dynamic rendering and disable caching
 export const dynamic = "force-dynamic"
@@ -25,10 +25,13 @@ export async function POST(request: Request) {
     )}`
   )
 
-  try {
-    const authError = verifyCronRequest(request, "[Score:POST]")
-    if (authError) return authError
+  return runMonitoredCron(request, "[Score:POST]", CRON_MONITORS.score, () =>
+    scoreShows(startTime)
+  )
+}
 
+async function scoreShows(startTime: number): Promise<NextResponse> {
+  try {
     console.log("[Score:POST] Authorization successful")
 
     // Check if cron jobs should run (only when tours are active)

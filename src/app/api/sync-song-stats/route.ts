@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { withRetry } from "@/lib/db-retry"
 import { shouldRunCronJobs } from "@/lib/cron-helpers"
-import { verifyCronRequest } from "@/lib/cron-auth"
+import { CRON_MONITORS, runMonitoredCron } from "@/lib/cron-monitor"
 
 const PHISHNET_API_BASE = "https://api.phish.net/v5"
 
@@ -48,16 +48,22 @@ async function fetchSongs(): Promise<PhishNetSong[]> {
 }
 
 export async function POST(request: Request) {
+  console.log(
+    `[Sync Song Stats] Cron job started at ${new Date().toISOString()}`
+  )
+
+  return runMonitoredCron(
+    request,
+    "[Sync Song Stats]",
+    CRON_MONITORS.syncSongStats,
+    syncSongStats
+  )
+}
+
+async function syncSongStats(): Promise<NextResponse> {
   const startTime = Date.now()
 
   try {
-    console.log(
-      `[Sync Song Stats] Cron job started at ${new Date().toISOString()}`
-    )
-
-    const authError = verifyCronRequest(request, "[Sync Song Stats]")
-    if (authError) return authError
-
     console.log("[Sync Song Stats] Authorization successful")
 
     // Check if cron jobs should run (only when tours are active)

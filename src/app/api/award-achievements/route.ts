@@ -10,7 +10,7 @@ import { getStreaksForAllUsers } from "@/lib/streaks"
 import { POINTS } from "@/lib/pick-rules"
 import { shouldRunCronJobs } from "@/lib/cron-helpers"
 import { withRetry } from "@/lib/db-retry"
-import { verifyCronRequest } from "@/lib/cron-auth"
+import { CRON_MONITORS, runMonitoredCron } from "@/lib/cron-monitor"
 
 // Force dynamic rendering and disable caching
 export const dynamic = "force-dynamic"
@@ -28,10 +28,16 @@ export async function POST(request: Request) {
     `[AwardAchievements:POST] Daily backup cron started at ${new Date().toISOString()}`
   )
 
-  try {
-    const authError = verifyCronRequest(request, "[AwardAchievements:POST]")
-    if (authError) return authError
+  return runMonitoredCron(
+    request,
+    "[AwardAchievements:POST]",
+    CRON_MONITORS.awardAchievements,
+    () => awardAllAchievements(startTime)
+  )
+}
 
+async function awardAllAchievements(startTime: number): Promise<NextResponse> {
+  try {
     console.log("[AwardAchievements:POST] Authorization successful")
 
     const results = []

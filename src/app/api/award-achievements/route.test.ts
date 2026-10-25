@@ -5,9 +5,15 @@ vi.mock("@/lib/prisma", async () => {
   return { prisma: createPrismaMock() }
 })
 vi.mock("@/lib/cron-helpers", () => ({ shouldRunCronJobs: vi.fn() }))
+vi.mock("@sentry/nextjs", async () => {
+  const { createSentryMock } = await import("@/test-utils/sentry-mock")
+  return createSentryMock()
+})
 vi.mock("@/lib/streaks", () => ({ getStreaksForAllUsers: vi.fn() }))
 
 import { prisma } from "@/lib/prisma"
+import * as Sentry from "@sentry/nextjs"
+import { resetSentryMock, type SentryMock } from "@/test-utils/sentry-mock"
 import { shouldRunCronJobs } from "@/lib/cron-helpers"
 import { getStreaksForAllUsers } from "@/lib/streaks"
 import { resetPrismaMock, type PrismaMock } from "@/test-utils/prisma-mock"
@@ -15,6 +21,7 @@ import { makeRequest } from "@/test-utils/request"
 import { GET, POST } from "./route"
 
 const db = prisma as unknown as PrismaMock
+const sentry = Sentry as unknown as SentryMock
 const cronMock = vi.mocked(shouldRunCronJobs)
 const streaksMock = vi.mocked(getStreaksForAllUsers)
 
@@ -39,6 +46,7 @@ const uniqueViolation = () =>
 
 beforeEach(() => {
   resetPrismaMock(db)
+  resetSentryMock(sentry)
   cronMock.mockReset()
   cronMock.mockResolvedValue({ shouldRun: true })
   streaksMock.mockReset()
@@ -180,5 +188,29 @@ describe("/api/award-achievements", () => {
   it("stringifies non-Error failures", async () => {
     cronMock.mockRejectedValue("weird")
     expect((await (await POST(authed())).json()).details).toBe("weird")
+  })
+})
+
+describe("/api/award-achievements cron monitor", () => {
+  it("does not check in for an unauthorized request", async () => {
+    await POST(makeRequest("/x", { headers: { authorization: "Bearer nope" } }))
+    expect(sentry.withMonitor).not.toHaveBeenCalled()
+    expect(sentry.checkIns).toEqual([])
+  })
+
+  it("checks in ok when there is nothing to do", async () => {
+    cronMock.mockResolvedValue({ shouldRun: false, reason: "No active tours" })
+    expect((await GET(authed())).status).toBe(200)
+    expect(sentry.checkIns).toEqual([
+      { slug: "fantasyphish-award-achievements", status: "ok" },
+    ])
+  })
+
+  it("marks the check-in failed when the job returns a 500", async () => {
+    db.achievement.upsert.mockRejectedValueOnce(new Error("db down"))
+    expect((await POST(authed())).status).toBe(500)
+    expect(sentry.checkIns).toEqual([
+      { slug: "fantasyphish-award-achievements", status: "error" },
+    ])
   })
 })

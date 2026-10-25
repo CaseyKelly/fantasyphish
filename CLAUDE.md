@@ -171,7 +171,9 @@ Important fields:
 
 ### Cron Jobs (vercel.json)
 
-All cron endpoints require `Authorization: Bearer <CRON_SECRET>` via `verifyCronRequest()` (`src/lib/cron-auth.ts`), and reject every request when `CRON_SECRET` is unset. Vercel sends this header on cron invocations automatically; never trust the `User-Agent` header:
+All cron endpoints require `Authorization: Bearer <CRON_SECRET>` via `verifyCronRequest()` (`src/lib/cron-auth.ts`), and reject every request when `CRON_SECRET` is unset. Vercel sends this header on cron invocations automatically; never trust the `User-Agent` header.
+
+Each cron route's handler goes through `runMonitoredCron()` (`src/lib/cron-monitor.ts`), which does that auth check first and then runs the job inside a Sentry cron monitor (`CRON_MONITORS`). Unauthorized requests never check in, a non-2xx response marks the check-in failed, and early "skipped" 200s count as healthy. When you add or reschedule a cron in `vercel.json`, update `CRON_MONITORS` to match (a unit test enforces it):
 
 1. **Scoring** (`/api/score`) - Every 10 minutes
    - Only runs when active tours exist (via `shouldRunCronJobs()`)
