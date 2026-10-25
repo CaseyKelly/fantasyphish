@@ -1,6 +1,7 @@
 import * as Sentry from "@sentry/nextjs"
 import type { NextResponse } from "next/server"
 import { verifyCronRequest } from "@/lib/cron-auth"
+import { isProduction } from "@/lib/env"
 
 type MonitorConfig = NonNullable<Parameters<typeof Sentry.withMonitor>[2]>
 
@@ -69,6 +70,10 @@ class CronJobFailed extends Error {
  * create a check-in. Any non-2xx response from `job` (the cron routes catch
  * their own errors and return a 500) marks the check-in as failed; early
  * returns like "no active tours" are 200s and count as healthy runs.
+ *
+ * Vercel only schedules crons in production, so manual runs on previews or
+ * locally skip the monitor; otherwise Sentry would expect them on schedule
+ * and alert on missed runs in those environments.
  */
 export async function runMonitoredCron(
   request: Request,
@@ -78,6 +83,8 @@ export async function runMonitoredCron(
 ): Promise<NextResponse> {
   const authError = verifyCronRequest(request, logPrefix)
   if (authError) return authError
+
+  if (!isProduction()) return job()
 
   try {
     return await Sentry.withMonitor(

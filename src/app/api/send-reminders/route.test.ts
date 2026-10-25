@@ -39,6 +39,7 @@ beforeEach(() => {
   cronMock.mockResolvedValue({ shouldRun: true })
   remindersMock.mockReset()
   vi.stubEnv("CRON_SECRET", "secret")
+  vi.stubEnv("VERCEL_ENV", "production")
   vi.useFakeTimers({ toFake: ["Date"] })
   vi.setSystemTime(NOON_MDT)
   vi.spyOn(console, "log").mockImplementation(() => {})

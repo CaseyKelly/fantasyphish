@@ -22,6 +22,7 @@ const req = (authorization = "Bearer secret") =>
 beforeEach(() => {
   resetSentryMock(sentry)
   vi.stubEnv("CRON_SECRET", "secret")
+  vi.stubEnv("VERCEL_ENV", "production")
   vi.spyOn(console, "error").mockImplementation(() => {})
 })
 
@@ -80,6 +81,19 @@ describe("runMonitoredCron", () => {
     ])
     expect(sentry.flush).toHaveBeenCalled()
   })
+
+  it.each(["preview", ""])(
+    "runs the job without a check-in when VERCEL_ENV is %j",
+    async (vercelEnv) => {
+      vi.stubEnv("VERCEL_ENV", vercelEnv)
+      const res = await runMonitoredCron(req(), "[Test]", monitor, async () =>
+        NextResponse.json({ error: "boom" }, { status: 500 })
+      )
+      expect(res.status).toBe(500)
+      expect(sentry.withMonitor).not.toHaveBeenCalled()
+      expect(sentry.checkIns).toEqual([])
+    }
+  )
 
   it.each([
     ["a bad secret", "secret", "Bearer nope", 401],

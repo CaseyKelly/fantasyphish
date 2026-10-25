@@ -44,6 +44,7 @@ beforeEach(() => {
   fetchMock.mockReset()
   vi.stubGlobal("fetch", fetchMock)
   vi.stubEnv("CRON_SECRET", "secret")
+  vi.stubEnv("VERCEL_ENV", "production")
   vi.stubEnv("PHISHNET_API_KEY", "key")
   vi.spyOn(console, "log").mockImplementation(() => {})
   vi.spyOn(console, "warn").mockImplementation(() => {})

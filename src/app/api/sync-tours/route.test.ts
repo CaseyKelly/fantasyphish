@@ -65,6 +65,7 @@ beforeEach(() => {
   fetchMock.mockReset()
   vi.stubGlobal("fetch", fetchMock)
   vi.stubEnv("CRON_SECRET", "secret")
+  vi.stubEnv("VERCEL_ENV", "production")
   vi.stubEnv("PHISHNET_API_KEY", "key")
   vi.useFakeTimers({ toFake: ["Date"] })
   vi.setSystemTime(new Date("2025-06-01T12:00:00Z"))

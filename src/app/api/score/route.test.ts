@@ -58,6 +58,7 @@ beforeEach(() => {
   setlistMock.mockReset()
   scoreMock.mockReset()
   vi.stubEnv("CRON_SECRET", "secret")
+  vi.stubEnv("VERCEL_ENV", "production")
   vi.spyOn(console, "log").mockImplementation(() => {})
   vi.spyOn(console, "error").mockImplementation(() => {})
 })
