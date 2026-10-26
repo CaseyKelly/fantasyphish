@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { shouldRunCronJobs } from "@/lib/cron-helpers"
 import { sendPickReminders } from "@/lib/reminders"
 import { getHourInTimezone } from "@/lib/date-utils"
-import { verifyCronRequest } from "@/lib/cron-auth"
+import { CRON_MONITORS, runMonitoredCron } from "@/lib/cron-monitor"
 
 // This cron is scheduled twice daily (18:00 and 19:00 UTC) to cover both
 // MDT and MST, since Vercel cron schedules are fixed UTC and don't shift
@@ -15,16 +15,22 @@ export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
 export async function POST(request: Request) {
+  console.log(
+    `[Send Reminders] Cron job started at ${new Date().toISOString()}`
+  )
+
+  return runMonitoredCron(
+    request,
+    "[Send Reminders]",
+    CRON_MONITORS.sendReminders,
+    sendReminders
+  )
+}
+
+async function sendReminders(): Promise<NextResponse> {
   const startTime = Date.now()
 
   try {
-    console.log(
-      `[Send Reminders] Cron job started at ${new Date().toISOString()}`
-    )
-
-    const authError = verifyCronRequest(request, "[Send Reminders]")
-    if (authError) return authError
-
     console.log("[Send Reminders] Authorization successful")
 
     // Only proceed on the invocation that actually lands at noon Mountain

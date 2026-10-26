@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { withRetry } from "@/lib/db-retry"
 import { getTimezoneForLocation, getShowLockTime } from "@/lib/timezone"
 import { shouldRunCronJobs } from "@/lib/cron-helpers"
-import { verifyCronRequest } from "@/lib/cron-auth"
+import { CRON_MONITORS, runMonitoredCron } from "@/lib/cron-monitor"
 
 const PHISHNET_API_BASE = "https://api.phish.net/v5"
 
@@ -303,13 +303,20 @@ async function syncYear(year: number): Promise<{
 }
 
 export async function POST(request: Request) {
-  const startTime = Date.now()
   console.log(`[Sync Tours] Cron job started at ${new Date().toISOString()}`)
 
-  try {
-    const authError = verifyCronRequest(request, "[Sync Tours]")
-    if (authError) return authError
+  return runMonitoredCron(
+    request,
+    "[Sync Tours]",
+    CRON_MONITORS.syncTours,
+    syncTours
+  )
+}
 
+async function syncTours(): Promise<NextResponse> {
+  const startTime = Date.now()
+
+  try {
     console.log("[Sync Tours] Authorization successful")
 
     // Check if cron jobs should run (only when tours are active)

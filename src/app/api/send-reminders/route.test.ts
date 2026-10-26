@@ -5,9 +5,15 @@ vi.mock("@/lib/prisma", async () => {
   return { prisma: createPrismaMock() }
 })
 vi.mock("@/lib/cron-helpers", () => ({ shouldRunCronJobs: vi.fn() }))
+vi.mock("@sentry/nextjs", async () => {
+  const { createSentryMock } = await import("@/test-utils/sentry-mock")
+  return createSentryMock()
+})
 vi.mock("@/lib/reminders", () => ({ sendPickReminders: vi.fn() }))
 
 import { prisma } from "@/lib/prisma"
+import * as Sentry from "@sentry/nextjs"
+import { resetSentryMock, type SentryMock } from "@/test-utils/sentry-mock"
 import { shouldRunCronJobs } from "@/lib/cron-helpers"
 import { sendPickReminders } from "@/lib/reminders"
 import { resetPrismaMock, type PrismaMock } from "@/test-utils/prisma-mock"
@@ -15,6 +21,7 @@ import { makeRequest } from "@/test-utils/request"
 import { GET, POST } from "./route"
 
 const db = prisma as unknown as PrismaMock
+const sentry = Sentry as unknown as SentryMock
 const cronMock = vi.mocked(shouldRunCronJobs)
 const remindersMock = vi.mocked(sendPickReminders)
 
@@ -27,10 +34,12 @@ const NOON_MDT = new Date("2025-07-04T18:00:00Z")
 
 beforeEach(() => {
   resetPrismaMock(db)
+  resetSentryMock(sentry)
   cronMock.mockReset()
   cronMock.mockResolvedValue({ shouldRun: true })
   remindersMock.mockReset()
   vi.stubEnv("CRON_SECRET", "secret")
+  vi.stubEnv("VERCEL_ENV", "production")
   vi.useFakeTimers({ toFake: ["Date"] })
   vi.setSystemTime(NOON_MDT)
   vi.spyOn(console, "log").mockImplementation(() => {})
@@ -83,5 +92,29 @@ describe("/api/send-reminders", () => {
     expect((await (await POST(req())).json()).error).toBe("boom")
     remindersMock.mockRejectedValueOnce(1)
     expect((await (await POST(req())).json()).error).toBe("Unknown error")
+  })
+})
+
+describe("/api/send-reminders cron monitor", () => {
+  it("does not check in for an unauthorized request", async () => {
+    await POST(req({ authorization: "Bearer x" }))
+    expect(sentry.withMonitor).not.toHaveBeenCalled()
+    expect(sentry.checkIns).toEqual([])
+  })
+
+  it("checks in ok when there is nothing to do", async () => {
+    vi.setSystemTime(new Date("2025-07-04T19:00:00Z"))
+    expect((await GET(req())).status).toBe(200)
+    expect(sentry.checkIns).toEqual([
+      { slug: "fantasyphish-send-reminders", status: "ok" },
+    ])
+  })
+
+  it("marks the check-in failed when the job returns a 500", async () => {
+    remindersMock.mockRejectedValueOnce(new Error("boom"))
+    expect((await POST(req())).status).toBe(500)
+    expect(sentry.checkIns).toEqual([
+      { slug: "fantasyphish-send-reminders", status: "error" },
+    ])
   })
 })

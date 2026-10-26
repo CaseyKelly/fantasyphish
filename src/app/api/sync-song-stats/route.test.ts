@@ -5,14 +5,21 @@ vi.mock("@/lib/prisma", async () => {
   return { prisma: createPrismaMock() }
 })
 vi.mock("@/lib/cron-helpers", () => ({ shouldRunCronJobs: vi.fn() }))
+vi.mock("@sentry/nextjs", async () => {
+  const { createSentryMock } = await import("@/test-utils/sentry-mock")
+  return createSentryMock()
+})
 
 import { prisma } from "@/lib/prisma"
+import * as Sentry from "@sentry/nextjs"
+import { resetSentryMock, type SentryMock } from "@/test-utils/sentry-mock"
 import { shouldRunCronJobs } from "@/lib/cron-helpers"
 import { resetPrismaMock, type PrismaMock } from "@/test-utils/prisma-mock"
 import { makeRequest } from "@/test-utils/request"
 import { GET, POST } from "./route"
 
 const db = prisma as unknown as PrismaMock
+const sentry = Sentry as unknown as SentryMock
 const cronMock = vi.mocked(shouldRunCronJobs)
 const fetchMock = vi.fn()
 
@@ -31,11 +38,13 @@ function songs(data: unknown) {
 
 beforeEach(() => {
   resetPrismaMock(db)
+  resetSentryMock(sentry)
   cronMock.mockReset()
   cronMock.mockResolvedValue({ shouldRun: true })
   fetchMock.mockReset()
   vi.stubGlobal("fetch", fetchMock)
   vi.stubEnv("CRON_SECRET", "secret")
+  vi.stubEnv("VERCEL_ENV", "production")
   vi.stubEnv("PHISHNET_API_KEY", "key")
   vi.spyOn(console, "log").mockImplementation(() => {})
   vi.spyOn(console, "warn").mockImplementation(() => {})
@@ -169,5 +178,29 @@ describe("/api/sync-song-stats", () => {
     expect((await (await POST(req())).json()).total).toBe(0)
     cronMock.mockRejectedValue("weird")
     expect((await (await POST(req())).json()).error).toBe("Unknown error")
+  })
+})
+
+describe("/api/sync-song-stats cron monitor", () => {
+  it("does not check in for an unauthorized request", async () => {
+    await POST(req("Bearer nope"))
+    expect(sentry.withMonitor).not.toHaveBeenCalled()
+    expect(sentry.checkIns).toEqual([])
+  })
+
+  it("checks in ok when there is nothing to do", async () => {
+    cronMock.mockResolvedValue({ shouldRun: false, reason: "No active tours" })
+    expect((await GET(req())).status).toBe(200)
+    expect(sentry.checkIns).toEqual([
+      { slug: "fantasyphish-sync-song-stats", status: "ok" },
+    ])
+  })
+
+  it("marks the check-in failed when the job returns a 500", async () => {
+    cronMock.mockRejectedValue(new Error("boom"))
+    expect((await POST(req())).status).toBe(500)
+    expect(sentry.checkIns).toEqual([
+      { slug: "fantasyphish-sync-song-stats", status: "error" },
+    ])
   })
 })
