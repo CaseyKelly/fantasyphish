@@ -1,6 +1,7 @@
 "use client"
 
 import { signIn } from "next-auth/react"
+import { RATE_LIMITED_CODE } from "./auth-errors"
 
 // A transient NextAuth CSRF race (a known, documented Auth.js issue - see
 // nextauthjs/next-auth #11336, #11337, #11713, #11726 - associated with
@@ -17,7 +18,9 @@ export async function signInWithRetry(
     signIn("credentials", { email, password, redirect: false })
   try {
     const first = await attempt()
-    if (!first?.error) return first
+    // A rate-limited attempt won't clear on retry, and retrying would only
+    // count against the limit again.
+    if (!first?.error || first.code === RATE_LIMITED_CODE) return first
   } catch {
     // fall through to the retry below
   }

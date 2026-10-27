@@ -91,6 +91,17 @@ describe("signInWithRetry", () => {
     expect(signInMock).toHaveBeenCalledTimes(2)
   })
 
+  it("does not retry a rate-limited sign-in", async () => {
+    signInMock.mockResolvedValueOnce({
+      error: "CredentialsSignin",
+      code: "rate_limited",
+    } as never)
+    expect(await signInWithRetry("a@b.com", "pw")).toMatchObject({
+      code: "rate_limited",
+    })
+    expect(signInMock).toHaveBeenCalledTimes(1)
+  })
+
   it("retries once after a thrown error", async () => {
     signInMock
       .mockRejectedValueOnce(new Error("csrf"))

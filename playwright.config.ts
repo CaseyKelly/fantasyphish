@@ -21,6 +21,13 @@ if (process.env.TEST_DATABASE_URL) {
 // ever writes the real owner's email into any database.
 process.env.PRIVATE_VIEWER_EMAIL = "owner-test-fixture@example.com"
 
+// The auth routes are rate limited per IP and per email (src/lib/rate-limit.ts),
+// and the whole suite registers and logs in many times from one IP against one
+// shared database across 4 workers. Turn limiting off for the dev server
+// Playwright starts (it inherits this env) so the limits can't make e2e flaky.
+// A dev server you started yourself and reuse needs RATE_LIMIT_DISABLED=true too.
+process.env.RATE_LIMIT_DISABLED = "true"
+
 export default defineConfig({
   testDir: "./tests/e2e",
   // Keep false: tests within a file still must run in declaration order

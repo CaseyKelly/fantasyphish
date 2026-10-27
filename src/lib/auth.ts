@@ -1,8 +1,22 @@
-import NextAuth from "next-auth"
+import NextAuth, { CredentialsSignin } from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import { compare } from "bcryptjs"
 import { prisma } from "./prisma"
 import { isPrivateViewerOwner } from "./private-access"
+import {
+  RATE_LIMITS,
+  checkRateLimits,
+  getClientIp,
+  normalizeEmailKey,
+} from "./rate-limit"
+import { RATE_LIMITED_CODE } from "./auth-errors"
+
+// Throwing a CredentialsSignin subclass is how NextAuth v5 fails a sign-in
+// with a custom `code`, which signIn({ redirect: false }) hands back to the
+// login page so it can show a specific message.
+class RateLimitedSignin extends CredentialsSignin {
+  code = RATE_LIMITED_CODE
+}
 
 const authSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET
 
@@ -19,13 +33,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         if (!credentials?.email || !credentials?.password) {
           return null
         }
 
         const email = credentials.email as string
         const password = credentials.password as string
+
+        // Per-email stops guessing one account's password; the looser
+        // per-IP limit stops one client spraying many accounts. Skip the IP
+        // check if NextAuth didn't pass the request, rather than lumping
+        // every caller into one shared "unknown" bucket.
+        const rateLimit = await checkRateLimits(
+          request?.headers
+            ? [
+                [RATE_LIMITS.loginIp, getClientIp(request.headers)],
+                [RATE_LIMITS.loginEmail, normalizeEmailKey(email)],
+              ]
+            : [[RATE_LIMITS.loginEmail, normalizeEmailKey(email)]]
+        )
+        if (!rateLimit.allowed) {
+          throw new RateLimitedSignin()
+        }
 
         const user = await prisma.user.findUnique({
           where: { email: email.toLowerCase() },

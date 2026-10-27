@@ -20,6 +20,7 @@ import * as nextauthRoute from "./[...nextauth]/route"
 import { POST as checkUser } from "./check-user/route"
 import { POST as forgotPassword } from "./forgot-password/route"
 import { POST as register } from "./register/route"
+import { POST as resendVerification } from "./resend-verification/route"
 import { POST as resetPassword } from "./reset-password/route"
 import { GET as verify } from "./verify/route"
 
@@ -31,8 +32,16 @@ function post(body: unknown, headers?: Record<string, string>) {
   return makeRequest("/x", { method: "POST", body, headers })
 }
 
+// What the rate-limit upsert in src/lib/rate-limit.ts returns: the count
+// for this window and when it resets.
+function rateLimitRow(count: number) {
+  return [{ count, resetAt: new Date(Date.now() + 60 * 60 * 1000) }]
+}
+
 beforeEach(() => {
   resetPrismaMock(db)
+  // Under every limit unless a test says otherwise
+  db.$queryRaw.mockResolvedValue(rateLimitRow(1))
   verifyEmailMock.mockReset()
   verifyEmailMock.mockResolvedValue({ success: true })
   resetEmailMock.mockReset()
@@ -109,6 +118,33 @@ describe("POST /api/auth/forgot-password", () => {
       "a@b.com",
       data.passwordResetToken
     )
+  })
+
+  it("rate limits per IP before counting the email", async () => {
+    db.$queryRaw.mockResolvedValueOnce(rateLimitRow(21)) // IP over its limit of 20
+    const res = await forgotPassword(post({ email: "a@b.com" }))
+    expect(res.status).toBe(429)
+    expect(res.headers.get("Retry-After")).toBeTruthy()
+    expect((await res.json()).error).toContain("Too many")
+    expect(db.user.findUnique).not.toHaveBeenCalled()
+    expect(resetEmailMock).not.toHaveBeenCalled()
+    // A blocked IP never touches the email counter, so it can't spend
+    // another user's budget
+    expect(db.$queryRaw.mock.calls.map((c) => c[1])).toEqual([
+      expect.stringMatching(/^forgot-password:ip:/),
+    ])
+  })
+
+  it("rate limits per email once the IP is within its limit", async () => {
+    db.$queryRaw
+      .mockResolvedValueOnce(rateLimitRow(1))
+      .mockResolvedValueOnce(rateLimitRow(6)) // email over its limit of 5
+    const res = await forgotPassword(post({ email: "a@b.com" }))
+    expect(res.status).toBe(429)
+    expect(db.$queryRaw.mock.calls.map((c) => c[1])).toEqual([
+      expect.stringMatching(/^forgot-password:ip:/),
+      expect.stringMatching(/^forgot-password:email:/),
+    ])
   })
 
   it("500s when the email fails or something throws", async () => {
@@ -216,6 +252,16 @@ describe("POST /api/auth/register", () => {
     expect(db.user.create).not.toHaveBeenCalled()
   })
 
+  it("rate limits per IP", async () => {
+    db.$queryRaw.mockResolvedValue(rateLimitRow(21))
+    const res = await register(post(body, { "x-real-ip": "5.6.7.8" }))
+    expect(res.status).toBe(429)
+    expect(res.headers.get("Retry-After")).toBeTruthy()
+    expect((await res.json()).error).toContain("Too many")
+    expect(db.user.create).not.toHaveBeenCalled()
+    expect(db.$queryRaw.mock.calls[0][1]).toMatch(/^register:ip:/)
+  })
+
   it("returns 500 with details on unexpected errors", async () => {
     db.user.findUnique.mockRejectedValueOnce(new Error("db"))
     const res = await register(post(body))
@@ -228,20 +274,13 @@ describe("POST /api/auth/register", () => {
 })
 
 describe("POST /api/auth/resend-verification", () => {
-  // The route keeps its rate-limit map at module scope, so load a fresh copy
-  // per test.
-  async function loadResend() {
-    vi.resetModules()
-    return (await import("./resend-verification/route")).POST
-  }
+  const resend = resendVerification
 
   it("validates the email", async () => {
-    const resend = await loadResend()
     expect((await resend(post({ email: "bad" }))).status).toBe(400)
   })
 
   it("returns a generic success for unknown or verified accounts", async () => {
-    const resend = await loadResend()
     db.user.findUnique.mockResolvedValueOnce(null)
     const json = await (await resend(post({ email: "a@b.com" }))).json()
     expect(json.message).toContain("If an account")
@@ -251,7 +290,6 @@ describe("POST /api/auth/resend-verification", () => {
   })
 
   it("issues a new token and sends the email", async () => {
-    const resend = await loadResend()
     db.user.findUnique.mockResolvedValue({
       id: "u1",
       email: "a@b.com",
@@ -265,7 +303,6 @@ describe("POST /api/auth/resend-verification", () => {
   })
 
   it("hides send failures behind the generic message", async () => {
-    const resend = await loadResend()
     db.user.findUnique.mockResolvedValue({
       id: "u1",
       email: "a@b.com",
@@ -276,39 +313,32 @@ describe("POST /api/auth/resend-verification", () => {
     expect(json.message).toContain("If an account")
   })
 
-  it("rate limits to 3 requests per IP+email per hour", async () => {
-    const resend = await loadResend()
+  it("rate limits per email and per IP with a 429 and Retry-After", async () => {
     db.user.findUnique.mockResolvedValue(null)
-    const headers = { "x-forwarded-for": "1.2.3.4, 10.0.0.1" }
-    for (let i = 0; i < 3; i++) {
-      expect((await resend(post({ email: "a@b.com" }, headers))).status).toBe(
-        200
-      )
-    }
-    expect((await resend(post({ email: "A@b.com" }, headers))).status).toBe(429)
-    // A different IP (via x-real-ip) has its own budget
-    expect(
-      (await resend(post({ email: "a@b.com" }, { "x-real-ip": "5.6.7.8" })))
-        .status
-    ).toBe(200)
+    db.$queryRaw
+      .mockResolvedValueOnce(rateLimitRow(1))
+      .mockResolvedValueOnce(rateLimitRow(6)) // email over its limit of 5
+    const res = await resend(
+      post({ email: "A@b.com" }, { "x-forwarded-for": "1.2.3.4, 10.0.0.1" })
+    )
+    expect(res.status).toBe(429)
+    expect(Number(res.headers.get("Retry-After"))).toBeGreaterThan(0)
+    expect((await res.json()).error).toContain("Too many")
+    expect(db.user.findUnique).not.toHaveBeenCalled()
+    expect(db.$queryRaw.mock.calls.map((c) => c[1])).toEqual([
+      expect.stringMatching(/^resend-verification:ip:/),
+      expect.stringMatching(/^resend-verification:email:/),
+    ])
   })
 
-  it("resets the window after an hour", async () => {
-    vi.useFakeTimers()
-    try {
-      const resend = await loadResend()
-      db.user.findUnique.mockResolvedValue(null)
-      for (let i = 0; i < 3; i++) await resend(post({ email: "a@b.com" }))
-      expect((await resend(post({ email: "a@b.com" }))).status).toBe(429)
-      vi.advanceTimersByTime(60 * 60 * 1000 + 1)
-      expect((await resend(post({ email: "a@b.com" }))).status).toBe(200)
-    } finally {
-      vi.useRealTimers()
-    }
+  it("allows the request when the rate-limit query fails", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {})
+    db.$queryRaw.mockRejectedValue(new Error("db down"))
+    db.user.findUnique.mockResolvedValue(null)
+    expect((await resend(post({ email: "a@b.com" }))).status).toBe(200)
   })
 
   it("returns 500 on unexpected errors", async () => {
-    const resend = await loadResend()
     db.user.findUnique.mockRejectedValue(new Error("x"))
     expect((await resend(post({ email: "a@b.com" }))).status).toBe(500)
   })
@@ -351,6 +381,17 @@ describe("POST /api/auth/reset-password", () => {
     expect(
       (await resetPassword(post({ token: "t", password: "longenough" }))).status
     ).toBe(400)
+  })
+
+  it("rate limits per IP", async () => {
+    db.$queryRaw.mockResolvedValue(rateLimitRow(21))
+    const res = await resetPassword(
+      post({ token: "t", password: "longenough" })
+    )
+    expect(res.status).toBe(429)
+    expect(res.headers.get("Retry-After")).toBeTruthy()
+    expect(db.user.findUnique).not.toHaveBeenCalled()
+    expect(db.$queryRaw.mock.calls[0][1]).toMatch(/^reset-password:ip:/)
   })
 
   it("updates the password and clears the token", async () => {

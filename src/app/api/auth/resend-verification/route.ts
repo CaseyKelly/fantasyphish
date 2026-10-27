@@ -3,60 +3,32 @@ import { randomBytes } from "crypto"
 import { prisma } from "@/lib/prisma"
 import { sendVerificationEmail } from "@/lib/email"
 import { z } from "zod"
+import {
+  RATE_LIMITS,
+  checkRateLimits,
+  getClientIp,
+  normalizeEmailKey,
+  rateLimitResponse,
+} from "@/lib/rate-limit"
 
 const resendSchema = z.object({
   email: z.string().email("Invalid email address"),
 })
-
-// Simple in-memory rate limiting (resets on server restart)
-// In production, consider using Redis or a database-backed solution
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
-const RATE_LIMIT_WINDOW = 60 * 60 * 1000 // 1 hour in milliseconds
-const MAX_REQUESTS_PER_WINDOW = 3
-
-function getRateLimitKey(ip: string, email: string): string {
-  return `${ip}:${email.toLowerCase()}`
-}
-
-function checkRateLimit(key: string): boolean {
-  const now = Date.now()
-  const record = rateLimitMap.get(key)
-
-  if (!record || now > record.resetAt) {
-    // No record or expired, create new
-    rateLimitMap.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW })
-    return true
-  }
-
-  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
-    return false
-  }
-
-  // Increment count
-  record.count++
-  return true
-}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { email } = resendSchema.parse(body)
 
-    // Get IP address for rate limiting
-    const ip =
-      request.headers.get("x-forwarded-for")?.split(",")[0] ||
-      request.headers.get("x-real-ip") ||
-      "unknown"
-
-    // Check rate limit
-    const rateLimitKey = getRateLimitKey(ip, email)
-    if (!checkRateLimit(rateLimitKey)) {
-      return NextResponse.json(
-        {
-          error:
-            "Too many verification email requests. Please try again later.",
-        },
-        { status: 429 }
+    const ip = getClientIp(request.headers)
+    const rateLimit = await checkRateLimits([
+      [RATE_LIMITS.resendVerificationIp, ip],
+      [RATE_LIMITS.resendVerificationEmail, normalizeEmailKey(email)],
+    ])
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(
+        rateLimit,
+        "Too many verification email requests. Please try again later."
       )
     }
 

@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
 type AuthConfig = {
-  providers: { authorize: (c: unknown) => Promise<unknown> }[]
+  providers: {
+    authorize: (c: unknown, request?: Request) => Promise<unknown>
+  }[]
   callbacks: {
     jwt: (args: Record<string, unknown>) => Promise<Record<string, unknown>>
     session: (args: Record<string, unknown>) => Promise<Record<string, unknown>>
@@ -15,6 +17,9 @@ vi.mock("next-auth", () => ({
     captured.config = config
     return { handlers: {}, signIn: vi.fn(), signOut: vi.fn(), auth: vi.fn() }
   }),
+  CredentialsSignin: class CredentialsSignin extends Error {
+    code = "credentials"
+  },
 }))
 vi.mock("next-auth/providers/credentials", () => ({
   default: (opts: unknown) => opts,
@@ -35,9 +40,15 @@ const config = captured.config as AuthConfig
 const authorize = config.providers[0].authorize
 const { jwt, session } = config.callbacks
 
+// What the rate-limit upsert in src/lib/rate-limit.ts returns
+function rateLimitRow(count: number) {
+  return [{ count, resetAt: new Date(Date.now() + 15 * 60 * 1000) }]
+}
+
 beforeEach(() => {
   resetPrismaMock(db)
   vi.mocked(compare).mockReset()
+  db.$queryRaw.mockResolvedValue(rateLimitRow(1))
 })
 
 describe("credentials authorize", () => {
@@ -72,6 +83,35 @@ describe("credentials authorize", () => {
     db.user.findUnique.mockResolvedValue(user)
     vi.mocked(compare).mockResolvedValue(false as never)
     expect(await authorize({ email: "a@b.com", password: "pw" })).toBeNull()
+  })
+
+  it("rate limits by email and by IP when the request is available", async () => {
+    db.user.findUnique.mockResolvedValue(user)
+    vi.mocked(compare).mockResolvedValue(true as never)
+    const request = new Request("http://localhost/api/auth/callback", {
+      headers: { "x-forwarded-for": "1.2.3.4" },
+    })
+    await authorize({ email: "A@B.com", password: "pw" }, request)
+    expect(db.$queryRaw.mock.calls.map((c) => c[1])).toEqual([
+      expect.stringMatching(/^login:ip:/),
+      expect.stringMatching(/^login:email:/),
+    ])
+  })
+
+  it("only rate limits by email without a request", async () => {
+    db.user.findUnique.mockResolvedValue(null)
+    await authorize({ email: "a@b.com", password: "pw" })
+    expect(db.$queryRaw).toHaveBeenCalledTimes(1)
+    expect(db.$queryRaw.mock.calls[0][1]).toMatch(/^login:email:/)
+  })
+
+  it("fails the sign-in with the rate_limited code over the limit", async () => {
+    db.$queryRaw.mockResolvedValue(rateLimitRow(21))
+    await expect(
+      authorize({ email: "a@b.com", password: "pw" })
+    ).rejects.toMatchObject({ code: "rate_limited" })
+    expect(db.user.findUnique).not.toHaveBeenCalled()
+    expect(compare).not.toHaveBeenCalled()
   })
 
   it("returns the session user on success", async () => {
