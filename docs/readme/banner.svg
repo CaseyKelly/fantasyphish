@@ -1,0 +1,29 @@
+<svg width="1280" height="360" viewBox="0 0 1280 360" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">FantasyPhish</title>
+  <desc id="desc">FantasyPhish logo and tagline: You knew they'd bust out Fluffhead. Now prove it.</desc>
+  <defs>
+    <pattern id="donuts" width="80" height="80" patternUnits="userSpaceOnUse">
+      <circle cx="40" cy="40" r="18" stroke="#c23a3a" stroke-opacity="0.16" stroke-width="10"/>
+    </pattern>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="360" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2d4654"/>
+      <stop offset="1" stop-color="#1e3340"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="640" cy="180" r="520" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1e3340" stop-opacity="0.95"/>
+      <stop offset="0.55" stop-color="#1e3340" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#1e3340" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1280" height="360" rx="24" fill="url(#bg)"/>
+  <rect width="1280" height="360" rx="24" fill="url(#donuts)"/>
+  <rect width="1280" height="360" rx="24" fill="url(#glow)"/>
+
+  <circle cx="640" cy="80" r="32" stroke="#c23a3a" stroke-width="20"/>
+
+  <text x="640" y="208" text-anchor="middle" fill="#ffffff" font-family="'Righteous', 'Arial Rounded MT Bold', 'Trebuchet MS', system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="76" font-weight="800" letter-spacing="-1">FantasyPhish</text>
+  <text x="640" y="262" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="30" font-weight="700">
+    <tspan fill="#ffffff">You knew they'd bust out </tspan><tspan fill="#d64545">Fluffhead.</tspan>
+  </text>
+  <text x="640" y="306" text-anchor="middle" fill="#94a3b8" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22">Pick 13 songs · score live as the band plays · climb the tour leaderboard</text>
+</svg>

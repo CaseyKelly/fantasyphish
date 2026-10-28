@@ -1,22 +1,25 @@
 <div align="center">
 
-<img src="public/android-chrome-192x192.png" alt="FantasyPhish donut logo" width="96" height="96" />
+<a href="https://www.fantasyphish.com"><img src="docs/readme/banner.svg" alt="FantasyPhish: You knew they'd bust out Fluffhead. Now prove it." width="100%" /></a>
 
-# FantasyPhish
+<br />
 
-**You knew they'd bust out Fluffhead. Now prove it.**
+<a href="https://www.fantasyphish.com"><img src="https://img.shields.io/badge/%E2%96%B6%20Play%20now-fantasyphish.com-c23a3a?style=for-the-badge" alt="Play now at fantasyphish.com" /></a>
 
-Fantasy sports for Phish fans: pick 13 songs before each show, score points live as the band plays them, and climb the tour leaderboard.
+<br /><br />
 
-### [▶ Play at fantasyphish.com](https://www.fantasyphish.com)
+[![E2E tests](https://img.shields.io/github/actions/workflow/status/CaseyKelly/fantasyphish/e2e-tests.yml?branch=main&style=flat-square&logo=playwright&label=e2e)](https://github.com/CaseyKelly/fantasyphish/actions/workflows/e2e-tests.yml)
+[![Unit tests](https://img.shields.io/github/actions/workflow/status/CaseyKelly/fantasyphish/unit-tests.yml?branch=main&style=flat-square&logo=vitest&logoColor=white&label=unit)](https://github.com/CaseyKelly/fantasyphish/actions/workflows/unit-tests.yml)
+[![codecov](https://img.shields.io/codecov/c/github/CaseyKelly/fantasyphish?style=flat-square&logo=codecov&logoColor=white)](https://codecov.io/gh/CaseyKelly/fantasyphish)
+[![License: MIT](https://img.shields.io/badge/license-MIT-3d5a6c?style=flat-square)](LICENSE)
 
-[![CI](https://github.com/CaseyKelly/fantasyphish/actions/workflows/e2e-tests.yml/badge.svg)](https://github.com/CaseyKelly/fantasyphish/actions/workflows/e2e-tests.yml)
-[![Unit Tests](https://github.com/CaseyKelly/fantasyphish/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/CaseyKelly/fantasyphish/actions/workflows/unit-tests.yml)
-[![codecov](https://codecov.io/gh/CaseyKelly/fantasyphish/graph/badge.svg)](https://codecov.io/gh/CaseyKelly/fantasyphish)
-![Next.js 16](https://img.shields.io/badge/Next.js-16-000?logo=nextdotjs)
-![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
-![Prisma](https://img.shields.io/badge/Prisma-Postgres-2d3748?logo=prisma)
-[![License: MIT](https://img.shields.io/badge/License-MIT-c23a3a.svg)](LICENSE)
+<sub>
+
+**[How it works](#how-it-works)** · **[Features](#features)** · **[Under the hood](#under-the-hood)** · **[Run it locally](#running-it-locally)** · **[Docs](#documentation)**
+
+</sub>
+
+<br />
 
 <img src="docs/screenshots/landing.png" alt="FantasyPhish landing page with the song picker" width="100%" />
 
@@ -29,12 +32,12 @@ Fantasy sports for Phish fans: pick 13 songs before each show, score points live
 3. **Watch the points roll in.** Scores update live during the show as the setlist comes in from [phish.net](https://phish.net).
 4. **Climb the leaderboard.** Every tour has its own standings, with a podium for the top three.
 
-| Pick                                             | Points |
-| ------------------------------------------------ | ------ |
-| Set opener (first song of each set, one per set) | 3 each |
-| Encore (any song in the encore)                  | 3      |
-| Regular (rest of the 13 picks, played anywhere)  | 1 each |
-| Opener/encore pick played anywhere else          | 1      |
+|     | Pick                                             |   Points   |
+| :-: | ------------------------------------------------ | :--------: |
+| 🛫  | Set opener (first song of each set, one per set) | **3** each |
+| 🛬  | Encore (any song in the encore)                  |   **3**    |
+| 🎵  | Regular (rest of the 13 picks, played anywhere)  | **1** each |
+| 🔁  | Opener/encore pick played anywhere else          |   **1**    |
 
 Admins mark each show as 1, 2 (the default) or 3 sets, which sets how many opener picks it gets. Regular picks fill out the 13, so a perfect show is worth **17 / 19 / 21 points** for 1 / 2 / 3 sets. Opener and encore picks are a bonus, never a penalty: a song that misses its slot but is played anywhere in the show still earns 1 point like a regular pick.
 
@@ -54,16 +57,33 @@ Admins mark each show as 1, 2 (the default) or 3 sets, which sets how many opene
 - 🎯 **Live, progressive scoring.** A scheduled job re-scores every submission every 10 minutes during a show.
 - 🕖 **Locking by time zone.** Each show locks at 7 PM in the venue's own time zone, with a fallback that checks whether the setlist has already started.
 - 🏆 **Tour leaderboards** with podiums, averages and pick streaks.
-- 🍩 **Achievements with deep cuts:**
-  - **Helping Friendly Book:** summon Icculus by turning on notifications
-  - **Jackpot:** pick Harpua and have it played
-  - **Couch Tour → Tour Rat → Lot Lifer → Never Miss a Sunday Show:** pick streaks of 5, 10, 25 and 50 shows
-  - **Donut Devotee:** catch 20 donuts in the hidden Donut Catch mini-game
-  - **Sample in a Jar:** vote in a site poll
-  - …and more
+- 🍩 **Achievements with deep cuts** (see the gallery below).
 - 🔔 **Reminders** by email and web push at noon Mountain time on show days, sent only if you haven't picked yet.
 - 📱 **Installable PWA** with a service worker, so it works like an app on your phone.
 - 🗳️ **Polls**, user profiles, and admin tools for impersonating users and resetting shows.
+
+### Achievements
+
+<table>
+  <tr>
+    <td align="center" width="25%">📖<br /><b>Helping Friendly Book</b><br /><sub>Summon Icculus by turning on notifications</sub></td>
+    <td align="center" width="25%">🐱<br /><b>Jackpot</b><br /><sub>Pick Harpua and have it played</sub></td>
+    <td align="center" width="25%">🛫<br /><b>Perfect Opener</b><br /><sub>Call a set opener</sub></td>
+    <td align="center" width="25%">🛬<br /><b>Perfect Closer</b><br /><sub>Call an encore song</sub></td>
+  </tr>
+  <tr>
+    <td align="center">🛋️<br /><b>Couch Tour</b><br /><sub>Pick 5 shows in a row</sub></td>
+    <td align="center">🚐<br /><b>Tour Rat</b><br /><sub>Pick 10 shows in a row</sub></td>
+    <td align="center">🎪<br /><b>Lot Lifer</b><br /><sub>Pick 25 shows in a row</sub></td>
+    <td align="center">🌞<br /><b>Never Miss a Sunday Show</b><br /><sub>Pick 50 shows in a row</sub></td>
+  </tr>
+  <tr>
+    <td align="center">🍩<br /><b>Donut Devotee</b><br /><sub>Catch 20 donuts in the hidden Donut Catch game</sub></td>
+    <td align="center">🫙<br /><b>Sample in a Jar</b><br /><sub>Vote in a site poll</sub></td>
+    <td align="center">🦦<br /><b>Fee-dback</b><br /><sub>Send feedback by email</sub></td>
+    <td align="center">👶<br /><b>Founding Member</b><br /><sub>Played at the site's launch</sub></td>
+  </tr>
+</table>
 
 ## Under the hood
 
@@ -80,6 +100,15 @@ flowchart LR
     RM -->|email + web push| U((Players))
     DB --> APP[Next.js 16 app<br/>on Vercel]
     APP <--> U
+
+    classDef ext fill:#c23a3a,stroke:#a32e2e,color:#fff
+    classDef job fill:#3d5a6c,stroke:#2d4654,color:#fff
+    classDef store fill:#1e3340,stroke:#3d5a6c,color:#fff
+    classDef app fill:#000,stroke:#3d5a6c,color:#fff
+    class PN,U ext
+    class SC,ST,SS,AA,RM job
+    class DB store
+    class APP app
 ```
 
 ### Problems that turned out to be interesting
@@ -92,6 +121,10 @@ flowchart LR
 - **Retrying database calls.** Database calls in scheduled jobs go through `withRetry()`, which retries temporary connection errors with exponential backoff.
 
 ### Tech stack
+
+<p align="center">
+  <img src="https://skillicons.dev/icons?i=nextjs,react,ts,tailwind,prisma,postgres,vercel,sentry,vitest,playwright,githubactions&perline=11" alt="Next.js, React, TypeScript, Tailwind CSS, Prisma, Postgres, Vercel, Sentry, Vitest, Playwright, GitHub Actions" />
+</p>
 
 | Layer          | Tools                                                                                                                 |
 | -------------- | --------------------------------------------------------------------------------------------------------------------- |
@@ -115,6 +148,9 @@ flowchart LR
 
 Create a `.env` file **before** running any database commands. Without one, Prisma falls back to a local `postgresql://localhost:5432/fantasyphish` database:
 
+<details>
+<summary>Show the <code>.env</code> template</summary>
+
 ```bash
 DATABASE_URL="postgres://..."         # pooled connection
 DIRECT_URL="postgres://..."           # direct connection (used for migrations)
@@ -126,6 +162,8 @@ RESEND_API_KEY=""
 CRON_SECRET=""                        # optional locally
 PRIVATE_VIEWER_EMAIL=""               # account allowed to view owner-only pages
 ```
+
+</details>
 
 ### Setup
 
@@ -183,3 +221,11 @@ Scheduled jobs (`vercel.json`). Each one returns early unless at least one tour 
 ## License
 
 [MIT](LICENSE). Setlist data courtesy of [phish.net](https://phish.net). This is a fan project and is not affiliated with Phish.
+
+<br />
+
+<div align="center">
+  <img src="public/android-chrome-192x192.png" alt="" width="32" height="32" />
+  <br />
+  <sub>Built for the lot by <a href="https://github.com/CaseyKelly">Casey Kelly</a> · See you at the next show</sub>
+</div>
