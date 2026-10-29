@@ -140,7 +140,7 @@ flowchart LR
 
 ### Prerequisites
 
-- [mise](https://mise.jdx.dev), which installs the exact Node version pinned in `mise.toml` (Node 24)
+- [mise](https://mise.jdx.dev), which installs the exact Node version pinned in `mise.toml` (Node 26)
 - A PostgreSQL database (a [Neon](https://neon.tech) branch works well)
 - A [phish.net API key](https://phish.net/api) and a [Resend](https://resend.com) API key
 
