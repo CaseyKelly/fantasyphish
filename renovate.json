@@ -135,6 +135,13 @@
       "enabled": false
     },
     {
+      "description": "Keep the eslint-plugin-jsx-a11y minimatch override on 3.x - jsx-a11y 6.x calls minimatch as a default-export function, which minimatch 10+ no longer provides, so label-has-associated-control would crash ESLint. Remove this rule (and the override) once jsx-a11y supports minimatch 10+",
+      "matchDepTypes": ["overrides"],
+      "matchPackageNames": ["minimatch"],
+      "matchCurrentValue": "/^\\^3\\./",
+      "enabled": false
+    },
+    {
       "description": "GitHub Actions - automerge minor/patch",
       "matchManagers": ["github-actions"],
       "automerge": true,
