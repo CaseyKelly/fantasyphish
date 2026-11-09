@@ -125,6 +125,35 @@ describe("credentials authorize", () => {
       isPrivateViewer: false,
     })
   })
+
+  it("records lastLoginAt on a successful sign-in", async () => {
+    db.user.findUnique.mockResolvedValue(user)
+    vi.mocked(compare).mockResolvedValue(true as never)
+    await authorize({ email: "a@b.com", password: "pw" })
+    expect(db.user.update).toHaveBeenCalledWith({
+      where: { id: "u1" },
+      data: { lastLoginAt: expect.any(Date) },
+    })
+  })
+
+  it("does not record lastLoginAt on a failed sign-in", async () => {
+    db.user.findUnique.mockResolvedValue(user)
+    vi.mocked(compare).mockResolvedValue(false as never)
+    await authorize({ email: "a@b.com", password: "pw" })
+    expect(db.user.update).not.toHaveBeenCalled()
+  })
+
+  it("still signs in when recording lastLoginAt fails", async () => {
+    db.user.findUnique.mockResolvedValue(user)
+    vi.mocked(compare).mockResolvedValue(true as never)
+    db.user.update.mockRejectedValue(new Error("db down"))
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+    expect(await authorize({ email: "a@b.com", password: "pw" })).toMatchObject(
+      { id: "u1" }
+    )
+    expect(warn).toHaveBeenCalled()
+    warn.mockRestore()
+  })
 })
 
 describe("jwt callback", () => {

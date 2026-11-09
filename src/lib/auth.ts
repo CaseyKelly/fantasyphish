@@ -75,6 +75,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null
         }
 
+        // Record the login so admins can see who has signed in recently.
+        // Best effort: a failed write must never block a valid sign-in.
+        try {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { lastLoginAt: new Date() },
+          })
+        } catch (error) {
+          console.warn("[Auth] Failed to record lastLoginAt:", error)
+        }
+
         return {
           id: user.id,
           email: user.email,
