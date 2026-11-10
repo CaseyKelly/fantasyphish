@@ -55,7 +55,7 @@ import { ShowLockOverrideForm } from "./shows/ShowLockOverrideForm"
 import { ShowSetCountForm } from "./shows/ShowSetCountForm"
 import AdminUsagePage from "./usage/page"
 import { UsageOverview } from "./usage/UsageOverview"
-import { UsageTables } from "./usage/UsageTables"
+import { UsageTables, formatLastLogin } from "./usage/UsageTables"
 
 const db = prisma as unknown as PrismaMock
 const authMock = vi.mocked(auth)
@@ -708,6 +708,13 @@ describe("usage", () => {
     expect(header).toHaveAttribute("aria-expanded", "false")
     fireEvent.keyDown(header, { key: "a" })
     expect(header).toHaveAttribute("aria-expanded", "false")
+  })
+
+  it("formats last login times, with a dash when none is recorded", () => {
+    expect(formatLastLogin("2026-11-10T21:05:30.000Z")).toBe(
+      "2026-11-10 21:05 UTC"
+    )
+    expect(formatLastLogin(null)).toBe("—")
   })
 
   it("shows the no-users message without a search", () => {
