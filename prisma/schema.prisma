@@ -21,6 +21,7 @@ model User {
   passwordResetExpiry   DateTime?
   isAdmin               Boolean   @default(false)
   emailPickReminders    Boolean   @default(false)
+  lastLoginAt           DateTime?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
   submissions           Submission[]
