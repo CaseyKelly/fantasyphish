@@ -526,12 +526,17 @@ describe("usage", () => {
     donutPlayers: 1,
     donutPlayersPct: 33,
     totalSubmissions: 5,
+    recentLoginDays: 30,
+    recentLoginUsers: 2,
+    recentLoginPct: 67,
+    recentLoginSince: "2026-11-01T00:00:00.000Z",
   }
   const userRow = (id: string, overrides: Record<string, unknown> = {}) => ({
     id,
     username: id,
     email: `${id}@x.com`,
     signupDate: "2025-01-01T00:00:00.000Z",
+    lastLoginAt: null,
     emailVerified: true,
     isAdmin: false,
     emailOptIn: false,
@@ -547,9 +552,18 @@ describe("usage", () => {
       emailOptIn: true,
       isAdmin: true,
       lastSubmissionDate: "2025-07-04T00:00:00.000Z",
+      lastLoginAt: "2026-11-10T21:05:00.000Z",
     }),
-    userRow("bob", { pushCount: 2, donutScore: 30 }),
-    userRow("carol", { emailVerified: false }),
+    userRow("bob", {
+      pushCount: 2,
+      donutScore: 30,
+      lastLoginAt: "2026-11-01T00:00:00.000Z",
+    }),
+    // Logged in before the window opened, so not a recent login
+    userRow("carol", {
+      emailVerified: false,
+      lastLoginAt: "2026-10-31T23:59:59.000Z",
+    }),
   ]
 
   it("server page loads every dataset", async () => {
@@ -572,6 +586,7 @@ describe("usage", () => {
   it.each([
     ["Total Users", "Total Users", 3],
     ["Verified", "Verified Users", 2],
+    ["Logged In (30d)", "Recent Logins", 2],
     ["Total Submissions", "Submissions by User", 3],
     ["Donut Players", "Donut Catch Players", 1],
     ["Email Reminders On", "Email Reminders On", 1],
@@ -674,6 +689,8 @@ describe("usage", () => {
     expect(screen.getByText("67%")).toBeInTheDocument()
     expect(screen.getByText("🐈")).toBeInTheDocument()
     expect(screen.getByText("2025-07-01")).toBeInTheDocument()
+    expect(screen.getByText("2026-11-10 21:05 UTC")).toBeInTheDocument()
+    expect(screen.getByText("Last Login")).toBeInTheDocument()
 
     const search = screen.getByRole("searchbox", { name: "Search users" })
     fireEvent.change(search, { target: { value: "BOB@" } })

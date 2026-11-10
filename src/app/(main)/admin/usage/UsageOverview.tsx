@@ -9,10 +9,12 @@ import {
   UserEngagementRow,
 } from "@/lib/admin-usage"
 import { useFocusTrap } from "@/hooks/useFocusTrap"
+import { formatLastLogin } from "./UsageTables"
 
 type MetricKey =
   | "totalUsers"
   | "verified"
+  | "recentLogins"
   | "totalSubmissions"
   | "donutPlayers"
   | "emailOptIn"
@@ -20,7 +22,7 @@ type MetricKey =
 
 interface MetricConfig {
   title: string
-  filter: (row: UserEngagementRow) => boolean
+  filter: (row: UserEngagementRow, overview: UsageOverviewStats) => boolean
   columns: Column<UserEngagementRow>[]
   initialSortKey: string
   initialSortDir?: "asc" | "desc"
@@ -56,6 +58,23 @@ const metricConfig: Record<MetricKey, MetricConfig> = {
       },
     ],
     initialSortKey: "signupDate",
+  },
+  recentLogins: {
+    title: "Recent Logins",
+    // ISO strings compare chronologically
+    filter: (row, overview) =>
+      row.lastLoginAt !== null && row.lastLoginAt >= overview.recentLoginSince,
+    columns: [
+      { key: "username", header: "User", sortable: true },
+      { key: "email", header: "Email", sortable: true },
+      {
+        key: "lastLoginAt",
+        header: "Last Login",
+        sortable: true,
+        render: (row) => formatLastLogin(row.lastLoginAt),
+      },
+    ],
+    initialSortKey: "lastLoginAt",
   },
   totalSubmissions: {
     title: "Submissions by User",
@@ -154,7 +173,9 @@ export function UsageOverview({
   const modalRef = useRef<HTMLDivElement>(null)
 
   const config = selectedMetric ? metricConfig[selectedMetric] : null
-  const rows = config ? engagementRows.filter(config.filter) : []
+  const rows = config
+    ? engagementRows.filter((row) => config.filter(row, overview))
+    : []
 
   useFocusTrap(modalRef, config !== null, () => setSelectedMetric(null))
 
@@ -170,6 +191,11 @@ export function UsageOverview({
           label="Verified"
           value={String(overview.verifiedUsers)}
           onClick={() => setSelectedMetric("verified")}
+        />
+        <StatTile
+          label={`Logged In (${overview.recentLoginDays}d)`}
+          value={`${overview.recentLoginUsers} (${overview.recentLoginPct}%)`}
+          onClick={() => setSelectedMetric("recentLogins")}
         />
         <StatTile
           label="Total Submissions"
