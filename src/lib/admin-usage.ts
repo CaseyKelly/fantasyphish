@@ -13,13 +13,24 @@ export interface UsageOverview {
   donutPlayers: number
   donutPlayersPct: number
   totalSubmissions: number
+  recentLoginDays: number
+  recentLoginUsers: number
+  recentLoginPct: number
+  /** Start of the recent-login window (ISO), shared with the tile's user list */
+  recentLoginSince: string
 }
+
+/** How far back the "Logged In" tile counts sign-ins */
+export const RECENT_LOGIN_DAYS = 30
 
 export function pctOf(count: number, total: number): number {
   return total === 0 ? 0 : Math.round((count / total) * 100)
 }
 
 export async function getUsageOverview(): Promise<UsageOverview> {
+  const recentLoginSince = new Date(
+    Date.now() - RECENT_LOGIN_DAYS * 24 * 60 * 60 * 1000
+  )
   const [
     totalUsers,
     verifiedUsers,
@@ -27,6 +38,7 @@ export async function getUsageOverview(): Promise<UsageOverview> {
     pushUserGroups,
     donutPlayers,
     totalSubmissions,
+    recentLoginUsers,
   ] = await withRetry(
     () =>
       Promise.all([
@@ -36,6 +48,9 @@ export async function getUsageOverview(): Promise<UsageOverview> {
         prisma.pushSubscription.groupBy({ by: ["userId"] }),
         prisma.easterEggScore.count(),
         prisma.submission.count({ where: { show: excludeTestShows } }),
+        prisma.user.count({
+          where: { lastLoginAt: { gte: recentLoginSince } },
+        }),
       ]),
     { operationName: "get usage overview" }
   )
@@ -52,6 +67,10 @@ export async function getUsageOverview(): Promise<UsageOverview> {
     donutPlayers,
     donutPlayersPct: pctOf(donutPlayers, totalUsers),
     totalSubmissions,
+    recentLoginDays: RECENT_LOGIN_DAYS,
+    recentLoginUsers,
+    recentLoginPct: pctOf(recentLoginUsers, totalUsers),
+    recentLoginSince: recentLoginSince.toISOString(),
   }
 }
 
@@ -60,6 +79,7 @@ export interface UserEngagementRow {
   username: string
   email: string
   signupDate: string
+  lastLoginAt: string | null
   emailVerified: boolean
   isAdmin: boolean
   emailOptIn: boolean
@@ -80,6 +100,7 @@ export async function getUserEngagementRows(): Promise<UserEngagementRow[]> {
             username: true,
             email: true,
             createdAt: true,
+            lastLoginAt: true,
             emailVerified: true,
             isAdmin: true,
             emailPickReminders: true,
@@ -115,6 +136,7 @@ export async function getUserEngagementRows(): Promise<UserEngagementRow[]> {
     username: user.username,
     email: user.email,
     signupDate: user.createdAt.toISOString(),
+    lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
     emailVerified: !!user.emailVerified,
     isAdmin: user.isAdmin,
     emailOptIn: user.emailPickReminders,

@@ -17,6 +17,14 @@ function formatDate(iso: string | null): string {
   return iso ? iso.slice(0, 10) : "—"
 }
 
+/**
+ * Sign-ins are only recorded from Nov 2026 on, and a 30-day session doesn't
+ * re-login, so a blank means "no password sign-in since then", not "never".
+ */
+export function formatLastLogin(iso: string | null): string {
+  return iso ? `${iso.slice(0, 10)} ${iso.slice(11, 16)} UTC` : "—"
+}
+
 function CollapsibleCard({
   title,
   description,
@@ -72,6 +80,12 @@ const engagementColumns: Column<UserEngagementRow>[] = [
     header: "Signed Up",
     sortable: true,
     render: (row) => formatDate(row.signupDate),
+  },
+  {
+    key: "lastLoginAt",
+    header: "Last Login",
+    sortable: true,
+    render: (row) => formatLastLogin(row.lastLoginAt),
   },
   {
     key: "emailVerified",
@@ -231,7 +245,7 @@ export function UsageTables({
     <>
       <CollapsibleCard
         title="User Engagement"
-        description="One row per user. Click a column header to sort."
+        description="One row per user. Click a column header to sort. Last Login is the last password sign-in (recorded since Nov 2026; long sessions don't re-login)."
       >
         <div className="mb-4 sm:max-w-xs">
           <Input

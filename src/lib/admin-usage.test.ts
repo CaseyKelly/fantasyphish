@@ -45,6 +45,7 @@ describe("getUsageOverview", () => {
       .mockResolvedValueOnce(10) // total
       .mockResolvedValueOnce(8) // verified
       .mockResolvedValueOnce(5) // email opt-in
+      .mockResolvedValueOnce(4) // logged in within the window
     db.pushSubscription.groupBy.mockResolvedValue([
       { userId: "a" },
       { userId: "b" },
@@ -62,7 +63,27 @@ describe("getUsageOverview", () => {
       donutPlayers: 3,
       donutPlayersPct: 30,
       totalSubmissions: 42,
+      recentLoginDays: 30,
+      recentLoginUsers: 4,
+      recentLoginPct: 40,
+      recentLoginSince: expect.any(String),
     })
+  })
+
+  it("counts logins from the last 30 days", async () => {
+    vi.useFakeTimers({ now: new Date("2026-12-31T12:00:00Z") })
+    db.user.count.mockResolvedValue(0)
+    db.pushSubscription.groupBy.mockResolvedValue([])
+    db.easterEggScore.count.mockResolvedValue(0)
+    db.submission.count.mockResolvedValue(0)
+
+    const overview = await getUsageOverview()
+    const since = new Date("2026-12-01T12:00:00Z")
+    expect(overview.recentLoginSince).toBe(since.toISOString())
+    expect(db.user.count).toHaveBeenCalledWith({
+      where: { lastLoginAt: { gte: since } },
+    })
+    vi.useRealTimers()
   })
 })
 
@@ -76,6 +97,7 @@ describe("getUserEngagementRows", () => {
         username: "alice",
         email: "a@x.com",
         createdAt: created,
+        lastLoginAt: last,
         emailVerified: created,
         isAdmin: true,
         emailPickReminders: true,
@@ -86,6 +108,7 @@ describe("getUserEngagementRows", () => {
         username: "bob",
         email: "b@x.com",
         createdAt: created,
+        lastLoginAt: null,
         emailVerified: null,
         isAdmin: false,
         emailPickReminders: false,
@@ -103,6 +126,7 @@ describe("getUserEngagementRows", () => {
       username: "alice",
       email: "a@x.com",
       signupDate: created.toISOString(),
+      lastLoginAt: last.toISOString(),
       emailVerified: true,
       isAdmin: true,
       emailOptIn: true,
@@ -113,6 +137,7 @@ describe("getUserEngagementRows", () => {
       achievementCount: 2,
     })
     expect(rows[1]).toMatchObject({
+      lastLoginAt: null,
       emailVerified: false,
       lastSubmissionDate: null,
       donutScore: null,
