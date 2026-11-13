@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 
 vi.mock("web-push", () => ({
-  default: { setVapidDetails: vi.fn(), sendNotification: vi.fn() },
+  setVapidDetails: vi.fn(),
+  sendNotification: vi.fn(),
 }))
 
-import webpush from "web-push"
+import * as webpush from "web-push"
 
 const sub = { endpoint: "https://push.example/1", p256dh: "p", auth: "a" }
 const payload = { title: "T", body: "B", url: "/x" }
